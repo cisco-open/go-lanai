@@ -78,10 +78,10 @@ func ShouldHavePointer(p Property) bool {
 	if schema.Value.Nullable {
 		return true
 	}
-	switch schema.Value.Type {
-	case openapi3.TypeObject:
+	switch {
+	case schema.Value.Type.Is(openapi3.TypeObject):
 		return isRequired
-	case openapi3.TypeArray, openapi3.TypeBoolean:
+	case schema.Value.Type.Is(openapi3.TypeArray), schema.Value.Type.Is(openapi3.TypeBoolean):
 		return false
 	default:
 		if zeroValueIsValid(schema) {
@@ -105,15 +105,15 @@ func zeroValue(schema *openapi3.Schema) reflect.Value {
 	return zvValue
 }
 func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {
-	switch val.Type {
-	case openapi3.TypeBoolean, openapi3.TypeNumber, openapi3.TypeInteger, openapi3.TypeString:
+	switch {
+	case val.Type.Is(openapi3.TypeBoolean), val.Type.Is(openapi3.TypeNumber), val.Type.Is(openapi3.TypeInteger), val.Type.Is(openapi3.TypeString):
 		result = schemaToGoBaseTypes(val)
-	case openapi3.TypeArray:
+	case val.Type.Is(openapi3.TypeArray):
 		itemsType := schemaToGoType(val.Items.Value)
 		if itemsType != nil {
 			result = reflect.SliceOf(itemsType)
 		}
-	case openapi3.TypeObject:
+	case val.Type.Is(openapi3.TypeObject):
 	//	Do nothing
 	default:
 		logger.Warnf("getType: type %v doesn't have corresponding mapping", val.Type)
@@ -122,12 +122,12 @@ func schemaToGoType(val *openapi3.Schema) (result reflect.Type) {
 	return result
 }
 func schemaToGoBaseTypes(val *openapi3.Schema) (result reflect.Type) {
-	switch val.Type {
-	case openapi3.TypeBoolean:
+	switch {
+	case val.Type.Is(openapi3.TypeBoolean):
 		result = reflect.TypeOf(true)
-	case openapi3.TypeNumber:
+	case val.Type.Is(openapi3.TypeNumber):
 		result = reflect.TypeOf(1.1)
-	case openapi3.TypeInteger:
+	case val.Type.Is(openapi3.TypeInteger):
 		var v interface{}
 		switch val.Format {
 		case "int32":
@@ -138,7 +138,7 @@ func schemaToGoBaseTypes(val *openapi3.Schema) (result reflect.Type) {
 			v = 1
 		}
 		result = reflect.TypeOf(v)
-	case openapi3.TypeString:
+	case val.Type.Is(openapi3.TypeString):
 		result = reflect.TypeOf("string")
 	default:
 		result = nil
@@ -182,24 +182,24 @@ func valueIsWithinSchemaLimits(schema *openapi3.Schema, value reflect.Value) boo
 }
 
 func limitsForSchema(element *openapi3.Schema) (min, max string) {
-	switch element.Type {
-	case "array":
+	switch {
+	case element.Type.Is(openapi3.TypeArray):
 		if element.MinItems > 0 {
 			min = strconv.FormatUint(element.MinItems, 10)
 		}
 		if element.MaxItems != nil {
 			max = strconv.FormatUint(*element.MaxItems, 10)
 		}
-	case "number":
+	case element.Type.Is(openapi3.TypeNumber):
 		fallthrough
-	case "integer":
+	case element.Type.Is(openapi3.TypeInteger):
 		if element.Min != nil {
 			min = strconv.FormatFloat(*element.Min, 'f', -1, 64)
 		}
 		if element.Max != nil {
 			max = strconv.FormatFloat(*element.Max, 'f', -1, 64)
 		}
-	case "string":
+	case element.Type.Is(openapi3.TypeString):
 		if element.MinLength > 0 {
 			min = strconv.FormatUint(element.MinLength, 10)
 		}

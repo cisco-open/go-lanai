@@ -25,7 +25,7 @@ func (c *Content) ContainsRef() bool {
 		if c.Schema.Ref != "" {
 			return true
 		} else {
-			if c.Schema.Value.Type == "array" {
+			if c.Schema.Value.Type.Is(openapi3.TypeArray) {
 				return c.Schema.Value.Items.Ref != ""
 			}
 		}
@@ -38,7 +38,7 @@ func (c *Content) CountFields() (result int) {
 		if content.Schema.Ref != "" {
 			result++
 		} else {
-			if content.Schema.Value.Type == "object" {
+			if content.Schema.Value.Type.Is(openapi3.TypeObject) {
 				result++
 			}
 			result += len(content.Schema.Value.AllOf)

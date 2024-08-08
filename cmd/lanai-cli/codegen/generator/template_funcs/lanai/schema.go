@@ -49,17 +49,17 @@ func (s Schema) StructProperties() (result openapi3.SchemaRefs) {
 
 func (s Schema) AllProperties() (result openapi3.Schemas) {
 	result = make(openapi3.Schemas)
-	if s.Data.Value.Type == openapi3.TypeObject || s.Data.Value.Type == "" {
+	if s.Data.Value.Type == nil || s.Data.Value.Type.Is(openapi3.TypeObject) {
 		result = s.Data.Value.Properties
 	}
 	return result
 }
 
 func (s Schema) Type() string {
-	if s.Data.Value.Type == "" {
+	if s.Data.Value.Type == nil || len(*s.Data.Value.Type) == 0 {
 		return openapi3.TypeObject
 	}
-	return s.Data.Value.Type
+	return (*s.Data.Value.Type)[0]
 }
 func (s Schema) HasAdditionalProperties() bool {
 	return openapi.SchemaRef(*s.Data).HasAdditionalProperties()

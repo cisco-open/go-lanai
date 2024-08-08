@@ -31,7 +31,7 @@ func (s SchemaRef) AllSchemas() (result openapi3.SchemaRefs) {
 	for _, a := range s.Value.AllOf {
 		result = append(result, SchemaRef(*a).AllSchemas()...)
 	}
-	if s.Value.Type == "array" {
+	if s.Value.Type.Is(openapi3.TypeArray) {
 		result = append(result, SchemaRef(*s.Value.Items).AllSchemas()...)
 	}
 

@@ -28,6 +28,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/fx"
 	"net/http"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -118,7 +119,7 @@ func NewPreFlightRequest(ctx context.Context, method, path string, headers ...st
 	return webtest.NewRequest(ctx, http.MethodOptions, path, nil, webtest.Headers(
 		"Origin", "localhost",
 		"Access-Control-Request-Method", method,
-		"Access-Control-Request-Headers", strings.Join(headers, ", "),
+		"Access-Control-Request-Headers", NormalizeHeaderKeys(headers, strings.ToLower),
 	))
 }
 
@@ -132,7 +133,7 @@ func ExpectedPreFlightResponseHeader(method string, headers...string) map[string
     return map[string]string{
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": method,
-        "Access-Control-Allow-Headers": strings.Join(headers, ", "),
+        "Access-Control-Allow-Headers": NormalizeHeaderKeys(headers, strings.ToLower),
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Max-Age": "3600",
     }
@@ -141,7 +142,7 @@ func ExpectedPreFlightResponseHeader(method string, headers...string) map[string
 func ExpectedCorsResponseHeader(headers...string) map[string]string {
 	return map[string]string{
 		"Access-Control-Allow-Origin": "*",
-		"Access-Control-Expose-Headers": strings.Join(headers, ", "),
+		"Access-Control-Expose-Headers": NormalizeHeaderKeys(headers, http.CanonicalHeaderKey),
 		"Access-Control-Allow-Credentials": "true",
 		"X-Test-Header": "test-response",
 	}
@@ -164,6 +165,23 @@ func AssertHeaders(g *gomega.WithT, header http.Header, expected map[string]stri
             g.Expect(h).ToNot(HaveKey(k), "response header should not have key [%s]", k)
         }
     }
+}
+
+// NormalizeHeaderKeys
+// (Since rs/cors v1.11.0) According to the discussion with rs/cors owner and the specification,
+// the header keys of "Access-Control-Request-Headers" should be converted to lower case and sorted.
+// We updated our test cases to reflect that.
+// See https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+//     https://github.com/rs/cors/issues/176
+//     https://github.com/rs/cors/issues/183
+func NormalizeHeaderKeys(headers []string, converter func(string) string) string {
+	for i := range headers {
+		headers[i] = converter(headers[i])
+	}
+	sort.SliceStable(headers, func(i, j int) bool {
+		return headers[i] < headers[j]
+	})
+	return strings.Join(headers, ",")
 }
 
 /*************************

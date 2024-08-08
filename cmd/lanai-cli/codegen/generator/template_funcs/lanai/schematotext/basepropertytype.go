@@ -45,12 +45,12 @@ func (b baseType) ToText() (string, error) {
 	return schemaToGoBaseTypes(schema.Value).String(), nil
 }
 func schemaToGoBaseTypes(val *openapi3.Schema) (result reflect.Type) {
-	switch val.Type {
-	case openapi3.TypeBoolean:
+	switch {
+	case val.Type.Is(openapi3.TypeBoolean):
 		result = reflect.TypeOf(true)
-	case openapi3.TypeNumber:
+	case val.Type.Is(openapi3.TypeNumber):
 		result = reflect.TypeOf(1.1)
-	case openapi3.TypeInteger:
+	case val.Type.Is(openapi3.TypeInteger):
 		var v interface{}
 		switch val.Format {
 		case "int32":
@@ -61,7 +61,7 @@ func schemaToGoBaseTypes(val *openapi3.Schema) (result reflect.Type) {
 			v = 1
 		}
 		result = reflect.TypeOf(v)
-	case openapi3.TypeString:
+	case val.Type.Is(openapi3.TypeString):
 		result = reflect.TypeOf("string")
 	default:
 		result = nil

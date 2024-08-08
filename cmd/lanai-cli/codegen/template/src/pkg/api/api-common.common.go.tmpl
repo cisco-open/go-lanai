@@ -31,7 +31,7 @@ package api
 
     {{- $parameters := $components.Parameters }}
     {{ range $parameterName, $parameterData := $parameters }}
-        {{- if eq $parameterData.Value.Schema.Value.Type "object" }}
+        {{- if $parameterData.Value.Schema.Value.Type.Is "object" }}
         {{- $structName := toTitle $parameterName }}
         {{ registerStruct $structName "pkg/api" -}}
         {{- end }}
@@ -54,7 +54,7 @@ package api
         {{- $structName := toTitle $schemaName }}
         {{- $structName = concat $namePrefix $structName }}
 
-        {{- $isObject := eq $schemaData.Value.Type "object" }}
+        {{- $isObject := $schemaData.Value.Type.Is "object" }}
         {{- if or $isObject $schemaData.Value.AllOf }}
             {{- if not $schemaData.Ref }}
                 {{- registerStruct $structName "pkg/api" -}}
@@ -127,7 +127,7 @@ package api
     {{- $parameters := index . 0 }}
     {{ range $parameterName, $parameterData := $parameters }}
         {{ $structName := toTitle $parameterName }}
-        {{- if eq $parameterData.Value.Schema.Value.Type "object" }}
+        {{- if $parameterData.Value.Schema.Value.Type.Is "object" }}
             {{ $struct := NewStruct $structName "pkg/api" }}
             {{ template "ParameterProperty" args $parameterData "pkg/api" $struct}}
             {{ template "struct" args $struct }}

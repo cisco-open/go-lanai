@@ -18,7 +18,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "0"
         url: http://localhost:9200/
         method: GET
       response:
@@ -31,7 +33,7 @@ interactions:
         uncompressed: true
         body: |
             {
-              "name" : "606acbda53dc",
+              "name" : "d5e4908fd640",
               "cluster_name" : "opensearch",
               "cluster_uuid" : "6jav7QKeT-mdEn2zdllwsw",
               "version" : {
@@ -52,7 +54,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 327.402041ms
+        duration: 361.386084ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -70,7 +72,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "1"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -81,13 +85,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"error":{"root_cause":[{"type":"index_not_found_exception","reason":"no such index [auditlog_test]","index":"auditlog_test","resource.id":"auditlog_test","resource.type":"index_or_alias","index_uuid":"_na_"}],"type":"index_not_found_exception","reason":"no such index [auditlog_test]","index":"auditlog_test","resource.id":"auditlog_test","resource.type":"index_or_alias","index_uuid":"_na_"},"status":404}'
+        body: '{"acknowledged":true}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
-        status: 404 Not Found
-        code: 404
-        duration: 18.785375ms
+        status: 200 OK
+        code: 200
+        duration: 57.262416ms
     - id: 2
       request:
         proto: HTTP/1.1
@@ -127,7 +131,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "2"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -138,13 +144,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":107,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"-7XsXI4BBpjHTwdikQ8v","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_LXsXI4BBpjHTwdikQ8v","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_bXsXI4BBpjHTwdikQ8v","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_rXsXI4BBpjHTwdikQ8v","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_7XsXI4BBpjHTwdikQ8v","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ALXsXI4BBpjHTwdikRAv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"AbXsXI4BBpjHTwdikRAv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ArXsXI4BBpjHTwdikRAv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"A7XsXI4BBpjHTwdikRAv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"BLXsXI4BBpjHTwdikRAv","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":164,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"cmlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"c2lTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"dGlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"dWlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"dmlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"d2lTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"eGlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"eWlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"emlTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"e2lTM5EBajh97wLb5qb3","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 111.799333ms
+        duration: 168.397917ms
     - id: 3
       request:
         proto: HTTP/1.1
@@ -165,7 +171,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "3"
         url: http://localhost:9200/auditlog_test/_search?request_cache=false
         method: POST
       response:
@@ -176,13 +184,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":10,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":1.4816045,"hits":[{"_index":"auditlog_test","_id":"A7XsXI4BBpjHTwdikRAv","_score":1.4816045,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"BLXsXI4BBpjHTwdikRAv","_score":1.4816045,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}}]}}'
+        body: '{"took":12,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":2,"relation":"eq"},"max_score":1.4816045,"hits":[{"_index":"auditlog_test","_id":"emlTM5EBajh97wLb5qb3","_score":1.4816045,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"e2lTM5EBajh97wLb5qb3","_score":1.4816045,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 14.74475ms
+        duration: 16.522458ms
     - id: 4
       request:
         proto: HTTP/1.1
@@ -203,7 +211,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "4"
         url: http://localhost:9200/auditlog_test/_doc
         method: POST
       response:
@@ -214,15 +224,15 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"_index":"auditlog_test","_id":"B7XsXI4BBpjHTwdikhAA","_version":1,"result":"created","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":10,"_primary_term":1}'
+        body: '{"_index":"auditlog_test","_id":"fmlTM5EBajh97wLb56Zt","_version":1,"result":"created","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":10,"_primary_term":1}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
             Location:
-                - /auditlog_test/_doc/B7XsXI4BBpjHTwdikhAA
+                - /auditlog_test/_doc/fmlTM5EBajh97wLb56Zt
         status: 201 Created
         code: 201
-        duration: 5.914625ms
+        duration: 6.874375ms
     - id: 5
       request:
         proto: HTTP/1.1
@@ -243,7 +253,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "5"
         url: http://localhost:9200/auditlog_test/_search
         method: POST
       response:
@@ -255,14 +267,14 @@ interactions:
         content_length: -1
         uncompressed: true
         body: |-
-            {"took":3,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.2321435,"hits":[{"_index":"auditlog_test","_id":"A7XsXI4BBpjHTwdikRAv","_score":1.2321435,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"BLXsXI4BBpjHTwdikRAv","_score":1.2321435,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}},{"_index":"auditlog_test","_id":"B7XsXI4BBpjHTwdikhAA","_score":1.2321435,"_source":{"Client_ID":"TESTING TESTING","Description":"","Details":"","ID":"","Keywords":"","Orig_User":"","Owner_Tenant_ID":"","Parent_Span_ID":"","Provider_ID":"","Security":"","Service":"","Severity":"","Span_ID":"","SubType":"SYNCHRONIZED","Tenant_ID":"","Tenant_Name":"","Time":"2019-10-15T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"","Type":"","User_ID":"","Username":""}
+            {"took":11,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.2321435,"hits":[{"_index":"auditlog_test","_id":"emlTM5EBajh97wLb5qb3","_score":1.2321435,"_source":{"Client_ID":"ibdei","Description":"","Details":"","ID":"","Keywords":"hjcgj","Orig_User":"iagjb","Owner_Tenant_ID":"hcggb","Parent_Span_ID":"cehfa","Provider_ID":"hfafc","Security":"","Service":"","Severity":"","Span_ID":"ddahi","SubType":"SYNCHRONIZED","Tenant_ID":"ehjdi","Tenant_Name":"","Time":"2021-09-17T21:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jcidi","Type":"DP","User_ID":"facij","Username":"hbcca"}},{"_index":"auditlog_test","_id":"e2lTM5EBajh97wLb5qb3","_score":1.2321435,"_source":{"Client_ID":"eejbi","Description":"","Details":"","ID":"","Keywords":"hhjba","Orig_User":"edcdi","Owner_Tenant_ID":"fhehh","Parent_Span_ID":"ejcgb","Provider_ID":"ihfhc","Security":"","Service":"","Severity":"","Span_ID":"ichjf","SubType":"SYNCHRONIZED","Tenant_ID":"egfgj","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dfcec","Type":"DEVICE","User_ID":"fbccb","Username":"gbfaj"}},{"_index":"auditlog_test","_id":"fmlTM5EBajh97wLb56Zt","_score":1.2321435,"_source":{"Client_ID":"TESTING TESTING","Description":"","Details":"","ID":"","Keywords":"","Orig_User":"","Owner_Tenant_ID":"","Parent_Span_ID":"","Provider_ID":"","Security":"","Service":"","Severity":"","Span_ID":"","SubType":"SYNCHRONIZED","Tenant_ID":"","Tenant_Name":"","Time":"2019-10-15T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"","Type":"","User_ID":"","Username":""}
             }]}}
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 9.030458ms
+        duration: 24.652459ms
     - id: 6
       request:
         proto: HTTP/1.1
@@ -280,7 +292,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "6"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -297,7 +311,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 23.862708ms
+        duration: 39.760916ms
     - id: 7
       request:
         proto: HTTP/1.1
@@ -337,7 +351,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "7"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -348,13 +364,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":58,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"CrXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"C7XsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DLXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DbXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"DrXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"D7XsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ELXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"EbXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ErXsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"E7XsXI4BBpjHTwdimBBT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":68,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"gWlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"gmlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"g2lTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"hGlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"hWlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"hmlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"h2lTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"iGlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"iWlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"imlTM5EBajh97wLb7aa7","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 60.412167ms
+        duration: 71.769708ms
     - id: 8
       request:
         proto: HTTP/1.1
@@ -375,7 +391,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "8"
         url: http://localhost:9200/auditlog_test/_search/template
         method: POST
       response:
@@ -386,13 +404,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"C7XsXI4BBpjHTwdimBBT","_score":1.1451323,"_source":{"Client_ID":"dafhj","Description":"","Details":"","ID":"","Keywords":"bajda","Orig_User":"jacdd","Owner_Tenant_ID":"agfdj","Parent_Span_ID":"bejch","Provider_ID":"bhcfd","Security":"","Service":"","Severity":"","Span_ID":"hjgbd","SubType":"SCHEDULE_TASK","Tenant_ID":"ddgic","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hcejb","Type":"DP","User_ID":"dfegd","Username":"djbhi"}},{"_index":"auditlog_test","_id":"D7XsXI4BBpjHTwdimBBT","_score":1.1451323,"_source":{"Client_ID":"cbife","Description":"","Details":"","ID":"","Keywords":"afaei","Orig_User":"gfbfc","Owner_Tenant_ID":"fbdfb","Parent_Span_ID":"ficaj","Provider_ID":"febbe","Security":"","Service":"","Severity":"","Span_ID":"gfifa","SubType":"SCHEDULE_TASK","Tenant_ID":"iiijj","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"efabh","Type":"DP","User_ID":"jhhbf","Username":"hebjc"}},{"_index":"auditlog_test","_id":"E7XsXI4BBpjHTwdimBBT","_score":1.1451323,"_source":{"Client_ID":"ebiif","Description":"","Details":"","ID":"","Keywords":"cbdei","Orig_User":"ihfcd","Owner_Tenant_ID":"beeea","Parent_Span_ID":"ejfgg","Provider_ID":"ejcac","Security":"","Service":"","Severity":"","Span_ID":"gcgfi","SubType":"SYNCHRONIZED","Tenant_ID":"ifaag","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ggfjc","Type":"DP","User_ID":"caddi","Username":"cchec"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"gmlTM5EBajh97wLb7aa7","_score":1.1451323,"_source":{"Client_ID":"dafhj","Description":"","Details":"","ID":"","Keywords":"bajda","Orig_User":"jacdd","Owner_Tenant_ID":"agfdj","Parent_Span_ID":"bejch","Provider_ID":"bhcfd","Security":"","Service":"","Severity":"","Span_ID":"hjgbd","SubType":"SCHEDULE_TASK","Tenant_ID":"ddgic","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hcejb","Type":"DP","User_ID":"dfegd","Username":"djbhi"}},{"_index":"auditlog_test","_id":"hmlTM5EBajh97wLb7aa7","_score":1.1451323,"_source":{"Client_ID":"cbife","Description":"","Details":"","ID":"","Keywords":"afaei","Orig_User":"gfbfc","Owner_Tenant_ID":"fbdfb","Parent_Span_ID":"ficaj","Provider_ID":"febbe","Security":"","Service":"","Severity":"","Span_ID":"gfifa","SubType":"SCHEDULE_TASK","Tenant_ID":"iiijj","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"efabh","Type":"DP","User_ID":"jhhbf","Username":"hebjc"}},{"_index":"auditlog_test","_id":"imlTM5EBajh97wLb7aa7","_score":1.1451323,"_source":{"Client_ID":"ebiif","Description":"","Details":"","ID":"","Keywords":"cbdei","Orig_User":"ihfcd","Owner_Tenant_ID":"beeea","Parent_Span_ID":"ejfgg","Provider_ID":"ejcac","Security":"","Service":"","Severity":"","Span_ID":"gcgfi","SubType":"SYNCHRONIZED","Tenant_ID":"ifaag","Tenant_Name":"","Time":"2021-11-30T00:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ggfjc","Type":"DP","User_ID":"caddi","Username":"cchec"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 18.301167ms
+        duration: 13.319417ms
     - id: 9
       request:
         proto: HTTP/1.1
@@ -410,7 +428,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "9"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -427,7 +447,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 13.539417ms
+        duration: 16.303125ms
     - id: 10
       request:
         proto: HTTP/1.1
@@ -467,7 +487,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "10"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -478,13 +500,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":56,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"F7XsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GLXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GbXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"GrXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"G7XsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"HLXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"HbXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"HrXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"H7XsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ILXsXI4BBpjHTwdimRAT","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":68,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"jmlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"j2lTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"kGlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"kWlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"kmlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"k2lTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"lGlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"lWlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"lmlTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"l2lTM5EBajh97wLb7qYi","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 58.57925ms
+        duration: 70.002583ms
     - id: 11
       request:
         proto: HTTP/1.1
@@ -505,7 +527,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "11"
         url: http://localhost:9200/auditlog_test/_search
         method: POST
       response:
@@ -516,13 +540,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"F7XsXI4BBpjHTwdimRAT","_score":1.1451323,"_source":{"Client_ID":"beijb","Description":"","Details":"","ID":"","Keywords":"dieah","Orig_User":"cjcij","Owner_Tenant_ID":"ibfcb","Parent_Span_ID":"jiijc","Provider_ID":"cjeda","Security":"","Service":"","Severity":"","Span_ID":"gbheh","SubType":"SYNCHRONIZED","Tenant_ID":"icbbd","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gefdd","Type":"DP","User_ID":"ccgei","Username":"ajhbj"}},{"_index":"auditlog_test","_id":"GbXsXI4BBpjHTwdimRAT","_score":1.1451323,"_source":{"Client_ID":"hgdch","Description":"","Details":"","ID":"","Keywords":"gadjd","Orig_User":"jhfja","Owner_Tenant_ID":"jeggd","Parent_Span_ID":"igghh","Provider_ID":"jddcf","Security":"","Service":"","Severity":"","Span_ID":"fbghb","SubType":"SYNCHRONIZED","Tenant_ID":"gfiac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjhag","Type":"GP","User_ID":"iffba","Username":"bbjga"}},{"_index":"auditlog_test","_id":"G7XsXI4BBpjHTwdimRAT","_score":1.1451323,"_source":{"Client_ID":"jdbfa","Description":"","Details":"","ID":"","Keywords":"gefef","Orig_User":"jdcid","Owner_Tenant_ID":"ibeeb","Parent_Span_ID":"jcdag","Provider_ID":"adbcd","Security":"","Service":"","Severity":"","Span_ID":"cidhe","SubType":"SYNCHRONIZED","Tenant_ID":"dihej","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"igeee","Type":"DEVICE","User_ID":"cgcai","Username":"addea"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":3,"relation":"eq"},"max_score":1.1451323,"hits":[{"_index":"auditlog_test","_id":"jmlTM5EBajh97wLb7qYi","_score":1.1451323,"_source":{"Client_ID":"beijb","Description":"","Details":"","ID":"","Keywords":"dieah","Orig_User":"cjcij","Owner_Tenant_ID":"ibfcb","Parent_Span_ID":"jiijc","Provider_ID":"cjeda","Security":"","Service":"","Severity":"","Span_ID":"gbheh","SubType":"SYNCHRONIZED","Tenant_ID":"icbbd","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gefdd","Type":"DP","User_ID":"ccgei","Username":"ajhbj"}},{"_index":"auditlog_test","_id":"kGlTM5EBajh97wLb7qYi","_score":1.1451323,"_source":{"Client_ID":"hgdch","Description":"","Details":"","ID":"","Keywords":"gadjd","Orig_User":"jhfja","Owner_Tenant_ID":"jeggd","Parent_Span_ID":"igghh","Provider_ID":"jddcf","Security":"","Service":"","Severity":"","Span_ID":"fbghb","SubType":"SYNCHRONIZED","Tenant_ID":"gfiac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"fjhag","Type":"GP","User_ID":"iffba","Username":"bbjga"}},{"_index":"auditlog_test","_id":"kmlTM5EBajh97wLb7qYi","_score":1.1451323,"_source":{"Client_ID":"jdbfa","Description":"","Details":"","ID":"","Keywords":"gefef","Orig_User":"jdcid","Owner_Tenant_ID":"ibeeb","Parent_Span_ID":"jcdag","Provider_ID":"adbcd","Security":"","Service":"","Severity":"","Span_ID":"cidhe","SubType":"SYNCHRONIZED","Tenant_ID":"dihej","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"igeee","Type":"DEVICE","User_ID":"cgcai","Username":"addea"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 3.087875ms
+        duration: 3.258875ms
     - id: 12
       request:
         proto: HTTP/1.1
@@ -543,7 +567,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "12"
         url: http://localhost:9200/auditlog_test/_search
         method: POST
       response:
@@ -560,7 +586,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 400 Bad Request
         code: 400
-        duration: 4.48475ms
+        duration: 5.268792ms
     - id: 13
       request:
         proto: HTTP/1.1
@@ -581,7 +607,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "13"
         url: http://localhost:9200/dontexist/_search
         method: POST
       response:
@@ -598,7 +626,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 1.107875ms
+        duration: 1.514791ms
     - id: 14
       request:
         proto: HTTP/1.1
@@ -616,7 +644,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "14"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -633,7 +663,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 12.418917ms
+        duration: 14.843167ms
     - id: 15
       request:
         proto: HTTP/1.1
@@ -673,7 +703,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "15"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -684,13 +716,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":53,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"JLXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"JbXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"JrXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"J7XsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"KLXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"KbXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"KrXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"K7XsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"LLXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"LbXsXI4BBpjHTwdimRC2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":65,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"m2lTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"nGlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"nWlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"nmlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"n2lTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"oGlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"oWlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"omlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"o2lTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"pGlTM5EBajh97wLb7qaF","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 55.449166ms
+        duration: 66.94675ms
     - id: 16
       request:
         proto: HTTP/1.1
@@ -711,7 +743,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "16"
         url: http://localhost:9200/auditlog_test/_search
         method: POST
       response:
@@ -722,13 +756,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":7,"relation":"eq"},"max_score":0.38299224,"hits":[{"_index":"auditlog_test","_id":"JLXsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"hcidj","Description":"","Details":"","ID":"","Keywords":"debed","Orig_User":"hfbbb","Owner_Tenant_ID":"bcgda","Parent_Span_ID":"dhffh","Provider_ID":"haeig","Security":"","Service":"","Severity":"","Span_ID":"cddii","SubType":"SYNCHRONIZED","Tenant_ID":"fdeba","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djdjh","Type":"GP","User_ID":"jahed","Username":"ajcif"}},{"_index":"auditlog_test","_id":"JrXsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"ecfai","Description":"","Details":"","ID":"","Keywords":"gaged","Orig_User":"jedci","Owner_Tenant_ID":"dgide","Parent_Span_ID":"ceeag","Provider_ID":"ddbah","Security":"","Service":"","Severity":"","Span_ID":"gbcid","SubType":"SYNCHRONIZED","Tenant_ID":"dfdac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jfefe","Type":"DEVICE","User_ID":"gbbca","Username":"gcihb"}},{"_index":"auditlog_test","_id":"J7XsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"dhahc","Description":"","Details":"","ID":"","Keywords":"cbfbc","Orig_User":"ahcaa","Owner_Tenant_ID":"ehgcd","Parent_Span_ID":"ffbhe","Provider_ID":"abfea","Security":"","Service":"","Severity":"","Span_ID":"dgbcc","SubType":"SYNCHRONIZED","Tenant_ID":"affij","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djcdh","Type":"DP","User_ID":"heaae","Username":"hijce"}},{"_index":"auditlog_test","_id":"KLXsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"hgdfc","Description":"","Details":"","ID":"","Keywords":"eeiah","Orig_User":"jbffa","Owner_Tenant_ID":"ajgcj","Parent_Span_ID":"dfbgj","Provider_ID":"jagbb","Security":"","Service":"","Severity":"","Span_ID":"ieief","SubType":"SYNCHRONIZED","Tenant_ID":"bcjji","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"bijai","Type":"GP","User_ID":"bbchj","Username":"jchge"}},{"_index":"auditlog_test","_id":"KbXsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"igdhi","Description":"","Details":"","ID":"","Keywords":"bdadj","Orig_User":"aeeif","Owner_Tenant_ID":"achea","Parent_Span_ID":"gbihe","Provider_ID":"aeief","Security":"","Service":"","Severity":"","Span_ID":"deibf","SubType":"SYNCHRONIZED","Tenant_ID":"bjjib","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dhebj","Type":"DP","User_ID":"idcad","Username":"hfahc"}},{"_index":"auditlog_test","_id":"KrXsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"gceif","Description":"","Details":"","ID":"","Keywords":"ejbic","Orig_User":"cdecb","Owner_Tenant_ID":"eadgg","Parent_Span_ID":"ecbfe","Provider_ID":"agfgi","Security":"","Service":"","Severity":"","Span_ID":"adica","SubType":"SYNCHRONIZED","Tenant_ID":"jfdfg","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jidee","Type":"DP","User_ID":"bhgjb","Username":"cehfb"}},{"_index":"auditlog_test","_id":"K7XsXI4BBpjHTwdimRC2","_score":0.38299224,"_source":{"Client_ID":"jdafg","Description":"","Details":"","ID":"","Keywords":"iibbc","Orig_User":"bcgag","Owner_Tenant_ID":"baedd","Parent_Span_ID":"dbdgg","Provider_ID":"jdgha","Security":"","Service":"","Severity":"","Span_ID":"eaehc","SubType":"SYNCHRONIZED","Tenant_ID":"ijcaa","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"eehfh","Type":"GP","User_ID":"eejca","Username":"hhdec"}}]}}'
+        body: '{"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":7,"relation":"eq"},"max_score":0.38299224,"hits":[{"_index":"auditlog_test","_id":"m2lTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"hcidj","Description":"","Details":"","ID":"","Keywords":"debed","Orig_User":"hfbbb","Owner_Tenant_ID":"bcgda","Parent_Span_ID":"dhffh","Provider_ID":"haeig","Security":"","Service":"","Severity":"","Span_ID":"cddii","SubType":"SYNCHRONIZED","Tenant_ID":"fdeba","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djdjh","Type":"GP","User_ID":"jahed","Username":"ajcif"}},{"_index":"auditlog_test","_id":"nWlTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"ecfai","Description":"","Details":"","ID":"","Keywords":"gaged","Orig_User":"jedci","Owner_Tenant_ID":"dgide","Parent_Span_ID":"ceeag","Provider_ID":"ddbah","Security":"","Service":"","Severity":"","Span_ID":"gbcid","SubType":"SYNCHRONIZED","Tenant_ID":"dfdac","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jfefe","Type":"DEVICE","User_ID":"gbbca","Username":"gcihb"}},{"_index":"auditlog_test","_id":"nmlTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"dhahc","Description":"","Details":"","ID":"","Keywords":"cbfbc","Orig_User":"ahcaa","Owner_Tenant_ID":"ehgcd","Parent_Span_ID":"ffbhe","Provider_ID":"abfea","Security":"","Service":"","Severity":"","Span_ID":"dgbcc","SubType":"SYNCHRONIZED","Tenant_ID":"affij","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"djcdh","Type":"DP","User_ID":"heaae","Username":"hijce"}},{"_index":"auditlog_test","_id":"n2lTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"hgdfc","Description":"","Details":"","ID":"","Keywords":"eeiah","Orig_User":"jbffa","Owner_Tenant_ID":"ajgcj","Parent_Span_ID":"dfbgj","Provider_ID":"jagbb","Security":"","Service":"","Severity":"","Span_ID":"ieief","SubType":"SYNCHRONIZED","Tenant_ID":"bcjji","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"bijai","Type":"GP","User_ID":"bbchj","Username":"jchge"}},{"_index":"auditlog_test","_id":"oGlTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"igdhi","Description":"","Details":"","ID":"","Keywords":"bdadj","Orig_User":"aeeif","Owner_Tenant_ID":"achea","Parent_Span_ID":"gbihe","Provider_ID":"aeief","Security":"","Service":"","Severity":"","Span_ID":"deibf","SubType":"SYNCHRONIZED","Tenant_ID":"bjjib","Tenant_Name":"","Time":"2021-02-10T14:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"dhebj","Type":"DP","User_ID":"idcad","Username":"hfahc"}},{"_index":"auditlog_test","_id":"oWlTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"gceif","Description":"","Details":"","ID":"","Keywords":"ejbic","Orig_User":"cdecb","Owner_Tenant_ID":"eadgg","Parent_Span_ID":"ecbfe","Provider_ID":"agfgi","Security":"","Service":"","Severity":"","Span_ID":"adica","SubType":"SYNCHRONIZED","Tenant_ID":"jfdfg","Tenant_Name":"","Time":"2021-04-24T16:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"jidee","Type":"DP","User_ID":"bhgjb","Username":"cehfb"}},{"_index":"auditlog_test","_id":"omlTM5EBajh97wLb7qaF","_score":0.38299224,"_source":{"Client_ID":"jdafg","Description":"","Details":"","ID":"","Keywords":"iibbc","Orig_User":"bcgag","Owner_Tenant_ID":"baedd","Parent_Span_ID":"dbdgg","Provider_ID":"jdgha","Security":"","Service":"","Severity":"","Span_ID":"eaehc","SubType":"SYNCHRONIZED","Tenant_ID":"ijcaa","Tenant_Name":"","Time":"2021-07-06T19:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"eehfh","Type":"GP","User_ID":"eejca","Username":"hhdec"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 3.213916ms
+        duration: 2.945417ms
     - id: 17
       request:
         proto: HTTP/1.1
@@ -749,7 +783,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "17"
         url: http://localhost:9200/auditlog_test/_search
         method: POST
       response:
@@ -766,7 +802,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 400 Bad Request
         code: 400
-        duration: 1.541125ms
+        duration: 1.5875ms
     - id: 18
       request:
         proto: HTTP/1.1
@@ -784,7 +820,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "18"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -801,7 +839,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 15.209958ms
+        duration: 12.96025ms
     - id: 19
       request:
         proto: HTTP/1.1
@@ -841,7 +879,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "19"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -852,13 +892,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":54,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"MbXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"MrXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"M7XsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"NLXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"NbXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"NrXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"N7XsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"OLXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ObXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"OrXsXI4BBpjHTwdimhBX","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":62,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"qGlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"qWlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"qmlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"q2lTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"rGlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"rWlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"rmlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"r2lTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sGlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"sWlTM5EBajh97wLb7qbW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 56.086084ms
+        duration: 64.142041ms
     - id: 20
       request:
         proto: HTTP/1.1
@@ -876,7 +916,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "20"
         url: http://localhost:9200/
         method: HEAD
       response:
@@ -895,7 +937,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 1.296666ms
+        duration: 1.156291ms
     - id: 21
       request:
         proto: HTTP/1.1
@@ -913,7 +955,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "21"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -930,7 +974,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 14.068875ms
+        duration: 12.218792ms
     - id: 22
       request:
         proto: HTTP/1.1
@@ -970,7 +1014,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "22"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -981,13 +1027,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":57,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"PrXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"P7XsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"QLXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"QbXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"QrXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"Q7XsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"RLXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"RbXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"RrXsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"R7XsXI4BBpjHTwdimhDs","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":56,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"tWlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"tmlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"t2lTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"uGlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"uWlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"umlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"u2lTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vGlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vWlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"vmlTM5EBajh97wLb76Yk","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 59.675083ms
+        duration: 58.328083ms
     - id: 23
       request:
         proto: HTTP/1.1
@@ -1008,7 +1054,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "23"
         url: http://localhost:9200/auditlog_test/_search?request_cache=false
         method: POST
       response:
@@ -1019,13 +1067,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":9,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":5,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"auditlog_test","_id":"PrXsXI4BBpjHTwdimhDs","_score":0.0,"_source":{"Client_ID":"cbbbd","Description":"","Details":"","ID":"","Keywords":"dibgb","Orig_User":"cghbb","Owner_Tenant_ID":"fiaec","Parent_Span_ID":"cdcdf","Provider_ID":"bhhbf","Security":"","Service":"","Severity":"","Span_ID":"fjbjc","SubType":"SYNCHRONIZED","Tenant_ID":"bihha","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gicae","Type":"DEVICE","User_ID":"ihece","Username":"dbbac"}},{"_index":"auditlog_test","_id":"P7XsXI4BBpjHTwdimhDs","_score":0.0,"_source":{"Client_ID":"didjj","Description":"","Details":"","ID":"","Keywords":"jbjjb","Orig_User":"gdife","Owner_Tenant_ID":"jffea","Parent_Span_ID":"gjicb","Provider_ID":"jffdj","Security":"","Service":"","Severity":"","Span_ID":"gbife","SubType":"SCHEDULE_TASK","Tenant_ID":"dgief","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"cdbja","Type":"DP","User_ID":"hgcec","Username":"bgfig"}},{"_index":"auditlog_test","_id":"QLXsXI4BBpjHTwdimhDs","_score":0.0,"_source":{"Client_ID":"fbhab","Description":"","Details":"","ID":"","Keywords":"hefhj","Orig_User":"cghag","Owner_Tenant_ID":"agjhd","Parent_Span_ID":"hdegc","Provider_ID":"dfjbj","Security":"","Service":"","Severity":"","Span_ID":"jigaa","SubType":"SYNCHRONIZED","Tenant_ID":"figef","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ifgeh","Type":"DP","User_ID":"ahhii","Username":"idcab"}},{"_index":"auditlog_test","_id":"QbXsXI4BBpjHTwdimhDs","_score":0.0,"_source":{"Client_ID":"ibied","Description":"","Details":"","ID":"","Keywords":"fgbja","Orig_User":"djiac","Owner_Tenant_ID":"dhbbb","Parent_Span_ID":"iacbh","Provider_ID":"gbabe","Security":"","Service":"","Severity":"","Span_ID":"ihgjd","SubType":"SYNCHRONIZED","Tenant_ID":"ibddd","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hagab","Type":"DEVICE","User_ID":"eebcf","Username":"hcgfg"}},{"_index":"auditlog_test","_id":"QrXsXI4BBpjHTwdimhDs","_score":0.0,"_source":{"Client_ID":"bfhec","Description":"","Details":"","ID":"","Keywords":"fahif","Orig_User":"ifdbj","Owner_Tenant_ID":"jahjb","Parent_Span_ID":"ggggb","Provider_ID":"jdagf","Security":"","Service":"","Severity":"","Span_ID":"gcjja","SubType":"W","Tenant_ID":"eiece","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"adief","Type":"GP","User_ID":"iddci","Username":"ciecf"}}]}}'
+        body: '{"took":7,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":5,"relation":"eq"},"max_score":0.0,"hits":[{"_index":"auditlog_test","_id":"tWlTM5EBajh97wLb76Yk","_score":0.0,"_source":{"Client_ID":"cbbbd","Description":"","Details":"","ID":"","Keywords":"dibgb","Orig_User":"cghbb","Owner_Tenant_ID":"fiaec","Parent_Span_ID":"cdcdf","Provider_ID":"bhhbf","Security":"","Service":"","Severity":"","Span_ID":"fjbjc","SubType":"SYNCHRONIZED","Tenant_ID":"bihha","Tenant_Name":"","Time":"2020-02-11T02:24:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"gicae","Type":"DEVICE","User_ID":"ihece","Username":"dbbac"}},{"_index":"auditlog_test","_id":"tmlTM5EBajh97wLb76Yk","_score":0.0,"_source":{"Client_ID":"didjj","Description":"","Details":"","ID":"","Keywords":"jbjjb","Orig_User":"gdife","Owner_Tenant_ID":"jffea","Parent_Span_ID":"gjicb","Provider_ID":"jffdj","Security":"","Service":"","Severity":"","Span_ID":"gbife","SubType":"SCHEDULE_TASK","Tenant_ID":"dgief","Tenant_Name":"","Time":"2020-04-24T04:48:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"cdbja","Type":"DP","User_ID":"hgcec","Username":"bgfig"}},{"_index":"auditlog_test","_id":"t2lTM5EBajh97wLb76Yk","_score":0.0,"_source":{"Client_ID":"fbhab","Description":"","Details":"","ID":"","Keywords":"hefhj","Orig_User":"cghag","Owner_Tenant_ID":"agjhd","Parent_Span_ID":"hdegc","Provider_ID":"dfjbj","Security":"","Service":"","Severity":"","Span_ID":"jigaa","SubType":"SYNCHRONIZED","Tenant_ID":"figef","Tenant_Name":"","Time":"2020-07-06T07:12:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"ifgeh","Type":"DP","User_ID":"ahhii","Username":"idcab"}},{"_index":"auditlog_test","_id":"uGlTM5EBajh97wLb76Yk","_score":0.0,"_source":{"Client_ID":"ibied","Description":"","Details":"","ID":"","Keywords":"fgbja","Orig_User":"djiac","Owner_Tenant_ID":"dhbbb","Parent_Span_ID":"iacbh","Provider_ID":"gbabe","Security":"","Service":"","Severity":"","Span_ID":"ihgjd","SubType":"SYNCHRONIZED","Tenant_ID":"ibddd","Tenant_Name":"","Time":"2020-09-17T09:36:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"hagab","Type":"DEVICE","User_ID":"eebcf","Username":"hcgfg"}},{"_index":"auditlog_test","_id":"uWlTM5EBajh97wLb76Yk","_score":0.0,"_source":{"Client_ID":"bfhec","Description":"","Details":"","ID":"","Keywords":"fahif","Orig_User":"ifdbj","Owner_Tenant_ID":"jahjb","Parent_Span_ID":"ggggb","Provider_ID":"jdagf","Security":"","Service":"","Severity":"","Span_ID":"gcjja","SubType":"W","Tenant_ID":"eiece","Tenant_Name":"","Time":"2020-11-29T12:00:00Z","Time_Bucket":0,"Trace":"","Trace_ID":"adief","Type":"GP","User_ID":"iddci","Username":"ciecf"}}]}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 11.192958ms
+        duration: 9.659083ms
     - id: 24
       request:
         proto: HTTP/1.1
@@ -1043,7 +1091,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "24"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -1060,7 +1110,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 13.136625ms
+        duration: 12.6275ms
     - id: 25
       request:
         proto: HTTP/1.1
@@ -1100,7 +1150,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "25"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -1111,13 +1163,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":52,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"S7XsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"TLXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"TbXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"TrXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"T7XsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ULXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"UbXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"UrXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"U7XsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"VLXsXI4BBpjHTwdimxCW","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":52,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"wmlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"w2lTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"xGlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"xWlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"xmlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"x2lTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"yGlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"yWlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ymlTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"y2lTM5EBajh97wLb76Z2","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 54.615292ms
+        duration: 53.762584ms
     - id: 26
       request:
         proto: HTTP/1.1
@@ -1135,7 +1187,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "26"
         url: http://localhost:9200/generic_events_1_test
         method: DELETE
       response:
@@ -1152,7 +1206,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 1.714791ms
+        duration: 1.393709ms
     - id: 27
       request:
         proto: HTTP/1.1
@@ -1170,7 +1224,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "27"
         url: http://localhost:9200/_index_template/test_template
         method: DELETE
       response:
@@ -1187,7 +1243,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 2.255959ms
+        duration: 1.951375ms
     - id: 28
       request:
         proto: HTTP/1.1
@@ -1205,7 +1261,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "28"
         url: http://localhost:9200/generic_events_1_test/_aliases/generic_event
         method: DELETE
       response:
@@ -1222,7 +1280,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 2.174125ms
+        duration: 1.686ms
     - id: 29
       request:
         proto: HTTP/1.1
@@ -1240,7 +1298,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "29"
         url: http://localhost:9200/_index_template/generic_events_template_1
         method: DELETE
       response:
@@ -1257,7 +1317,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 404 Not Found
         code: 404
-        duration: 1.114583ms
+        duration: 1.322709ms
     - id: 30
       request:
         proto: HTTP/1.1
@@ -1278,7 +1338,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "30"
         url: http://localhost:9200/_index_template/test_template
         method: PUT
       response:
@@ -1297,7 +1359,7 @@ interactions:
                 - 299 OpenSearch-2.6.0-7203a5af21a8a009aece1474446b437a3c674db6 "index template [test_template] has index patterns [*generic_events*] matching patterns from existing older templates [tenant_template] with patterns (tenant_template => [.kibana_-*_*, .kibana_0*_*, .kibana_1*_*, .kibana_2*_*, .kibana_3*_*, .kibana_4*_*, .kibana_5*_*, .kibana_6*_*, .kibana_7*_*, .kibana_8*_*, .kibana_9*_*]); this template [test_template] will take precedence during new index creation"
         status: 200 OK
         code: 200
-        duration: 13.679667ms
+        duration: 13.959583ms
     - id: 31
       request:
         proto: HTTP/1.1
@@ -1318,7 +1380,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "31"
         url: http://localhost:9200/generic_events_1_test
         method: PUT
       response:
@@ -1335,7 +1399,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 53.951625ms
+        duration: 53.328792ms
     - id: 32
       request:
         proto: HTTP/1.1
@@ -1353,7 +1417,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "32"
         url: http://localhost:9200/generic_events_1_test/_aliases/generic_event
         method: PUT
       response:
@@ -1370,7 +1436,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 46.674292ms
+        duration: 14.10575ms
     - id: 33
       request:
         proto: HTTP/1.1
@@ -1388,7 +1454,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "33"
         url: http://localhost:9200/generic_event
         method: GET
       response:
@@ -1399,13 +1467,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"generic_events_1_test":{"aliases":{"generic_event":{}},"mappings":{"properties":{"SubType":{"type":"text"}}},"settings":{"index":{"creation_date":"1710955994132","number_of_shards":"4","number_of_replicas":"4","uuid":"I_ZzjxA_TiCo8oQaBGeo9Q","version":{"created":"136277827"},"provided_name":"generic_events_1_test"}}}}'
+        body: '{"generic_events_1_test":{"aliases":{"generic_event":{}},"mappings":{"properties":{"SubType":{"type":"text"}}},"settings":{"index":{"creation_date":"1723143024549","number_of_shards":"4","number_of_replicas":"4","uuid":"KFwjb4Y2QFGXqA8LRA27OA","version":{"created":"136277827"},"provided_name":"generic_events_1_test"}}}}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 2.152167ms
+        duration: 1.766458ms
     - id: 34
       request:
         proto: HTTP/1.1
@@ -1423,7 +1491,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "34"
         url: http://localhost:9200/generic_events_1_test/_aliases/generic_event
         method: DELETE
       response:
@@ -1440,7 +1510,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 10.508792ms
+        duration: 11.659083ms
     - id: 35
       request:
         proto: HTTP/1.1
@@ -1458,7 +1528,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "35"
         url: http://localhost:9200/_index_template/test_template
         method: DELETE
       response:
@@ -1475,7 +1547,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 11.423ms
+        duration: 13.75225ms
     - id: 36
       request:
         proto: HTTP/1.1
@@ -1493,7 +1565,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "36"
         url: http://localhost:9200/generic_events_1_test
         method: DELETE
       response:
@@ -1510,7 +1584,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 15.900583ms
+        duration: 14.269083ms
     - id: 37
       request:
         proto: HTTP/1.1
@@ -1528,7 +1602,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "37"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -1545,7 +1621,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 12.799042ms
+        duration: 13.696208ms
     - id: 38
       request:
         proto: HTTP/1.1
@@ -1585,7 +1661,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "38"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -1596,13 +1674,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":59,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"Y7XsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ZLXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ZbXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"ZrXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"Z7XsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"aLXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"abXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"arXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"a7XsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"bLXsXI4BBpjHTwdinRBz","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":56,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"2mlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"22lTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3GlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3WlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"3mlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"32lTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4GlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4WlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"4mlTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"42lTM5EBajh97wLb8KZB","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 61.103166ms
+        duration: 57.890583ms
     - id: 39
       request:
         proto: HTTP/1.1
@@ -1642,7 +1720,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "39"
         url: http://localhost:9200/generic_events_test/_bulk?refresh=true
         method: POST
       response:
@@ -1653,13 +1733,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":53,"errors":false,"items":[{"index":{"_index":"generic_events_test","_id":"b7XsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"cLXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"cbXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"crXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"c7XsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"dLXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"dbXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"drXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"d7XsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"eLXsXI4BBpjHTwdinRDt","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":52,"errors":false,"items":[{"index":{"_index":"generic_events_test","_id":"5mlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"52lTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"6GlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"6WlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"6mlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"62lTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"7GlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"7WlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"7mlTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"generic_events_test","_id":"72lTM5EBajh97wLb8KZ9","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 55.51575ms
+        duration: 57.706833ms
     - id: 40
       request:
         proto: HTTP/1.1
@@ -1677,7 +1757,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "40"
         url: http://localhost:9200/generic_events_test
         method: DELETE
       response:
@@ -1694,7 +1776,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 13.492166ms
+        duration: 11.9975ms
     - id: 41
       request:
         proto: HTTP/1.1
@@ -1712,7 +1794,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "41"
         url: http://localhost:9200/auditlog_test
         method: DELETE
       response:
@@ -1729,7 +1813,7 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 10.679292ms
+        duration: 13.016334ms
     - id: 42
       request:
         proto: HTTP/1.1
@@ -1769,7 +1853,9 @@ interactions:
             Content-Type:
                 - application/json
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "42"
         url: http://localhost:9200/auditlog_test/_bulk?refresh=true
         method: POST
       response:
@@ -1780,13 +1866,13 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '{"took":54,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"fbXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"frXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"f7XsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"gLXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"gbXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"grXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"g7XsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"hLXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"hbXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"hrXsXI4BBpjHTwdinhCR","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
+        body: '{"took":53,"errors":false,"items":[{"index":{"_index":"auditlog_test","_id":"9GlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":0,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9WlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"9mlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":2,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"92lTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":3,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-GlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":4,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-WlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":5,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-mlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":6,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"-2lTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":7,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_GlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":8,"_primary_term":1,"status":201}},{"index":{"_index":"auditlog_test","_id":"_WlTM5EBajh97wLb8KbQ","_version":1,"result":"created","forced_refresh":true,"_shards":{"total":2,"successful":1,"failed":0},"_seq_no":9,"_primary_term":1,"status":201}}]}'
         headers:
             Content-Type:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 56.200917ms
+        duration: 55.214375ms
     - id: 43
       request:
         proto: HTTP/1.1
@@ -1804,7 +1890,9 @@ interactions:
             Authorization:
                 - Basic YWRtaW46YWRtaW4=
             User-Agent:
-                - opensearch-go/1.0.0 (darwin arm64; Go 1.21.6)
+                - opensearch-go/1.0.0 (darwin arm64; Go 1.22.4)
+            X-Http-Record-Index:
+                - "43"
         url: http://localhost:9200/
         method: HEAD
       response:
@@ -1823,4 +1911,4 @@ interactions:
                 - application/json; charset=UTF-8
         status: 200 OK
         code: 200
-        duration: 1.249292ms
+        duration: 913.584µs

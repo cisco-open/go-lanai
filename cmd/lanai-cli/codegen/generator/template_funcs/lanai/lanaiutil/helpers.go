@@ -48,7 +48,7 @@ func ExternalImportsFromFormat(element interface{}) (result []string) {
 
 func MatchesFormat(element interface{}, specificType string) bool {
 	schema, err := ConvertToSchemaRef(element)
-	if err != nil && schema.Value.Type != openapi3.TypeString {
+	if err != nil || schema == nil || schema.Value.Type == nil || !schema.Value.Type.Is(openapi3.TypeString)  {
 		return false
 	}
 

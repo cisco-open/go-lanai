@@ -66,7 +66,7 @@ func (r RequestBody) RefsUsed() (result []string) {
 	for _, schema := range r.Schemas() {
 		if schema.Ref != "" {
 			result = append(result, path.Base(schema.Ref))
-		} else if schema.Value.Type == "array" && schema.Value.Items.Ref != "" {
+		} else if schema.Value.Type.Is(openapi3.TypeArray) && schema.Value.Items.Ref != "" {
 			result = append(result, schema.Value.Items.Ref)
 		}
 	}

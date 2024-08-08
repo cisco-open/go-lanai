@@ -2,8 +2,8 @@
 2=ConnExec	2:"CREATE TABLE IF NOT EXISTS data_encryption_test\n(\n    id    int   NOT NULL,\n    name  text  NOT NULL,\n    value jsonb NOT NULL,\n    CONSTRAINT \"primary\" PRIMARY KEY (id),\n    CONSTRAINT idx_record_name UNIQUE (name)\n)"	1:nil
 3=ResultRowsAffected	4:0	1:nil
 4=ConnExec	2:"INSERT INTO \"data_encryption_test\" (\"id\", \"name\", \"value\")\nVALUES (675153534251466753, 'v1_plain_map', '{\"alg\": \"p\", \"d\": {\"key1\": \"value1\", \"key2\": 2}, \"kid\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc\", \"v\": 1}'),\n       (675153534266441729, 'v2_plain_map', '{\"alg\": \"p\", \"d\": {\"key1\": \"value1\", \"key2\": 2}, \"kid\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc\", \"v\": 2}'),\n       (675154428705505281, 'v1_mock_map', '{\"alg\": \"e\", \"d\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc:{\\\"key1\\\":\\\"value1\\\",\\\"key2\\\":2}\", \"kid\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc\", \"v\": 1}'),\n       (675154428730507265, 'v2_mock_map', '{\"alg\": \"e\", \"d\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc:{\\\"key1\\\":\\\"value1\\\",\\\"key2\\\":2}\", \"kid\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc\", \"v\": 2}'),\n       (675171350698229761, 'v2_invalid_plain_map', '{\"alg\": \"p\", \"d\": \"invalid\", \"kid\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc\", \"v\": 2}'),\n       (675171350734307329, 'v2_invalid_mock_map', '{\"alg\": \"e\", \"d\": \"invalid\", \"kid\": \"d034a284-172f-46c3-aead-e7cfb2f78ddc\", \"v\": 2}')\nON CONFLICT DO NOTHING\nRETURNING \"id\""	1:nil
-5=ResultRowsAffected	4:6	1:nil
-6=ConnExec	2:"TRUNCATE TABLE \"data_encryption_test\" CASCADE;"	1:nil
+5=ConnExec	2:"TRUNCATE TABLE \"data_encryption_test\" CASCADE;"	1:nil
+6=ResultRowsAffected	4:6	1:nil
 7=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE Name = $1 LIMIT $2"	1:nil
 8=RowsColumns	9:["id","name","value"]
 9=RowsNext	11:[4:675153534251466753,2:"v1_plain_map",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiZDAzNGEyODQtMTcyZi00NmMzLWFlYWQtZTdjZmIyZjc4ZGRjIiwgInYiOiAxfQ]	1:nil
@@ -17,7 +17,7 @@
 17=RowsColumns	9:["id"]
 18=RowsNext	11:[4:12345678]	1:nil
 19=ConnQuery	2:"SELECT * FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1 LIMIT $2"	1:nil
-20=RowsNext	11:[4:12345678,2:"temp_e_e7IIc4JE",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+20=RowsNext	11:[4:12345678,2:"temp_e_jSapTxhG",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
 21=ConnExec	2:"DELETE FROM \"data_encryption_test\" WHERE \"data_encryption_test\".\"id\" = $1"	1:nil
 22=ResultRowsAffected	4:1	1:nil
 23=RowsNext	11:[4:675171350698229761,2:"v2_invalid_plain_map",10:eyJhbGciOiAicCIsICJkIjogImludmFsaWQiLCAia2lkIjogImQwMzRhMjg0LTE3MmYtNDZjMy1hZWFkLWU3Y2ZiMmY3OGRkYyIsICJ2IjogMn0]	1:nil
@@ -32,8 +32,8 @@
 32=RowsNext	11:[4:12345678,2:"temp_p_pDKUQBz8",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
 33=RowsNext	11:[4:12345678,2:"temp_e_taq3Zxva",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
 34=RowsNext	11:[4:12345678,2:"temp_e_kUFbHUuO",10:eyJhbGciOiAiZSIsICJkIjogImFhNzRhOTZjLWMwZjQtNGEyOS05Yzc2LWU2NDNmZjI5ZGVlODp7XCJrZXkxXCI6XCJ2YWx1ZTFcIixcImtleTJcIjoyfSIsICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
-35=RowsNext	11:[4:12345678,2:"temp_p_y7dCwfx1",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
+35=RowsNext	11:[4:12345678,2:"temp_p_L7lxTLcY",10:eyJhbGciOiAicCIsICJkIjogeyJrZXkxIjogInZhbHVlMSIsICJrZXkyIjogMn0sICJraWQiOiAiYWE3NGE5NmMtYzBmNC00YTI5LTljNzYtZTY0M2ZmMjlkZWU4IiwgInYiOiAyfQ]	1:nil
 
-"TestEncryptedMapWithEncryptionEnabled"=1,2,3,4,5,6,3,2,3,4,5,7,8,8,9,2,3,4,3,6,3,2,3,4,5,7,8,8,10,2,3,4,3,6,3,2,3,4,5,7,8,8,11,2,3,4,3,6,3,2,3,4,5,7,8,8,12,2,3,4,3,6,3,2,3,4,5,13,14,3,15,13,16,17,17,18,15,19,8,8,20,13,21,22,15,2,3,4,3,6,3,2,3,4,5,7,8,8,23,8,2,3,4,3,6,3,2,3,4,5,7,8,8,24,8,2,3,4,3,6,3,2,3,4,5,13,25
+"TestEncryptedMapWithEncryptionEnabled"=1,2,3,4,3,5,3,2,3,4,6,7,8,8,9,2,3,4,3,5,3,2,3,4,6,7,8,8,10,2,3,4,3,5,3,2,3,4,6,7,8,8,11,2,3,4,3,5,3,2,3,4,6,7,8,8,12,2,3,4,3,5,3,2,3,4,6,13,14,3,15,13,16,17,17,18,15,19,8,8,20,13,21,22,15,2,3,4,3,5,3,2,3,4,6,7,8,8,23,8,2,3,4,3,5,3,2,3,4,6,7,8,8,24,8,2,3,4,3,5,3,2,3,4,6,13,25
 "TestEncryptedMap"=1,26,8,8,9,26,8,8,10,13,14,3,15,27,8,8,28,13,29,17,18,15,30,8,8,31,13,21,22,15,13,14,3,15,27,8,8,28,13,29,17,18,15,30,8,8,32,13,21,22,15,26,8,8,11,26,8,8,12,13,14,3,15,27,8,8,28,13,29,17,18,15,30,8,8,33,13,21,22,15,13,14,3,15,27,8,8,28,13,29,17,18,15,30,8,8,34,13,21,22,15,26,8,8,23,8,26,8,8,24,8,13,25
-"TestEncryptedMapWithEncryptionDisabled"=1,2,3,4,3,6,3,2,3,4,5,7,8,8,9,2,3,4,3,6,3,2,3,4,5,7,8,8,10,2,3,4,3,6,3,2,3,4,5,13,14,3,15,13,16,17,17,18,15,19,8,8,35,13,21,22,15,2,3,4,3,6,3,2,3,4,5,7,8,8,11,8,2,3,4,3,6,3,2,3,4,5,7,8,8,24,8,2,3,4,3,6,3,2,3,4,5,7,8,8,23,8,2,3,4,3,6,3,2,3,4,5,13,25
+"TestEncryptedMapWithEncryptionDisabled"=1,2,3,4,3,5,3,2,3,4,6,7,8,8,9,2,3,4,3,5,3,2,3,4,6,7,8,8,10,2,3,4,3,5,3,2,3,4,6,13,14,3,15,13,16,17,17,18,15,19,8,8,35,13,21,22,15,2,3,4,3,5,3,2,3,4,6,7,8,8,11,8,2,3,4,3,5,3,2,3,4,6,7,8,8,24,8,2,3,4,3,5,3,2,3,4,6,7,8,8,23,8,2,3,4,3,5,3,2,3,4,6,13,25

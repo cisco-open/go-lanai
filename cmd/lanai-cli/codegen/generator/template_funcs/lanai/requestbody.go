@@ -40,7 +40,7 @@ func (r RequestBody) ExternalImports() (result []string) {
 	for _, schema := range r.Schemas() {
 		result = append(result, lanaiutil.ExternalImportsFromFormat(schema)...)
 		if schema.Ref == "" {
-			if schema.Value.Type != "" && schema.Value.Type != "object" {
+			if schema.Value != nil && schema.Value.Type != nil && !schema.Value.Type.Is(openapi3.TypeObject) {
 				result = append(result, lanaiutil.JSON_IMPORT_PATH)
 			}
 		}

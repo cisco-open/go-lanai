@@ -51,8 +51,8 @@ func (o objectType) ToText() (result string, err error) {
 	if err != nil {
 		return "", err
 	}
-	switch schema.Value.Type {
-	case openapi3.TypeObject:
+	switch {
+	case schema.Value.Type.Is(openapi3.TypeObject):
 		if len(schema.Value.Properties) == 0 {
 			if schema.Value.AdditionalProperties.Has != nil && *schema.Value.AdditionalProperties.Has {
 				result = "map[string]interface{}"
