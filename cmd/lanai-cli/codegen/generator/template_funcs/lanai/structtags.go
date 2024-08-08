@@ -33,7 +33,7 @@ func structTags(p Property) string {
 		name = "-"
 	} else if nameType == "json" {
 		schema, _ := lanaiutil.ConvertToSchemaRef(p.PropertyData)
-		if p.IsOptional() && schema.Value.Type != "array" && (ShouldHavePointer(p) || !zeroValueIsValid(schema)) {
+		if p.IsOptional() && !schema.Value.Type.Is(openapi3.TypeArray) && (ShouldHavePointer(p) || !zeroValueIsValid(schema)) {
 			name = fmt.Sprintf("%v,omitempty", name)
 		}
 	}
@@ -109,7 +109,7 @@ func validationTags(data interface{}) []string {
 	}
 	result = append(result, limitTags(schemaRef)...)
 	result = append(result, enumOf(schemaRef.Value.Enum)...)
-	if schemaRef.Value.Type == openapi3.TypeArray {
+	if schemaRef.Value.Type.Is(openapi3.TypeArray) {
 		innerParts := validationTags(schemaRef.Value.Items)
 		if innerParts != nil {
 			result = append(result, "dive")

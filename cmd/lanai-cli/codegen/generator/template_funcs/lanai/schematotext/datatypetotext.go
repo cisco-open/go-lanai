@@ -53,14 +53,14 @@ func NewDataTypeToTextTranslator(element interface{}, opts ...func(option *trans
 		return NewDefaultType(element, opts...)
 	}
 	var translator ToTextTranslator
-	switch schema.Value.Type {
-	case openapi3.TypeNumber, openapi3.TypeInteger, openapi3.TypeBoolean:
+	switch {
+	case schema.Value.Type.Is(openapi3.TypeNumber), schema.Value.Type.Is(openapi3.TypeInteger), schema.Value.Type.Is(openapi3.TypeBoolean):
 		translator = NewBaseType(element, opts...)
-	case openapi3.TypeString:
+	case schema.Value.Type.Is(openapi3.TypeString):
 		translator = NewStringType(element, opts...)
-	case openapi3.TypeArray:
+	case schema.Value.Type.Is(openapi3.TypeArray):
 		translator = NewArrayType(element, opts...)
-	case openapi3.TypeObject:
+	case schema.Value.Type.Is(openapi3.TypeObject):
 		translator = NewObjectType(element, opts...)
 	default:
 		translator = NewDefaultType(element, opts...)

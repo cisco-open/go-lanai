@@ -42,7 +42,7 @@ type Regex struct {
 }
 
 func NewRegex(value openapi3.Schema) (*Regex, error) {
-	if value.Type != "string" {
+	if !value.Type.Is(openapi3.TypeString) {
 		return nil, errors.New("schema is not a string type for regex")
 	}
 

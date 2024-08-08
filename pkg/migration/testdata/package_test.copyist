@@ -12,8 +12,9 @@
 12=ConnExec	2:"UPDATE \"migration_versions\" SET \"description\"=$1,\"execution_time\"=$2,\"installed_on\"=$3,\"success\"=$4 WHERE \"version\" = $5"	1:nil
 13=ConnExec	2:"INSERT INTO \"migration_versions\" (\"version\",\"description\",\"execution_time\",\"installed_on\",\"success\") VALUES ($1,$2,$3,$4,$5) ON CONFLICT (\"version\") DO UPDATE SET \"description\"=\"excluded\".\"description\",\"execution_time\"=\"excluded\".\"execution_time\",\"installed_on\"=\"excluded\".\"installed_on\",\"success\"=\"excluded\".\"success\""	1:nil
 14=ResultRowsAffected	4:1	1:nil
-15=ConnQuery	2:"SELECT * FROM \"migration_versions\" ORDER BY version ASC"	1:nil
-16=RowsNext	11:[2:"1.0.0.1",2:"A test migration step",4:4390708,8:2024-05-09T18:37:22.351513Z,6:true]	1:nil
-17=ConnExec	2:"SELECT * FROM public.migration_package_test;"	1:nil
+15=ResultLastInsertId	4:0	7:"LastInsertId is not supported by this driver"
+16=ConnQuery	2:"SELECT * FROM \"migration_versions\" ORDER BY version ASC"	1:nil
+17=RowsNext	11:[2:"1.0.0.1",2:"A test migration step",4:1023542,8:2024-08-08T18:50:13.076974Z,6:true]	1:nil
+18=ConnExec	2:"SELECT * FROM public.migration_package_test;"	1:nil
 
-"TestModuleInit"=1,2,3,4,5,6,5,7,8,3,9,10,10,7,11,3,12,3,13,14,15,10,10,16,7,17,3
+"TestModuleInit"=1,2,3,4,5,6,5,7,8,3,9,10,10,7,11,3,12,3,13,14,15,16,10,10,17,7,18,3

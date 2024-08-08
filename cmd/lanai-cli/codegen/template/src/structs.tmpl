@@ -40,7 +40,7 @@
     {{- $struct := index . 2 }}
 
     {{- $isRef := $parameter.Ref }}
-    {{- $isObject := eq $parameter.Value.Schema.Value.Type "object" }}
+    {{- $isObject := $parameter.Value.Schema.Value.Type.Is "object" }}
     {{- $shouldEmbed := and $isRef $isObject }}
     {{- with $shouldEmbed }}
         {{- $struct = $struct.AddEmbeddedStruct $parameter.Ref }}
