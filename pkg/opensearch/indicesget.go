@@ -41,7 +41,7 @@ type IndicesDetail struct {
 			} `json:"version"`
 			ProvidedName string `json:"provided_name"`
 		} `json:"index"`
-	}
+	} `json:"Settings"`
 }
 
 func (c *RepoImpl[T]) IndicesGet(ctx context.Context, index string, o ...Option[opensearchapi.IndicesGetRequest]) (*IndicesDetail, error) {

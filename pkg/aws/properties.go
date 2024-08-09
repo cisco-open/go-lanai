@@ -34,11 +34,11 @@ type CredentialsType string
 
 // Properties describes common config used to consume AWS services
 type Properties struct {
-	//Region for AWS client defaults to us-east-1
+	// Region for AWS client. Default: us-east-1
 	Region string `json:"region"`
-	//Endpoint for AWS client default empty can be used to override if consuming localstack
+	// Endpoint for AWS client as "BaseEndpoint". Default: empty. Can be used to testing with consuming localstack
 	Endpoint string `json:"endpoint"`
-	//Credentials to be used to authenticate the AWS client
+	// Credentials to be used to authenticate the AWS client
 	Credentials Credentials `json:"credentials"`
 }
 

@@ -17,21 +17,21 @@
 package aws_test
 
 import (
-    "context"
-    "github.com/aws/aws-sdk-go-v2/aws"
-    "github.com/aws/aws-sdk-go-v2/config"
-    "github.com/aws/aws-sdk-go-v2/credentials"
-    "github.com/aws/aws-sdk-go-v2/service/acm"
-    awsconfig "github.com/cisco-open/go-lanai/pkg/aws"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/ittest"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "gopkg.in/dnaeon/go-vcr.v3/recorder"
-    "os"
-    "testing"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
+	awsconfig "github.com/cisco-open/go-lanai/pkg/aws"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/ittest"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
+	"os"
+	"testing"
 )
 
 /*************************

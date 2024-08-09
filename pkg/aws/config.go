@@ -33,26 +33,40 @@ type ConfigLoader interface {
 	Load(ctx context.Context, opts ...config.LoadOptionsFunc) (aws.Config, error)
 }
 
-func NewConfigLoader(p Properties, customizers ...config.LoadOptionsFunc) ConfigLoader {
+// ConfigOverrideFunc used to override loaded aws.Config
+type ConfigOverrideFunc func(cfg *aws.Config)
+
+func NewConfigLoader(p Properties, customizers []config.LoadOptionsFunc, overrides []ConfigOverrideFunc) ConfigLoader {
 	return &PropertiesBasedConfigLoader{
 		Properties:  &p,
 		Customizers: customizers,
+		Overrides:   overrides,
 	}
 }
 
 type PropertiesBasedConfigLoader struct {
 	Properties  *Properties
 	Customizers []config.LoadOptionsFunc
+	Overrides   []ConfigOverrideFunc
 }
 
-func (l *PropertiesBasedConfigLoader) Load(ctx context.Context, opts ...config.LoadOptionsFunc) (aws.Config, error) {
+func (l *PropertiesBasedConfigLoader) Load(ctx context.Context, opts ...config.LoadOptionsFunc) (cfg aws.Config, err error) {
 	extraOpts := append(l.Customizers, opts...)
 	opts = append([]config.LoadOptionsFunc{
 		WithBasicProperties(l.Properties),
 		WithCredentialsProperties(ctx, l.Properties, extraOpts...)},
 		extraOpts...,
 	)
-	return LoadConfig(ctx, opts...)
+	cfg, err = LoadConfig(ctx, opts...)
+	if err != nil {
+		return
+	}
+
+	overrides := append([]ConfigOverrideFunc{OverrideConfigWithProperties(l.Properties)}, l.Overrides...)
+	for _, fn := range overrides {
+		fn(&cfg)
+	}
+	return
 }
 
 func LoadConfig(ctx context.Context, opts ...config.LoadOptionsFunc) (aws.Config, error) {
@@ -69,13 +83,7 @@ func WithBasicProperties(p *Properties) config.LoadOptionsFunc {
 			return fmt.Errorf(errTmpl, "Region is not set")
 		}
 		opt.Region = p.Region
-		if len(p.Endpoint) != 0 {
-			opt.EndpointResolverWithOptions = aws.EndpointResolverWithOptionsFunc(
-				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-					return aws.Endpoint{URL: p.Endpoint}, nil
-				},
-			)
-		}
+		//Note: Endpoint is set in OverrideConfigWithProperties
 		return nil
 	}
 }
@@ -97,6 +105,18 @@ func WithCredentialsProperties(ctx context.Context, p *Properties, globalOpts ..
 	}
 }
 
+// OverrideConfigWithProperties overrides given aws.Config with properties
+func OverrideConfigWithProperties(props *Properties) ConfigOverrideFunc {
+	return func(cfg *aws.Config) {
+		// Note: At v1.27.27, aws.EndpointResolverWithOptionsFunc is deprecated. Each client would have its own EndpointResolver.
+		// All we need is to set the BaseEndpoint. But this property cannot be set via config.LoadOptionsFunc.
+		// So we set it via ConfigOverrideFunc
+		if len(props.Endpoint) != 0 {
+			cfg.BaseEndpoint = aws.String(props.Endpoint)
+		}
+	}
+}
+
 func NewStsCredentialsProvider(ctx context.Context, p *Properties, opts ...config.LoadOptionsFunc) (aws.CredentialsProvider, error) {
 	tokenPath := p.Credentials.TokenFile
 	if tokenPath == "" {
@@ -108,11 +128,19 @@ func NewStsCredentialsProvider(ctx context.Context, p *Properties, opts ...confi
 		roleArn = os.Getenv("AWS_ROLE_ARN")
 	}
 
+	// prepare config for STS
 	opts = append([]config.LoadOptionsFunc{WithBasicProperties(p)}, opts...)
 	cfg, e := LoadConfig(ctx, opts...)
 	if e != nil {
 		return nil, fmt.Errorf(`unable to prepare for STS credentials`)
 	}
+
+	overrides := []ConfigOverrideFunc{OverrideConfigWithProperties(p)}
+	for _, fn := range overrides {
+		fn(&cfg)
+	}
+
+	// create provider
 	client := sts.NewFromConfig(cfg)
 	provider := stscreds.NewWebIdentityRoleProvider(client, roleArn, stscreds.IdentityTokenFile(tokenPath), func(opts *stscreds.WebIdentityRoleOptions) {
 		opts.RoleSessionName = p.Credentials.RoleSessionName

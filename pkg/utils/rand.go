@@ -28,9 +28,8 @@ const (
 	CharsetAlphabetic   RandomCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+//nolint:gosec // this is used as fallback, better than not working
+var pseudoRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // RandomCharset is a string containing all acceptable UTF-8 characters for random string generation
 type RandomCharset string
@@ -54,7 +53,7 @@ func RandomStringWithCharset(length int, charset RandomCharset) string {
 	b := make([]byte, 1)
 	for i := range data {
 		if n, e := cryptorand.Reader.Read(b); e != nil || n < 1 {
-			data[i] = charset[rand.Intn(len(charset))] //nolint:gosec // this is fallback method, better than not working
+			data[i] = charset[pseudoRand.Intn(len(charset))]
 		} else {
 			data[i] = charset[int(b[0]) % len(charset)]
 		}
@@ -68,7 +67,7 @@ func RandomStringWithCharset(length int, charset RandomCharset) string {
 func RandomInt64N(n int64) int64 {
 	bigInt, e := cryptorand.Int(cryptorand.Reader, big.NewInt(n))
 	if e != nil {
-		return rand.Int63n(n) //nolint:gosec // this is fallback method, better than not working
+		return pseudoRand.Int63n(n) //nolint:gosec // this is fallback method, better than not working
 	}
 	return bigInt.Int64()
 }

@@ -130,6 +130,7 @@ func (a *AcmProvider) RootCAs(ctx context.Context) (*x509.CertPool, error) {
 
 func (a *AcmProvider) LazyInit(ctx context.Context) error {
 	var err error
+	//nolint:contextcheck // false positive, sync.Once.Do doesn't take func(context.Context)
 	a.once.Do(func() {
 		// At least get RootCA once
 		// TODO should we renew RootCA periodically?

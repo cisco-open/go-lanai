@@ -182,6 +182,7 @@ func (c *SwaggerController) resources(_ context.Context, _ web.EmptyRequest) (re
 
 func (c *SwaggerController) oas2Doc(w http.ResponseWriter, r *http.Request) {
 	var err error
+	//nolint:contextcheck // we want r.Context() at the end of execution
 	defer func() {
 		if err != nil {
 			logger.WithContext(r.Context()).Errorf("Failed to serve OAS document: %v", err)
@@ -209,6 +210,7 @@ func (c *SwaggerController) oas2Doc(w http.ResponseWriter, r *http.Request) {
 
 func (c *SwaggerController) oas3Doc(w http.ResponseWriter, r *http.Request) {
 	var err error
+	//nolint:contextcheck // we want r.Context() at the end of execution
 	defer func() {
 		if err != nil {
 			logger.WithContext(r.Context()).Errorf("Failed to serve OAS document: %v", err)
