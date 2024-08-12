@@ -20,7 +20,7 @@ runs:
     - name: "Run Tests with Coverage"
       shell: bash
       run: |
-        make test report SHELL=/bin/bash ARGS="-covermode atomic -coverpkg ${{ inputs.coverpkg || './pkg/...' }}"
+        make test report SHELL=/bin/bash GOTESTSUM_FORMAT="github-actions" ARGS="-covermode atomic -coverpkg ${{ inputs.coverpkg || './pkg/...' }}"
         go tool cover -func=dist/coverage.out -o dist/coverage-func.out
 
     - name: "Code Quality Analysis"

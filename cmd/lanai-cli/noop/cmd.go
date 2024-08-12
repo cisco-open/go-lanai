@@ -48,12 +48,12 @@ var (
 )
 
 type Arguments struct {
-	Str     string  `flag:"str,s" desc:"string"`
-	StrPtr  *string `flag:"strptr,p" desc:"*string"`
-	Int     int     `flag:"int" desc:"int"`
-	IntPtr  *int    `flag:"intptr" desc:"*int"`
-	Bool    bool    `flag:"bool,b" desc:"bool"`
-	BoolPtr *bool   `flag:"boolptr" desc:"*bool"`
+	Str     string  `flag:"str,s" desc:"string" json:"string"`
+	StrPtr  *string `flag:"strptr,p" desc:"*string" json:"*string"`
+	Int     int     `flag:"int" desc:"int" json:"int"`
+	IntPtr  *int    `flag:"intptr" desc:"*int"  json:"*int"`
+	Bool    bool    `flag:"bool,b" desc:"bool" json:"bool"`
+	BoolPtr *bool   `flag:"boolptr" desc:"*bool" json:"*bool"`
 }
 
 func init() {
@@ -62,7 +62,9 @@ func init() {
 
 func Run(_ *cobra.Command, _ []string) error {
 	fmt.Println()
-	_ = json.NewEncoder(os.Stdout).Encode(Args)
+	if e := json.NewEncoder(os.Stdout).Encode(Args); e != nil {
+		fmt.Println("Args N/A")
+	}
 	for _, env := range os.Environ() {
 		if strings.Contains(strings.ToUpper(env), "GO") {
 			fmt.Println(env)

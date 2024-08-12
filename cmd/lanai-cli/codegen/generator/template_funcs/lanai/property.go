@@ -155,8 +155,10 @@ func valuePassesValidation(schema *openapi3.Schema, value reflect.Value) (result
 				return false
 			}
 		}
+		fallthrough
+	default:
+		return valueIsWithinSchemaLimits(schema, value)
 	}
-	return valueIsWithinSchemaLimits(schema, value)
 }
 
 func valueIsWithinSchemaLimits(schema *openapi3.Schema, value reflect.Value) bool {
@@ -176,9 +178,9 @@ func valueIsWithinSchemaLimits(schema *openapi3.Schema, value reflect.Value) boo
 		fallthrough
 	case reflect.Slice:
 		return !isOutOfBounds(value.Len(), min, max)
+	default:
+		return false
 	}
-
-	return false
 }
 
 func limitsForSchema(element *openapi3.Schema) (min, max string) {
@@ -210,25 +212,24 @@ func limitsForSchema(element *openapi3.Schema) (min, max string) {
 	return min, max
 }
 func isOutOfBounds[V int | int32 | int64 | float64](value V, min, max string) (result bool) {
-	v := reflect.ValueOf(value)
-	switch v.Kind() {
-	case reflect.Int:
+	switch v := interface{}(value).(type) {
+	case int:
 		minConverted, _ := strconv.Atoi(min)
 		maxConverted, _ := strconv.Atoi(max)
-		result = minConverted > any(value).(int) || maxConverted < any(value).(int)
-	case reflect.Int32:
+		result = minConverted > v || maxConverted < v
+	case int32:
 		minConverted, _ := strconv.ParseInt(min, 10, 32)
 		maxConverted, _ := strconv.ParseInt(max, 10, 32)
-		result = int32(minConverted) > any(value).(int32) || int32(maxConverted) < any(value).(int32)
-	case reflect.Int64:
+		result = int32(minConverted) > v || int32(maxConverted) < v
+	case int64:
 		minConverted, _ := strconv.ParseInt(min, 10, 64)
 		maxConverted, _ := strconv.ParseInt(max, 10, 64)
-		result = minConverted > any(value).(int64) || maxConverted < any(value).(int64)
+		result = minConverted > v || maxConverted < v
 
-	case reflect.Float64:
+	case float64:
 		minConverted, _ := strconv.ParseFloat(min, 64)
 		maxConverted, _ := strconv.ParseFloat(max, 64)
-		result = minConverted > any(value).(float64) || maxConverted < any(value).(float64)
+		result = minConverted > v || maxConverted < v
 	}
 	return result
 }

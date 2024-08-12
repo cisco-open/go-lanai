@@ -73,6 +73,9 @@ func FormatFile(path string, typeHint FileType) error {
 
 func formatFile(path string, formatter TextFormatter) error {
 	content, fi, e := readFile(path)
+	if e != nil {
+		return e
+	}
 	formatted, e := formatter.Format(content)
 	if e != nil {
 		return e

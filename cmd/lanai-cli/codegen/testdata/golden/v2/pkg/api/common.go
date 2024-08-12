@@ -140,11 +140,11 @@ type Device struct {
 	CreatedOn                           *time.Time              `json:"createdOn,omitempty"`
 	Id                                  *uuid.UUID              `json:"id,omitempty"`
 	ModifiedOn                          *time.Time              `json:"modifiedOn,omitempty"`
-	RegexWithBackslashes                *string                 `json:"regexWithBackslashes,omitempty" binding:"omitempty,regex00484"`
+	RegexWithBackslashes                *string                 `json:"regexWithBackslashes,omitempty" binding:"omitempty,regexA217A"`
 	ServiceType                         string                  `json:"serviceType" binding:"omitempty,max=128"`
 	Status                              DeviceStatus            `json:"status,omitempty"`
 	StatusDetails                       map[string]DeviceStatus `json:"statusDetails,omitempty"`
-	StringWithFormatOnlyInAnAllOfSchema *string                 `json:"stringWithFormatOnlyInAnAllOfSchema,omitempty" binding:"omitempty,regexE9C39"`
+	StringWithFormatOnlyInAnAllOfSchema *string                 `json:"stringWithFormatOnlyInAnAllOfSchema,omitempty" binding:"omitempty,regexEFF6B"`
 	SubscriptionId                      *uuid.UUID              `json:"subscriptionId,omitempty"`
 	UserId                              *uuid.UUID              `json:"userId,omitempty"`
 }
@@ -198,8 +198,8 @@ type GenericResponse struct {
 	StringValue                     *string                     `json:"stringValue" binding:"required,max=128"`
 	StringWithEnum                  string                      `json:"stringWithEnum" binding:"omitempty,enumof=asc desc"`
 	StringWithNilEnum               string                      `json:"stringWithNilEnum" binding:"omitempty,enumof=asc desc"`
-	StringWithRegexDefinedInFormat  *string                     `json:"stringWithRegexDefinedInFormat,omitempty" binding:"omitempty,regexCD184"`
-	StringWithRegexDefinedInPattern string                      `json:"stringWithRegexDefinedInPattern" binding:"required,regexEB33C"`
+	StringWithRegexDefinedInFormat  *string                     `json:"stringWithRegexDefinedInFormat,omitempty" binding:"omitempty,regex50C92"`
+	StringWithRegexDefinedInPattern string                      `json:"stringWithRegexDefinedInPattern" binding:"required,regexA2EFE"`
 	Values                          map[string]string           `json:"-"`
 }
 

@@ -67,13 +67,5 @@ severity:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-dirs:
-    - cmd
-  exclude-rules:
-#    - linters:
-#        - errcheck
-#        - dupl
-#      path: _test\.go
-#      text: "SA9003:"
-#      source: "^//go:generate "
+
 

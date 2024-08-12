@@ -47,10 +47,13 @@ generate: $(GEN_LIST)
 #		  e.g. ARGS="-coverpkg ./pkg/... -covermode atomic"
 # 		- PKGS="..." Override packages to run for test. Default: $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/...
 #		  e.g. PKGS="./pkg/... ./teset/..."
+# 		- GOTESTSUM_FORMAT="..." Choose output format on console. See `gotestsum --help` for supported formats.
+#		  Default: pkgname
 test: PKGS ?= $(MODULE)/pkg/... $(MODULE)/cmd/... $(MODULE)/test/...
+test: GOTESTSUM_FORMAT ?= pkgname
 test:
 	set -o pipefail; \
-	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
+	gotestsum --format-hide-empty-pkg --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \
   		$(GO) test -json -count=1 -failfast -timeout=0 -coverprofile $(DESTDIR)/coverage.out \
   		-coverpkg $(MODULE)/pkg/...,$(MODULE)/cmd/...,$(MODULE)/test/...,$(MODULE)/internal/... \
   		$(PKGS) $(ARGS)

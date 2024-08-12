@@ -17,7 +17,7 @@
 package lanai
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -73,7 +73,7 @@ func generateNameFromRegex(regex string) string {
 		}
 	}
 
-	hashedString := strings.ToUpper(fmt.Sprintf("%x", md5.Sum([]byte(regex))))[0:5]
+	hashedString := strings.ToUpper(fmt.Sprintf("%x", sha256.Sum224([]byte(regex))))[0:5]
 	return fmt.Sprintf("regex%v", hashedString)
 }
 

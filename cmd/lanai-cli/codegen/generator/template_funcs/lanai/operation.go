@@ -71,7 +71,6 @@ func (o Operation) ResponseRefsUsed() (result []string) {
 			result = append(result, resp.RefsUsed()...)
 			break
 		}
-		break
 	}
 	return result
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type DeleteTestPathRequest struct {
-	Scope     string `uri:"scope" binding:"required,regexA79C5"`
+	Scope     string `uri:"scope" binding:"required,regex78135"`
 	TestParam string `form:"testParam" binding:"omitempty,max=128"`
 }
 
@@ -17,7 +17,7 @@ type DeleteTestPathResponse struct {
 }
 
 type TestpathScopeGetRequest struct {
-	Scope        string `uri:"scope" binding:"required,regexA79C5"`
+	Scope        string `uri:"scope" binding:"required,regex78135"`
 	HEADER_PARAM bool   `header:"HEADER-PARAM"`
 }
 
@@ -28,5 +28,5 @@ type TestpathScopePatchRequest struct {
 }
 
 type PostTestPathRequest struct {
-	Scope string `uri:"scope" binding:"required,regexA397E"`
+	Scope string `uri:"scope" binding:"required,regex440F7"`
 }

@@ -3,5 +3,5 @@
 package v1
 
 type SearchApiKeysRequest struct {
-	StringParamThatZeroValueIsValidFor string `form:"StringParamThatZeroValueIsValidFor" binding:"omitempty,regexD4EC2,max=32"`
+	StringParamThatZeroValueIsValidFor string `form:"StringParamThatZeroValueIsValidFor" binding:"omitempty,regex2F1C0,max=32"`
 }
