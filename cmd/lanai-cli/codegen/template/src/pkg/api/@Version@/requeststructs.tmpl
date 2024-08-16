@@ -51,7 +51,7 @@
         {{- if eq .Ref "" }}
             {{- range .Value.Content }}
                 {{- if eq .Schema.Ref "" }}
-                    {{- if ne .Schema.Value.Type "object" }}
+                    {{- if not (.Schema.Value.Type.Is "object") }}
                         {{- $addMarshallingFunctions = true }}
                     {{- end }}
                 {{- end }}

@@ -17,9 +17,9 @@
 package aws
 
 import (
-    "github.com/aws/aws-sdk-go-v2/config"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "go.uber.org/fx"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"go.uber.org/fx"
 )
 
 const FxGroup = `aws`
@@ -43,8 +43,9 @@ type CfgLoaderDI struct {
 	fx.In
 	Properties  Properties
 	Customizers []config.LoadOptionsFunc `group:"aws"`
+	Overrides   []ConfigOverrideFunc     `group:"aws"`
 }
 
 func ProvideConfigLoader(di CfgLoaderDI) ConfigLoader {
-	return NewConfigLoader(di.Properties, di.Customizers...)
+	return NewConfigLoader(di.Properties, di.Customizers, di.Overrides)
 }

@@ -168,8 +168,8 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
     {{- else }}
         {{- /*If this is an array of an object, add a pointer to the array, otherwise just return an array of the type */ -}}
         {{- range $i, $content := $operation.AllResponseContent }}
-            {{- $isNotObject := ne $content.Schema.Value.Type "object" }}
-            {{- $isNotArray := ne $content.Schema.Value.Type "array" }}
+            {{- $isNotObject := not ($content.Schema.Value.Type.Is "object") }}
+            {{- $isNotArray := not ($content.Schema.Value.Type.Is "array") }}
             {{- $isBaseType := and $isNotObject $isNotArray }}
             {{- if $isBaseType}}
                 {{- $type = schemaToText $content.Schema "" "" }}
@@ -198,7 +198,9 @@ func New{{ $controllerName }}(di {{ $diName }}) web.Controller {
         &{{$import}}.{{$type}}{}
     {{- else -}}
        {{- range $i, $content := $operation.AllResponseContent }}
-            {{- $type = $content.Schema.Value.Type }}
+       		{{- if $content.Schema.Value.Type }}
+            	{{- $type = index $content.Schema.Value.Type 0 }}
+            {{- end -}}
             {{- break }}
         {{- end }}
         {{- $defaultValue := "nil" }}

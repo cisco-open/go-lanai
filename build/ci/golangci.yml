@@ -16,10 +16,8 @@
 
 # Ref: https://golangci-lint.run/usage/configuration/
 run:
+  go: '1.22'
   tests: false
-  skip-dirs:
-    - cmd
-    - pkg/security/example
   modules-download-mode: readonly
 
 output:
@@ -35,8 +33,6 @@ linters:
 #    - asciicheck
 #    - ...
   disable:
-    - maligned # deprecated
-    - scopelint # deprecated
 
 linters-settings:
   # https://golangci-lint.run/usage/linters/#exhaustive:
@@ -50,8 +46,6 @@ linters-settings:
     # So we allow plain error switching for now.
     # TODO we should revise this setting when patterns are more consistent within golang communities
     comparison: false
-  staticcheck:
-    go: "1.16"
 
 severity:
   # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
@@ -73,11 +67,5 @@ severity:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-rules:
-#    - linters:
-#        - errcheck
-#        - dupl
-#      path: _test\.go
-#      text: "SA9003:"
-#      source: "^//go:generate "
+
 

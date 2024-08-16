@@ -49,6 +49,7 @@ func LeadershipLock() Lock {
 }
 
 func startLeadershipLock(_ context.Context, di initDI) (err error) {
+	//nolint:contextcheck // we want di.AppCtx on purpose
 	leadershipOnce.Do(func() {
 		leadershipLock, err = syncManager.Lock(
 			fmt.Sprintf(leadershipLockKeyFormat, di.AppCtx.Name()),

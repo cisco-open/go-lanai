@@ -57,10 +57,14 @@ func (g SecurityGroup) CustomizeData(data GenerationData) error {
 	switch g.Components.Security.Authentication.Method {
 	case AuthOAuth2:
 		modules = append(modules, LanaiSecurity, LanaiResServer)
+	default:
+		// nothing to add
 	}
 	switch g.Components.Security.Access.Preset {
 	case AccessPresetOPA:
 		modules = append(modules, LanaiOPA)
+	default:
+		// nothing to add
 	}
 	sec := ResolveEnabledLanaiModules(modules...)
 	data.ProjectMetadata().EnabledModules.Add(sec.Values()...)

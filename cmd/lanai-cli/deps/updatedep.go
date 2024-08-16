@@ -56,9 +56,8 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	// update their dependencies
 	for module, branch := range moduleToBranch {
 		logger.Infof("processing %s@%s", module, branch)
-		e := cmdutils.GoGet(cmd.Context(), module, branch)
-		if e != nil {
-			return nil
+		if e := cmdutils.GoGet(cmd.Context(), module, branch); e != nil {
+			return e
 		}
 	}
 

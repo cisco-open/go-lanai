@@ -16,7 +16,7 @@ interactions:
         form: {}
         headers:
             Amz-Sdk-Invocation-Id:
-                - 64f2fc13-de6b-4ec9-9ed0-dfb6f273db7d
+                - 18ad6503-03ef-4aa0-b2d4-bd05cd9cc4ed
             Amz-Sdk-Request:
                 - attempt=1; max=3
             Authorization:
@@ -24,9 +24,9 @@ interactions:
             Content-Type:
                 - application/x-amz-json-1.1
             User-Agent:
-                - aws-sdk-go-v2/1.24.0 os/macos lang/go#1.20.10 md/GOOS#darwin md/GOARCH#arm64 api/acm#1.22.5
+                - m/E aws-sdk-go-v2/1.30.3 os/macos lang/go#1.22.6 md/GOOS#darwin md/GOARCH#arm64 api/acm#1.28.4
             X-Amz-Date:
-                - 20231212T225637Z
+                - 20240809T204617Z
             X-Amz-Security-Token:
                 - static_auth
             X-Amz-Target:
@@ -43,7 +43,7 @@ interactions:
         trailer: {}
         content_length: 105
         uncompressed: false
-        body: '{"CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/d4dae864-2c68-4b99-9954-ccec827c2054"}'
+        body: '{"CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/92fb941a-9ef5-44a9-98fb-d1740381ba43"}'
         headers:
             Content-Length:
                 - "105"
@@ -54,7 +54,7 @@ interactions:
             Server:
                 - hypercorn-h11
             X-Amzn-Requestid:
-                - 93a36030-aaea-45cc-9102-29121155089c
+                - 57b1dac4-1873-459b-aa3c-ef3148128fae
         status: '200 '
         code: 200
         duration: 200µs
@@ -73,7 +73,7 @@ interactions:
         form: {}
         headers:
             Amz-Sdk-Invocation-Id:
-                - 113d3fad-e435-4c19-a9e6-e13ad931d2f0
+                - d4d99e32-0404-416e-b7db-ed12fb7b5644
             Amz-Sdk-Request:
                 - attempt=1; max=3
             Authorization:
@@ -81,9 +81,9 @@ interactions:
             Content-Type:
                 - application/x-amz-json-1.1
             User-Agent:
-                - aws-sdk-go-v2/1.24.0 os/macos lang/go#1.20.10 md/GOOS#darwin md/GOARCH#arm64 api/acm#1.22.5
+                - m/E aws-sdk-go-v2/1.30.3 os/macos lang/go#1.22.6 md/GOOS#darwin md/GOARCH#arm64 api/acm#1.28.4
             X-Amz-Date:
-                - 20231212T225637Z
+                - 20240809T204618Z
             X-Amz-Target:
                 - CertificateManager.ImportCertificate
             X-Http-Record-Index:
@@ -98,7 +98,7 @@ interactions:
         trailer: {}
         content_length: 105
         uncompressed: false
-        body: '{"CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/4b500cd6-b6d4-4c6c-8807-8b2ca44af813"}'
+        body: '{"CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/89add63f-f569-4132-a05f-c8eea563f2a6"}'
         headers:
             Content-Length:
                 - "105"
@@ -109,7 +109,7 @@ interactions:
             Server:
                 - hypercorn-h11
             X-Amzn-Requestid:
-                - 32f5264f-a307-4b40-877c-0d457aa7a678
+                - 583e3d5a-ceac-4ac0-8d06-53652653743c
         status: '200 '
         code: 200
         duration: 200µs
@@ -138,13 +138,13 @@ interactions:
                 - LocalStack doesn't care
         headers:
             Amz-Sdk-Invocation-Id:
-                - 08b4d2ee-c873-4314-ae56-f5f9b2a97520
+                - fff918f1-8c48-4a9d-ba02-ae2c76c89288
             Amz-Sdk-Request:
                 - attempt=1; max=3
             Content-Type:
                 - application/x-www-form-urlencoded
             User-Agent:
-                - aws-sdk-go-v2/1.24.0 os/macos lang/go#1.20.10 md/GOOS#darwin md/GOARCH#arm64 api/sts#1.26.5
+                - aws-sdk-go-v2/1.30.3 os/macos lang/go#1.22.6 md/GOOS#darwin md/GOARCH#arm64 api/sts#1.30.3
             X-Http-Record-Index:
                 - "2"
         url: http://localhost:4566/
@@ -159,7 +159,7 @@ interactions:
         uncompressed: false
         body: |-
             <?xml version='1.0' encoding='utf-8'?>
-            <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/"><AssumeRoleWithWebIdentityResult><Credentials><AccessKeyId>ASIAQAAAAAAADJTQ24S7</AccessKeyId><SecretAccessKey>pAbvh6pgFXukZNEMjA5zqT20C/HdDwXEC79UM418</SecretAccessKey><SessionToken>FQoGZXIvYXdzEBYaDUYQe2osbp8rBcSjf2aZz4gAHQMTiAsF+t8HYP5OHW/iFYQ98wsr3C04jr5sJNxGbXHI9UZ8YjcykM+haGIvcx5DaGF/uQrFmN5HyrkgGOXWVpgopDPrt+rgj7HQqLJ8me23CmMtxMuorodvkeVT2BaKh4yvzyUdsokH+k8SsOA9n5klF0RqTdYA4pNLmcl5yXoWmm47obfOi3MQybf5y2o9q0cymNMyEXtYygKfvcosabZ47znG0EV3TwA6a+9CW/mEGs+m0tQCsB8xQG8EFZxpc7H2EialOmd2Qkm46cz1KtQG16DEs1E08k7TiE4UPWGBkPILr2pKoWXLy7o=</SessionToken><Expiration>2023-12-12T23:56:38.160000Z</Expiration></Credentials><AssumedRoleUser><AssumedRoleId>ARO123EXAMPLE123:test_session</AssumedRoleId><Arn>arn:aws:sts::000000000000:assumed-role//test_session</Arn></AssumedRoleUser><PackedPolicySize>6</PackedPolicySize></AssumeRoleWithWebIdentityResult><ResponseMetadata><RequestId>28f0c51c-3a8b-4f6a-90ed-2e5c62318cf1</RequestId></ResponseMetadata></AssumeRoleWithWebIdentityResponse>
+            <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/"><AssumeRoleWithWebIdentityResult><Credentials><AccessKeyId>ASIAQAAAAAAAOUNIRORJ</AccessKeyId><SecretAccessKey>t45xnmT9WvZqMPsx0PPGYHjaW2UfwqP2qUOmUCM4</SecretAccessKey><SessionToken>FQoGZXIvYXdzEBYaDGmeeF5U7hF77uMJN8d8qAYHwwmCJcvsKj9z4VmNOm2QD2XMDcmskD3/TOrSirBXBjrIlZb2nWT+urffGM4HMAtJA1a+UL8e24pXdr51KKXO/LmVUM7lPVnogPpj8gVrXfgyIAzqVt7pkTxt0zMvKDudSZCL8qpNbv2AC1+itMzCKBSgFezj1l9LmOwhGJuypzRVvg6ZHGNCUzOlx9gbzB/4bYAH0iUC+vQsEAaR2RYYHbjOfjPNmTw2hR4yrMHGm0sIxRoYfW/QAXgaZ+eilTDedEa+zTpUKFngJTY7l5bEsS/v/E7r4EZR1HnhKT+IV28a2BRKkgnKPSRCeOQ=</SessionToken><Expiration>2024-08-09T21:46:18.318000Z</Expiration></Credentials><AssumedRoleUser><AssumedRoleId>ARO123EXAMPLE123:test_session</AssumedRoleId><Arn>arn:aws:sts::000000000000:assumed-role//test_session</Arn></AssumedRoleUser><PackedPolicySize>6</PackedPolicySize></AssumeRoleWithWebIdentityResult><ResponseMetadata><RequestId>2cb0d059-4fd7-4ee1-8847-34f78fc508b0</RequestId></ResponseMetadata></AssumeRoleWithWebIdentityResponse>
         headers:
             Content-Length:
                 - "1105"
@@ -187,7 +187,7 @@ interactions:
         form: {}
         headers:
             Amz-Sdk-Invocation-Id:
-                - e0b07f6d-487e-4ed2-894e-d59361c76bcd
+                - 1f0f79c5-6e7e-4eae-a5a2-86b8eafe6609
             Amz-Sdk-Request:
                 - attempt=1; max=3
             Authorization:
@@ -195,11 +195,11 @@ interactions:
             Content-Type:
                 - application/x-amz-json-1.1
             User-Agent:
-                - aws-sdk-go-v2/1.24.0 os/macos lang/go#1.20.10 md/GOOS#darwin md/GOARCH#arm64 api/acm#1.22.5
+                - m/E aws-sdk-go-v2/1.30.3 os/macos lang/go#1.22.6 md/GOOS#darwin md/GOARCH#arm64 api/acm#1.28.4
             X-Amz-Date:
-                - 20231212T225638Z
+                - 20240809T204618Z
             X-Amz-Security-Token:
-                - FQoGZXIvYXdzEBYaDUYQe2osbp8rBcSjf2aZz4gAHQMTiAsF+t8HYP5OHW/iFYQ98wsr3C04jr5sJNxGbXHI9UZ8YjcykM+haGIvcx5DaGF/uQrFmN5HyrkgGOXWVpgopDPrt+rgj7HQqLJ8me23CmMtxMuorodvkeVT2BaKh4yvzyUdsokH+k8SsOA9n5klF0RqTdYA4pNLmcl5yXoWmm47obfOi3MQybf5y2o9q0cymNMyEXtYygKfvcosabZ47znG0EV3TwA6a+9CW/mEGs+m0tQCsB8xQG8EFZxpc7H2EialOmd2Qkm46cz1KtQG16DEs1E08k7TiE4UPWGBkPILr2pKoWXLy7o=
+                - FQoGZXIvYXdzEBYaDGmeeF5U7hF77uMJN8d8qAYHwwmCJcvsKj9z4VmNOm2QD2XMDcmskD3/TOrSirBXBjrIlZb2nWT+urffGM4HMAtJA1a+UL8e24pXdr51KKXO/LmVUM7lPVnogPpj8gVrXfgyIAzqVt7pkTxt0zMvKDudSZCL8qpNbv2AC1+itMzCKBSgFezj1l9LmOwhGJuypzRVvg6ZHGNCUzOlx9gbzB/4bYAH0iUC+vQsEAaR2RYYHbjOfjPNmTw2hR4yrMHGm0sIxRoYfW/QAXgaZ+eilTDedEa+zTpUKFngJTY7l5bEsS/v/E7r4EZR1HnhKT+IV28a2BRKkgnKPSRCeOQ=
             X-Amz-Target:
                 - CertificateManager.ImportCertificate
             X-Http-Record-Index:
@@ -214,7 +214,7 @@ interactions:
         trailer: {}
         content_length: 105
         uncompressed: false
-        body: '{"CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/0faf6743-ca84-4bc3-9b17-499f3d090c1b"}'
+        body: '{"CertificateArn": "arn:aws:acm:us-east-1:000000000000:certificate/47eec489-8937-408c-8ded-51e49bca95e1"}'
         headers:
             Content-Length:
                 - "105"
@@ -225,7 +225,7 @@ interactions:
             Server:
                 - hypercorn-h11
             X-Amzn-Requestid:
-                - b8cd5a98-8673-429f-bd08-c84bdf1507bc
+                - 476bb8ea-2ca0-45e4-8d08-3f3944c0ca06
         status: '200 '
         code: 200
         duration: 200µs

@@ -36,11 +36,16 @@ generate: $(GEN_LIST)
 # test:
 # 	Invoke "go test" on defined modules.
 # 	This target typically run on CI/CD working machine
-# 	Optional parameter: ARGS="..."
+# 	Optional parameter:
+#		- ARGS="..."
+#		  e.g. ARGS="-coverpkg ./pkg/... -covermode atomic"
+# 		- GOTESTSUM_FORMAT="..." Choose output format on console. See `gotestsum --help` for supported formats.
+#		  Default: pkgname
 ifneq ($(filter true True TRUE,$(SKIP_TEST)),)
 test: generate
 	@echo "Test Skipped..."
 else
+test: GOTESTSUM_FORMAT ?= pkgname
 test: generate
 	set -o pipefail; \
 	gotestsum -f pkgname --jsonfile="$(DESTDIR)/tests.json" --raw-command -- \

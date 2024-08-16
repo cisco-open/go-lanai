@@ -149,9 +149,9 @@ func DropInvalidReplace(ctx context.Context, opts ...GoCmdOptions) (ret []*Repla
 		ShellUseWorkingDir(),
 		ShellStdOut(os.Stdout),
 	}
-	for _, v := range mod.Replace {
+	for i, v := range mod.Replace {
 		if isInvalidReplace(&v) {
-			ret = append(ret, &v)
+			ret = append(ret, &mod.Replace[i])
 			cmdOpts = append(cmdOpts, dropReplaceCmd(v.Old.Path, v.Old.Version, opts))
 		}
 	}

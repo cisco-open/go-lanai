@@ -126,7 +126,8 @@ func (h *DefaultAuthorizeHandler) HandleApprovalPage(ctx context.Context, r *Aut
 		}
 	}
 
-	return func(ctx *gin.Context) {
+	//nolint:contextcheck // false positive
+	return func(gc *gin.Context) {
 		mv := template.ModelView{
 			View: h.approvalPageTmpl,
 			Model: map[string]interface{}{
@@ -134,7 +135,7 @@ func (h *DefaultAuthorizeHandler) HandleApprovalPage(ctx context.Context, r *Aut
 				ApprovalModelKeyApprovalUrl: h.approvalUrl,
 			},
 		}
-		_ = template.TemplateEncodeResponseFunc(ctx, ctx.Writer, &mv)
+		_ = template.TemplateEncodeResponseFunc(gc, gc.Writer, &mv)
 	}, nil
 }
 
