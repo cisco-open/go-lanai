@@ -45,6 +45,9 @@ type Client interface {
 	// The returned client is goroutine-safe and can be reused
 	WithBaseUrl(baseUrl string) (Client, error)
 
+	// WithNoTargetResolver expects the request to contain the absolute url
+	WithNoTargetResolver() (Client, error)
+
 	// WithConfig create a shallow copy of the client with specified config.
 	// Service (with LB) or BaseURL cannot be changed with this method.
 	// If any field of provided config is zero value, this value is not applied.

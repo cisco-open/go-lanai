@@ -17,9 +17,9 @@
 package auth
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
 )
 
 type TokenGranter interface {
@@ -31,12 +31,20 @@ type TokenGranter interface {
 	Grant(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error)
 }
 
+type TokenGranterOption struct {
+	AuthService AuthorizationService
+}
+
+type CustomizableTokenGranter interface {
+	Customize(options ...func(o *TokenGranterOption))
+}
+
 // CompositeTokenGranter implements TokenGranter
 type CompositeTokenGranter struct {
 	delegates []TokenGranter
 }
 
-func NewCompositeTokenGranter(delegates...TokenGranter) *CompositeTokenGranter {
+func NewCompositeTokenGranter(delegates ...TokenGranter) *CompositeTokenGranter {
 	return &CompositeTokenGranter{
 		delegates: delegates,
 	}

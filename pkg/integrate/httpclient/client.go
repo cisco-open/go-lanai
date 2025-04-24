@@ -105,6 +105,17 @@ func (c *client) WithBaseUrl(baseUrl string) (Client, error) {
 	return cp.WithConfig(defaultExtHostConfig()), nil
 }
 
+func (c *client) WithNoTargetResolver() (Client, error) {
+	endpointer, e := NewNoOpTargetResolver()
+	if e != nil {
+		return nil, NewNoEndpointFoundError(fmt.Errorf("cannot create client"), e)
+	}
+
+	cp := c.shallowCopy()
+	cp.resolver = endpointer
+	return cp.WithConfig(defaultExtHostConfig()), nil
+}
+
 func (c *client) WithConfig(config *ClientConfig) Client {
 	mergeConfig(config, c.config)
 	cp := c.shallowCopy()
