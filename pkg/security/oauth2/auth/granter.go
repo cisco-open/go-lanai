@@ -31,6 +31,10 @@ type TokenGranter interface {
 	Grant(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error)
 }
 
+// AuthorizationServiceInjector
+// By implementing this interface, a component can ask the framework to call its Inject method
+// to get a reference to the AuthorizationService.
+// Currently only component that also implements TokenGranter interface will have its Inject method be called.
 type AuthorizationServiceInjector interface {
 	Inject(authService AuthorizationService)
 }
