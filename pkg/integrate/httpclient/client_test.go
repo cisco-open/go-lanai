@@ -394,8 +394,7 @@ func SubTestWithURLEncoded(di *TestDI) test.GomegaSubTestFunc {
 
 func SubTestWithAbsoluteUrl(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		client, e := di.HttpClient.WithNoTargetResolver()
-		g.Expect(e).To(Succeed(), "client without target resolver should be available")
+		client := di.HttpClient
 
 		random := utils.RandomString(20)
 		now := time.Now().Format(time.RFC3339)

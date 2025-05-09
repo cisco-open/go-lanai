@@ -38,7 +38,7 @@ var Module = &bootstrap.Module{
 }
 
 const (
-	fxNameLoader = "tenant_hierarchy/loader"
+	fxNameLoader = "tenant-hierarchy/loader"
 )
 
 func Use() {
@@ -81,7 +81,7 @@ func provideLoader(di loaderDI) Loader {
 type initDi struct {
 	fx.In
 	AppCtx          *bootstrap.ApplicationContext
-	EffectiveLoader Loader `name:"tenant_hierarchy/loader"`
+	EffectiveLoader Loader `name:"tenant-hierarchy/loader"`
 }
 
 func initializeTenantHierarchy(di initDi) error {

@@ -36,6 +36,10 @@ type CustomTokenGranter struct {
 	authService auth.AuthorizationService
 }
 
+func (c *CustomTokenGranter) Inject(authService auth.AuthorizationService) {
+	c.authService = authService
+}
+
 func NewCustomTokenGranter() auth.TokenGranter {
 	return &CustomTokenGranter{}
 }
@@ -60,12 +64,4 @@ func (c *CustomTokenGranter) Grant(ctx context.Context, request *auth.TokenReque
 		opt.Details = &CustomContextDetails{}
 	})
 	return c.authService.CreateAccessToken(ctx, oauth)
-}
-
-func (c *CustomTokenGranter) Customize(options ...func(o *auth.TokenGranterOption)) {
-	config := &auth.TokenGranterOption{}
-	for _, opt := range options {
-		opt(config)
-	}
-	c.authService = config.AuthService
 }

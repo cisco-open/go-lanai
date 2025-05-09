@@ -24,10 +24,3 @@ func NewStaticTargetResolver(baseUrl string) (TargetResolverFunc, error) {
 		return &uri, nil
 	}, nil
 }
-
-func NewNoOpTargetResolver() (TargetResolverFunc, error) {
-	return func(ctx context.Context, req *Request) (*url.URL, error) {
-		uri, e := url.Parse(req.Path)
-		return uri, e
-	}, nil
-}

@@ -83,7 +83,7 @@ func TestMain(m *testing.M) {
 type testDI struct {
 	fx.In
 	DB              *gorm.DB `optional:"true"`
-	InternalLoader  Loader   `name:"tenant_hierarchy/loader"`
+	InternalLoader  Loader   `name:"tenant-hierarchy/loader"`
 	ClientFactory   redis.ClientFactory
 	AppCtx          *bootstrap.ApplicationContext
 	TestTenantStore *TestTenantStore

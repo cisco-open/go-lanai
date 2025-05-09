@@ -270,10 +270,8 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 
 		for _, custom := range c.CustomTokenGranter {
 			switch v := custom.(type) {
-			case auth.CustomizableTokenGranter:
-				v.Customize(func(o *auth.TokenGranterOption) {
-					o.AuthService = c.authorizationService()
-				})
+			case auth.AuthorizationServiceInjector:
+				v.Inject(c.authorizationService())
 			default:
 				// do nothing
 			}

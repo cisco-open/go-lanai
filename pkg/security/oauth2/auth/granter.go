@@ -31,12 +31,8 @@ type TokenGranter interface {
 	Grant(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error)
 }
 
-type TokenGranterOption struct {
-	AuthService AuthorizationService
-}
-
-type CustomizableTokenGranter interface {
-	Customize(options ...func(o *TokenGranterOption))
+type AuthorizationServiceInjector interface {
+	Inject(authService AuthorizationService)
 }
 
 // CompositeTokenGranter implements TokenGranter
