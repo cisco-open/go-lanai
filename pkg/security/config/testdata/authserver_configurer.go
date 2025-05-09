@@ -49,6 +49,9 @@ type authDI struct {
 	Properties          authserver.AuthServerProperties
 	PasswdIDPProperties passwdidp.PwdAuthProperties
 	SamlIDPProperties   extsamlidp.SamlAuthProperties
+	CustomTokenGranter  auth.TokenGranter          `optional:"true"`
+	CustomTokenEnhancer auth.TokenEnhancer         `optional:"true"`
+	CustomAuthRegistry  auth.AuthorizationRegistry `optional:"true"`
 }
 
 func NewAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {
@@ -71,7 +74,15 @@ func NewAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 		config.ProviderStore = sectest.MockedProviderStore{}
 		config.UserPasswordEncoder = di.PasswordEncoder
 		config.SessionSettingService = StaticSessionSettingService(1)
-		config.CustomTokenEnhancer = []auth.TokenEnhancer{auth.NewLegacyTokenEnhancer()}
+		if di.CustomTokenEnhancer != nil {
+			config.CustomTokenEnhancer = []auth.TokenEnhancer{di.CustomTokenEnhancer}
+		}
+		if di.CustomTokenGranter != nil {
+			config.CustomTokenGranter = []auth.TokenGranter{di.CustomTokenGranter}
+		}
+		if di.CustomAuthRegistry != nil {
+			config.CustomAuthRegistry = di.CustomAuthRegistry
+		}
 	}
 }
 

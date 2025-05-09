@@ -93,6 +93,11 @@ mocking:
       redirect-uris: ["localhost:*/**"]
       tenants: ["id-tenant-3"]
       scopes: "scope_a,scope_b"
+    custom-grant-client:
+      id: "custom-grant-client"
+      secret: "test-secret"
+      access-token-validity: 3600s
+      grant-types: "custom_grant"
   accounts:
     system:
       username: "system"

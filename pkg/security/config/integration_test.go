@@ -37,6 +37,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/security/idp/passwdidp"
 	"github.com/cisco-open/go-lanai/pkg/security/logout"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/authorize"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/clientauth"
 	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth/token"
@@ -59,6 +60,7 @@ import (
 	. "github.com/cisco-open/go-lanai/test/utils/gomega"
 	"github.com/cisco-open/go-lanai/test/webtest"
 	"github.com/crewjam/saml"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -157,6 +159,7 @@ type intDI struct {
 	Mocking         sectest.MockingProperties
 	TokenReader     oauth2.TokenStoreReader
 	SessionStore    session.Store
+	AuthReg         auth.AuthorizationRegistry `optional:"true"`
 }
 
 func TestWithMockedServer(t *testing.T) {
@@ -189,6 +192,7 @@ func TestWithMockedServer(t *testing.T) {
 				testdata.NewAuthServerConfigurer, //This configurer will set up mocked client store, mocked tenant store etc.
 				testdata.NewResServerConfigurer,
 				testdata.NewMockedApprovalStore,
+				auth.NewLegacyTokenEnhancer,
 			),
 		),
 		test.GomegaSubTest(SubTestOAuth2AuthorizeWithPasswdIDP(di), "TestOAuth2AuthorizeWithPasswdIDP"),
@@ -234,11 +238,45 @@ func TestWithMockedServerWithoutFinalizer(t *testing.T) {
 				sectest.BindMockingProperties,
 				testdata.NewAuthServerConfigurer,
 				testdata.NewResServerConfigurer,
+				auth.NewLegacyTokenEnhancer,
 			),
 		),
 		// a user has access to two tenants, switch from one to the other
 		// the permission is not per tenant, so user permission doesn't change
 		test.GomegaSubTest(SubTestOAuth2SwitchTenantNoFinalizer(di), "TestOauth2SwitchTenant"),
+	)
+}
+
+func TestWithMockedServerWithCustomTokenGranter(t *testing.T) {
+	di := &intDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithTimeout(2*time.Minute),
+		webtest.WithMockedServer(),
+		sectest.WithMockedMiddleware(sectest.MWEnableSession()),
+		apptest.WithModules(
+			authserver.Module, resserver.Module,
+			passwdidp.Module, extsamlidp.Module, authorize.Module, samlidp.Module,
+			passwd.Module, formlogin.Module, logout.Module,
+			samlctx.Module, samlsp.Module,
+			basicauth.Module, clientauth.Module,
+			token.Module, access.Module, errorhandling.Module,
+			request_cache.Module, csrf.Module, session.Module,
+			redis.Module,
+		),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Provide(
+				IntegrationTestMocksProvider(),
+				sectest.BindMockingProperties,
+				testdata.NewAuthServerConfigurer,
+				testdata.NewResServerConfigurer,
+				testdata.NewCustomTokenEnhancer,
+				testdata.NewCustomAuthRegistry,
+				testdata.NewCustomTokenGranter,
+			),
+		),
+		test.GomegaSubTest(SubTestCustomTokenGranter(di), "TestCustomTokenGranter"),
 	)
 }
 
@@ -914,6 +952,31 @@ func SubTestOauth2SwitchTenant(
 	}
 }
 
+func SubTestCustomTokenGranter(
+	di *intDI,
+) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		req := webtest.NewRequest(ctx, http.MethodPost, "/v2/token", customGrantReqBody(), withClientAuth("custom-grant-client", TestClientSecret), tokenReqOptions())
+		resp := webtest.MustExec(ctx, req)
+		g.Expect(resp).ToNot(BeNil(), "response should not be nil")
+		g.Expect(resp.Response.StatusCode).To(Equal(http.StatusOK), "response should have correct status code")
+
+		body, e := io.ReadAll(resp.Response.Body)
+		g.Expect(e).To(Succeed(), `token response body should be readable`)
+		g.Expect(body).To(HaveJsonPath("$.access_token"), "token response should have access_token")
+
+		accessToken := oauth2.NewDefaultAccessToken("")
+		e = json.Unmarshal(body, accessToken)
+		g.Expect(e).ToNot(HaveOccurred())
+
+		tk, _, e := jwt.NewParser().ParseUnverified(accessToken.Value(), jwt.MapClaims{})
+		g.Expect(e).ToNot(HaveOccurred())
+		g.Expect(tk.Claims.(jwt.MapClaims)["MyClaim"]).To(Equal("my_claim_value"))
+
+		g.Expect(di.AuthReg.(*testdata.CustomAuthRegistry).RegistrationCount).To(Equal(1))
+	}
+}
+
 /*************************
 	Helpers
  *************************/
@@ -1100,6 +1163,12 @@ func passwordGrantReqBody(tenantId string, username string, password string) io.
 	if tenantId != "" {
 		values.Set(oauth2.ParameterTenantId, tenantId)
 	}
+	return strings.NewReader(values.Encode())
+}
+
+func customGrantReqBody() io.Reader {
+	values := url.Values{}
+	values.Set(oauth2.ParameterGrantType, "custom_grant")
 	return strings.NewReader(values.Encode())
 }
 

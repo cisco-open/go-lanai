@@ -68,7 +68,7 @@ func (c *legacyClaims) Values() map[string]interface{} {
 // but deprecated in Go version
 type LegacyTokenEnhancer struct{}
 
-func NewLegacyTokenEnhancer() *LegacyTokenEnhancer {
+func NewLegacyTokenEnhancer() TokenEnhancer {
 	return &LegacyTokenEnhancer{}
 }
 

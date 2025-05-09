@@ -34,6 +34,7 @@ import (
 	"go.uber.org/fx"
 	"net/http"
 	"net/url"
+	"path"
 	"testing"
 	"time"
 )
@@ -112,6 +113,7 @@ func TestWithMockedServer(t *testing.T) {
 		test.GomegaSubTest(SubTestWithRetry(&di), "TestWithRetry"),
 		test.GomegaSubTest(SubTestWithTimeout(&di), "TestWithTimeout"),
 		test.GomegaSubTest(SubTestWithURLEncoded(&di), "TestWithURLEncoded"),
+		test.GomegaSubTest(SubTestWithAbsoluteUrl(&di), "TestWithAbsoluteUrl"),
 	)
 }
 
@@ -385,6 +387,44 @@ func SubTestWithURLEncoded(di *TestDI) test.GomegaSubTestFunc {
 				"time": now,
 				"data": random,
 			},
+		}
+		assertResponse(t, g, resp, http.StatusOK, &expected)
+	}
+}
+
+func SubTestWithAbsoluteUrl(di *TestDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		client, e := di.HttpClient.WithNoTargetResolver()
+		g.Expect(e).To(Succeed(), "client without target resolver should be available")
+
+		random := utils.RandomString(20)
+		now := time.Now().Format(time.RFC3339)
+		reqBody := makeEchoRequestBody()
+		opts := append([]httpclient.RequestOptions{
+			httpclient.WithHeader("X-Data", random),
+			httpclient.WithParam("time", now),
+			httpclient.WithParam("data", random),
+			httpclient.WithBody(reqBody),
+		})
+
+		uri, e := url.Parse(fmt.Sprintf(`http://localhost:%d%s`, webtest.CurrentPort(ctx), webtest.CurrentContextPath(ctx)))
+		g.Expect(e).ToNot(HaveOccurred())
+
+		uri.Path = path.Join(uri.Path, TestPath)
+		req := httpclient.NewRequest(uri.String(), http.MethodPost, opts...)
+
+		resp, e := client.Execute(ctx, req, httpclient.JsonBody(&EchoResponse{}))
+		g.Expect(e).To(Succeed(), "execute request shouldn't fail")
+
+		expected := EchoResponse{
+			Headers: map[string]string{
+				"X-Data": random,
+			},
+			Form: map[string]string{
+				"time": now,
+				"data": random,
+			},
+			ReqBody: reqBody,
 		}
 		assertResponse(t, g, resp, http.StatusOK, &expected)
 	}

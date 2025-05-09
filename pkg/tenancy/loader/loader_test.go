@@ -108,6 +108,25 @@ func TestLoader(t *testing.T) {
 	)
 }
 
+func TestCustomLoader(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithModules(redis.Module),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Provide(
+				defaultLoader(),
+				ProvideTestTenantStore,
+				ProvideTestTenantAccessor,
+				ProvideTestCacheProperties,
+				NewCustomLoader,
+			),
+		),
+		test.GomegaSubTest(SubTestCustomLoader(di), "SubTestLoadTenantHierarchy"),
+	)
+}
+
 /*************************
 	Sub Tests
  *************************/
@@ -130,6 +149,17 @@ func SubTestLoadTenantHierarchyFailure(di *testDI) test.GomegaSubTestFunc {
 			EffectiveLoader: di.InternalLoader,
 		})
 		g.Expect(e).To(HaveOccurred())
+	}
+}
+
+func SubTestCustomLoader(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		e := initializeTenantHierarchy(initDi{
+			AppCtx:          di.AppCtx,
+			EffectiveLoader: di.InternalLoader,
+		})
+		g.Expect(e).To(Succeed())
+		g.Expect(di.InternalLoader.(*CustomLoader).Loaded).To(BeTrue())
 	}
 }
 
@@ -206,5 +236,17 @@ func (i *TestTenantIterator) Close() error {
 }
 
 func (i *TestTenantIterator) Err() error {
+	return nil
+}
+
+type CustomLoader struct {
+	Loaded bool
+}
+
+func NewCustomLoader() Loader {
+	return &CustomLoader{}
+}
+func (c *CustomLoader) LoadTenantHierarchy(ctx context.Context) (err error) {
+	c.Loaded = true
 	return nil
 }
