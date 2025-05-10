@@ -181,6 +181,9 @@ type Configuration struct {
 	OpenIDSSOEnabled      bool
 	SamlIdpSigningMethod  string
 	ApprovalStore         auth.ApprovalStore
+	CustomTokenGranter    []auth.TokenGranter
+	CustomTokenEnhancer   []auth.TokenEnhancer
+	CustomAuthRegistry    auth.AuthorizationRegistry
 
 	// not directly configurable items
 	appContext                *bootstrap.ApplicationContext
@@ -265,6 +268,16 @@ func (c *Configuration) tokenGranter() auth.TokenGranter {
 			granters = append(granters, passwordGranter)
 		}
 
+		for _, custom := range c.CustomTokenGranter {
+			switch v := custom.(type) {
+			case auth.AuthorizationServiceInjector:
+				v.Inject(c.authorizationService())
+			default:
+				// do nothing
+			}
+		}
+		granters = append(granters, c.CustomTokenGranter...)
+
 		c.sharedTokenGranter = auth.NewCompositeTokenGranter(granters...)
 	}
 	return c.sharedTokenGranter
@@ -295,7 +308,11 @@ func (c *Configuration) contextDetailsStore() security.ContextDetailsStore {
 
 func (c *Configuration) authorizationRegistry() auth.AuthorizationRegistry {
 	if c.sharedAuthRegistry == nil {
-		c.sharedAuthRegistry = c.contextDetailsStore().(auth.AuthorizationRegistry)
+		if c.CustomAuthRegistry != nil {
+			c.sharedAuthRegistry = c.CustomAuthRegistry
+		} else {
+			c.sharedAuthRegistry = c.contextDetailsStore().(auth.AuthorizationRegistry)
+		}
 	}
 	return c.sharedAuthRegistry
 }
@@ -329,6 +346,7 @@ func (c *Configuration) authorizationService() auth.AuthorizationService {
 				})
 				conf.PostTokenEnhancers = append(conf.PostTokenEnhancers, openidEnhancer)
 			}
+			conf.TokenEnhancers = append(conf.TokenEnhancers, c.CustomTokenEnhancer...)
 		})
 	}
 

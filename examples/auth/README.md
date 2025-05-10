@@ -16,12 +16,12 @@ In this example, the source code contains the fully finished service. This step 
 involved in writing this service.
 
 ### 1. Create the Initial Project
-This involves the following steps. For detail explanation of each step, see the [developer guide](../docs/Develop.md)
+This involves the following steps. For detail explanation of each step, see the [developer guide](../../docs/Develop.md)
 
 1. Create Module.yml
 2. Add go.mod 
 3. Add Makefile 
-4. call ```shell make init CLI_TAG="develop"``` to initialize the project 
+4. call ```shell make init CLI_TAG="main"``` to initialize the project 
 
 ### 2. Adding Main File
 Add the main file corresponding to the definition in Module.yml. The main file is the entry point for this service.

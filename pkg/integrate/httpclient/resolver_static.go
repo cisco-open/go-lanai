@@ -24,5 +24,3 @@ func NewStaticTargetResolver(baseUrl string) (TargetResolverFunc, error) {
 		return &uri, nil
 	}, nil
 }
-
-

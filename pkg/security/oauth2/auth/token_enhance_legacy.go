@@ -66,7 +66,11 @@ func (c *legacyClaims) Values() map[string]interface{} {
 // LegacyTokenEnhancer implements order.Ordered and TokenEnhancer
 // LegacyTokenEnhancer add legacy claims and response fields that was supported by Java version of IDM
 // but deprecated in Go version
-type LegacyTokenEnhancer struct {}
+type LegacyTokenEnhancer struct{}
+
+func NewLegacyTokenEnhancer() TokenEnhancer {
+	return &LegacyTokenEnhancer{}
+}
 
 func (te *LegacyTokenEnhancer) Order() int {
 	return TokenEnhancerOrderDetailsClaims

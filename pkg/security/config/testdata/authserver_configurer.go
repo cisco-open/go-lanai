@@ -24,6 +24,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/security/idp/extsamlidp"
 	"github.com/cisco-open/go-lanai/pkg/security/idp/passwdidp"
 	"github.com/cisco-open/go-lanai/pkg/security/idp/unknownIdp"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/auth"
 	"github.com/cisco-open/go-lanai/pkg/security/passwd"
 	"github.com/cisco-open/go-lanai/test/samltest"
 	"github.com/cisco-open/go-lanai/test/sectest"
@@ -35,8 +36,8 @@ const (
 	IdpDomainExtSAML   = "saml.lanai.com"
 	ExtSamlIdpName     = "ext-saml-idp"
 	ExtSamlIdpEntityID = "http://external.saml.com/samlidp/metadata"
-	ExtSamlIdpSSOUrl = "http://external.saml.com/samlidp/authorize"
-	ExtSamlIdpSLOUrl = "http://external.saml.com/samlidp/logout"
+	ExtSamlIdpSSOUrl   = "http://external.saml.com/samlidp/authorize"
+	ExtSamlIdpSLOUrl   = "http://external.saml.com/samlidp/logout"
 )
 
 type authDI struct {
@@ -48,6 +49,9 @@ type authDI struct {
 	Properties          authserver.AuthServerProperties
 	PasswdIDPProperties passwdidp.PwdAuthProperties
 	SamlIDPProperties   extsamlidp.SamlAuthProperties
+	CustomTokenGranter  auth.TokenGranter          `optional:"true"`
+	CustomTokenEnhancer auth.TokenEnhancer         `optional:"true"`
+	CustomAuthRegistry  auth.AuthorizationRegistry `optional:"true"`
 }
 
 func NewAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer {
@@ -70,6 +74,15 @@ func NewAuthServerConfigurer(di authDI) authserver.AuthorizationServerConfigurer
 		config.ProviderStore = sectest.MockedProviderStore{}
 		config.UserPasswordEncoder = di.PasswordEncoder
 		config.SessionSettingService = StaticSessionSettingService(1)
+		if di.CustomTokenEnhancer != nil {
+			config.CustomTokenEnhancer = []auth.TokenEnhancer{di.CustomTokenEnhancer}
+		}
+		if di.CustomTokenGranter != nil {
+			config.CustomTokenGranter = []auth.TokenGranter{di.CustomTokenGranter}
+		}
+		if di.CustomAuthRegistry != nil {
+			config.CustomAuthRegistry = di.CustomAuthRegistry
+		}
 	}
 }
 
@@ -81,7 +94,7 @@ func (s StaticSessionSettingService) GetMaximumSessions(ctx context.Context) int
 
 func NewMockedIDPManager() *samltest.MockedIdpManager {
 	return samltest.NewMockedIdpManager(func(opt *samltest.IdpManagerMockOption) {
-		opt.IDPList = []idp.IdentityProvider {
+		opt.IDPList = []idp.IdentityProvider{
 			extsamlidp.NewIdentityProvider(func(opt *extsamlidp.SamlIdpDetails) {
 				opt.EntityId = ExtSamlIdpEntityID
 				opt.Domain = IdpDomainExtSAML

@@ -17,9 +17,9 @@
 package auth
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
 )
 
 type TokenGranter interface {
@@ -31,12 +31,20 @@ type TokenGranter interface {
 	Grant(ctx context.Context, request *TokenRequest) (oauth2.AccessToken, error)
 }
 
+// AuthorizationServiceInjector
+// By implementing this interface, a component can ask the framework to call its Inject method
+// to get a reference to the AuthorizationService.
+// Currently only component that also implements TokenGranter interface will have its Inject method be called.
+type AuthorizationServiceInjector interface {
+	Inject(authService AuthorizationService)
+}
+
 // CompositeTokenGranter implements TokenGranter
 type CompositeTokenGranter struct {
 	delegates []TokenGranter
 }
 
-func NewCompositeTokenGranter(delegates...TokenGranter) *CompositeTokenGranter {
+func NewCompositeTokenGranter(delegates ...TokenGranter) *CompositeTokenGranter {
 	return &CompositeTokenGranter{
 		delegates: delegates,
 	}

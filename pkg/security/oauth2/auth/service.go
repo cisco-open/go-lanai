@@ -17,15 +17,15 @@
 package auth
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2"
-    "github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
-    "github.com/cisco-open/go-lanai/pkg/tenancy"
-    "github.com/cisco-open/go-lanai/pkg/utils"
-    "github.com/google/uuid"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/security"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2"
+	"github.com/cisco-open/go-lanai/pkg/security/oauth2/common"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/pkg/utils"
+	"github.com/google/uuid"
+	"time"
 )
 
 var (
@@ -76,7 +76,6 @@ func NewDefaultAuthorizationService(opts ...DASOptions) *DefaultAuthorizationSer
 		TokenEnhancers: []TokenEnhancer{
 			&ExpiryTokenEnhancer{},
 			&basicEnhancer,
-			&LegacyTokenEnhancer{},
 			&ResourceIdTokenEnhancer{},
 			&DetailsTokenEnhancer{},
 			&refreshTokenEnhancer,

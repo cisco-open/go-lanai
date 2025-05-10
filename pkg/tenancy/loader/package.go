@@ -29,13 +29,17 @@ var logger = log.New("Tenancy.Load")
 var internalLoader Loader
 
 var Module = &bootstrap.Module{
-	Name: "tenancy-loader",
+	Name:       "tenancy-loader",
 	Precedence: bootstrap.TenantHierarchyLoaderPrecedence,
 	Options: []fx.Option{
-		fx.Provide(provideLoader),
+		fx.Provide(defaultLoader()),
 		fx.Invoke(initializeTenantHierarchy),
 	},
 }
+
+const (
+	fxNameLoader = "tenant-hierarchy/loader"
+)
 
 func Use() {
 	tenancy.Use()
@@ -44,14 +48,26 @@ func Use() {
 
 type loaderDI struct {
 	fx.In
-	Ctx *bootstrap.ApplicationContext
-	Store TenantHierarchyStore
-	Cf redis.ClientFactory
-	Prop tenancy.CacheProperties
-	Accessor tenancy.Accessor `name:"tenancy/accessor"`
+	Ctx           *bootstrap.ApplicationContext
+	Store         TenantHierarchyStore
+	Cf            redis.ClientFactory
+	Prop          tenancy.CacheProperties
+	Accessor      tenancy.Accessor `name:"tenancy/accessor"`
+	UnnamedLoader Loader           `optional:"true"`
+}
+
+func defaultLoader() fx.Annotated {
+	return fx.Annotated{
+		Name:   fxNameLoader,
+		Target: provideLoader,
+	}
 }
 
 func provideLoader(di loaderDI) Loader {
+	if di.UnnamedLoader != nil {
+		internalLoader = di.UnnamedLoader
+		return di.UnnamedLoader
+	}
 	rc, e := di.Cf.New(di.Ctx, func(opt *redis.ClientOption) {
 		opt.DbIndex = di.Prop.DbIndex
 	})
@@ -62,9 +78,16 @@ func provideLoader(di loaderDI) Loader {
 	return internalLoader
 }
 
-func initializeTenantHierarchy (ctx *bootstrap.ApplicationContext, loader Loader) error {
+type initDi struct {
+	fx.In
+	AppCtx          *bootstrap.ApplicationContext
+	EffectiveLoader Loader `name:"tenant-hierarchy/loader"`
+}
+
+func initializeTenantHierarchy(di initDi) error {
+	ctx := di.AppCtx
 	logger.WithContext(ctx).Infof("started loading tenant hierarchy")
-	internalLoader = loader
+	internalLoader = di.EffectiveLoader
 	err := LoadTenantHierarchy(ctx)
 	if err != nil {
 		logger.WithContext(ctx).Errorf("tenant hierarchy not loaded due to %v", err)
@@ -72,4 +95,5 @@ func initializeTenantHierarchy (ctx *bootstrap.ApplicationContext, loader Loader
 		logger.WithContext(ctx).Infof("finished loading tenant hierarchy")
 	}
 	return err
+
 }

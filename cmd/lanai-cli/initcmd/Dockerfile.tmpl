@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=debian:bookworm
-ARG BUILDER_IMAGE=golang:1.21-bookworm
+ARG BUILDER_IMAGE=golang:1.24-bookworm
 
 ## Build Container ##
 FROM ${BUILDER_IMAGE} AS builder

@@ -21,12 +21,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cisco-open/go-lanai/pkg/discovery"
+	"github.com/cisco-open/go-lanai/pkg/utils"
 	"github.com/cisco-open/go-lanai/pkg/utils/order"
+	"net/url"
 	"time"
 )
 
 var (
 	insecureInstanceMatcher = discovery.InstanceWithTagKV("secure", "false", true)
+	supportedSchemes        = utils.NewStringSet("http", "https")
 )
 
 type clientDefaults struct {
@@ -203,9 +206,13 @@ func (c *client) shallowCopy() *client {
 
 func (c *client) executor(request *Request, resolver TargetResolver, dec DecodeResponseFunc) Retryable {
 	return func(ctx context.Context) (interface{}, error) {
-		target, e := resolver.Resolve(ctx, request)
-		if e != nil {
-			return nil, e
+		target, e := url.Parse(request.Path)
+		// only need to resolve the target if the request.Path is not absolute
+		if e != nil || !supportedSchemes.Has(target.Scheme) {
+			target, e = resolver.Resolve(ctx, request)
+			if e != nil {
+				return nil, e
+			}
 		}
 
 		req, e := request.CreateFunc(ctx, request.Method, target)

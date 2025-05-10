@@ -17,25 +17,25 @@
 package th_loader
 
 import (
-    "context"
-    "embed"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/redis"
-    "github.com/cisco-open/go-lanai/pkg/tenancy"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/cisco-open/go-lanai/test/embedded"
-    "github.com/cisco-open/go-lanai/test/mocks"
-    "github.com/cisco-open/go-lanai/test/suitetest"
-    "github.com/ghodss/yaml"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "gorm.io/gorm"
-    "io"
-    "io/fs"
-    "testing"
+	"context"
+	"embed"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/redis"
+	"github.com/cisco-open/go-lanai/pkg/tenancy"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/cisco-open/go-lanai/test/embedded"
+	"github.com/cisco-open/go-lanai/test/mocks"
+	"github.com/cisco-open/go-lanai/test/suitetest"
+	"github.com/ghodss/yaml"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"gorm.io/gorm"
+	"io"
+	"io/fs"
+	"testing"
 )
 
 /*************************
@@ -83,7 +83,7 @@ func TestMain(m *testing.M) {
 type testDI struct {
 	fx.In
 	DB              *gorm.DB `optional:"true"`
-	InternalLoader  Loader
+	InternalLoader  Loader   `name:"tenant-hierarchy/loader"`
 	ClientFactory   redis.ClientFactory
 	AppCtx          *bootstrap.ApplicationContext
 	TestTenantStore *TestTenantStore
@@ -97,7 +97,7 @@ func TestLoader(t *testing.T) {
 		apptest.WithDI(di),
 		apptest.WithFxOptions(
 			fx.Provide(
-				provideLoader,
+				defaultLoader(),
 				ProvideTestTenantStore,
 				ProvideTestTenantAccessor,
 				ProvideTestCacheProperties,
@@ -108,13 +108,35 @@ func TestLoader(t *testing.T) {
 	)
 }
 
+func TestCustomLoader(t *testing.T) {
+	di := &testDI{}
+	test.RunTest(context.Background(), t,
+		apptest.Bootstrap(),
+		apptest.WithModules(redis.Module),
+		apptest.WithDI(di),
+		apptest.WithFxOptions(
+			fx.Provide(
+				defaultLoader(),
+				ProvideTestTenantStore,
+				ProvideTestTenantAccessor,
+				ProvideTestCacheProperties,
+				NewCustomLoader,
+			),
+		),
+		test.GomegaSubTest(SubTestCustomLoader(di), "SubTestLoadTenantHierarchy"),
+	)
+}
+
 /*************************
 	Sub Tests
  *************************/
 
 func SubTestLoadTenantHierarchy(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
-		e := initializeTenantHierarchy(di.AppCtx, di.InternalLoader)
+		e := initializeTenantHierarchy(initDi{
+			AppCtx:          di.AppCtx,
+			EffectiveLoader: di.InternalLoader,
+		})
 		g.Expect(e).To(Succeed())
 	}
 }
@@ -122,8 +144,22 @@ func SubTestLoadTenantHierarchy(di *testDI) test.GomegaSubTestFunc {
 func SubTestLoadTenantHierarchyFailure(di *testDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		di.TestTenantStore.Reset(nil, "")
-		e := initializeTenantHierarchy(di.AppCtx, di.InternalLoader)
+		e := initializeTenantHierarchy(initDi{
+			AppCtx:          di.AppCtx,
+			EffectiveLoader: di.InternalLoader,
+		})
 		g.Expect(e).To(HaveOccurred())
+	}
+}
+
+func SubTestCustomLoader(di *testDI) test.GomegaSubTestFunc {
+	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
+		e := initializeTenantHierarchy(initDi{
+			AppCtx:          di.AppCtx,
+			EffectiveLoader: di.InternalLoader,
+		})
+		g.Expect(e).To(Succeed())
+		g.Expect(di.InternalLoader.(*CustomLoader).Loaded).To(BeTrue())
 	}
 }
 
@@ -200,5 +236,17 @@ func (i *TestTenantIterator) Close() error {
 }
 
 func (i *TestTenantIterator) Err() error {
+	return nil
+}
+
+type CustomLoader struct {
+	Loaded bool
+}
+
+func NewCustomLoader() Loader {
+	return &CustomLoader{}
+}
+func (c *CustomLoader) LoadTenantHierarchy(ctx context.Context) (err error) {
+	c.Loaded = true
 	return nil
 }
