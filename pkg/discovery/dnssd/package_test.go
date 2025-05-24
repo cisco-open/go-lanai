@@ -93,23 +93,41 @@ func SubTestDiscoveryClientWithFallback(di *TestModuleDI) test.GomegaSubTestFunc
 		// via service
 		svc := instancer.Service()
 		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
-		g.Expect(svc.Insts).To(HaveLen(2), "instancer should return services with all matching instances")
+		g.Expect(svc.Insts).To(HaveLen(4), "instancer should return services with all matching instances")
 
 		// without additional selector
 		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
 			{
-				AlternativeID: "inst-1." + ServiceName2 + ".test.mock:9999",
+				AlternativeID:   "inst-1." + ServiceName2 + ".test.mock:9999",
 				AlternativeAddr: "inst-1." + ServiceName2 + ".test.mock",
-				Name:          ServiceName2,
-				Port:          9999,
-				Healthy:       true,
+				Name:            ServiceName2,
+				Port:            9999,
+				Healthy:         true,
 			},
 			{
-				AlternativeID: "inst-2." + ServiceName2 + ".test.mock:8888",
+				AlternativeID:   "inst-2." + ServiceName2 + ".test.mock",
 				AlternativeAddr: "inst-2." + ServiceName2 + ".test.mock",
-				Name:          ServiceName2,
-				Port:          8888,
-				Healthy:       true,
+				Name:            ServiceName2,
+				Port:            0,
+				Healthy:         true,
+			},
+			{
+				AlternativeID:   "http://inst-3." + ServiceName2 + ".test.mock:9999",
+				AlternativeAddr: "inst-3." + ServiceName2 + ".test.mock",
+				Name:            ServiceName2,
+				Port:            9999,
+				Healthy:         true,
+				AlternativeTags: []string{"insecure=true", "secure=false"},
+				AlternativeMeta: map[string]string{"scheme": "http"},
+			},
+			{
+				AlternativeID:   "https://inst-4." + ServiceName2 + ".test.mock",
+				AlternativeAddr: "inst-4." + ServiceName2 + ".test.mock",
+				Name:            ServiceName2,
+				Port:            0,
+				Healthy:         true,
+				AlternativeTags: []string{"insecure=false", "secure=true"},
+				AlternativeMeta: map[string]string{"scheme": "https"},
 			},
 		})
 	}
@@ -134,11 +152,11 @@ func SubTestDiscoveryClientWithUnknownService(di *TestModuleDI) test.GomegaSubTe
 		// without additional selector
 		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
 			{
-				AlternativeID: svcName + ".test.mock:0",
+				AlternativeID:   svcName + ".test.mock",
 				AlternativeAddr: svcName + ".test.mock",
-				Name:          svcName,
-				Port:          0,
-				Healthy:       true,
+				Name:            svcName,
+				Port:            0,
+				Healthy:         true,
 			},
 		})
 	}

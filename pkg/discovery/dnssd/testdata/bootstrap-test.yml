@@ -15,4 +15,6 @@ cloud:
             service: service[0-9]+
             hosts:
               - "inst-1.{{.ServiceName}}.test.mock:9999"
-              - "inst-2.{{.ServiceName}}.test.mock:8888"
+              - "inst-2.{{.ServiceName}}.test.mock"
+              - "http://inst-3.{{.ServiceName}}.test.mock:9999"
+              - "https://inst-4.{{.ServiceName}}.test.mock"

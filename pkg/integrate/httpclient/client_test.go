@@ -62,7 +62,7 @@ func UpdateMockedSD(di *TestDI) test.SetupFunc {
 		if port <= 0 {
 			return ctx, nil
 		}
-		di.Client.UpdateMockedService(SDServiceNameFullInfo, sdtest.NthInstance(0), func(inst *discovery.Instance) {
+		di.Client.UpdateMockedService(SDServiceNameFullInfo, sdtest.AnyHealthyInstance(), func(inst *discovery.Instance) {
 			inst.Port = port
 		})
 		di.Client.UpdateMockedService(SDServiceNamePortOnly, sdtest.NthInstance(0), func(inst *discovery.Instance) {
@@ -130,7 +130,7 @@ func SubTestWithFullInfoSD(di *TestDI) test.GomegaSubTestFunc {
 	}
 }
 
-// SubTestWithPortOnlySD discovered service has no information about scheme and context-path, only has "port
+// SubTestWithPortOnlySD discovered service has no information about scheme and context-path, only has "port"
 func SubTestWithPortOnlySD(di *TestDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		var client httpclient.Client
@@ -142,11 +142,10 @@ func SubTestWithPortOnlySD(di *TestDI) test.GomegaSubTestFunc {
 		req := httpclient.NewRequest(TestPath, http.MethodPost, httpclient.WithBody(reqBody))
 		_, e = client.Execute(ctx, req, httpclient.JsonBody(&EchoResponse{}))
 		g.Expect(e).To(HaveOccurred(), "execution should fail without extra SD options")
-		g.Expect(e).To(gomegautils.IsError(httpclient.ErrorTypeInternal), "error should be correct without extra SD options")
+		g.Expect(e).To(gomegautils.IsError(httpclient.ErrorTypeResponse), "error should be correct without extra SD options")
 
 		// with proper SD options, should not fail
 		client, e = di.HttpClient.WithService(SDServiceNamePortOnly, func(opt *httpclient.SDOption) {
-			opt.Scheme = "http"
 			opt.ContextPath = "/test"
 		})
 		g.Expect(e).To(Succeed(), "client with service name should be available")
@@ -399,12 +398,12 @@ func SubTestWithAbsoluteUrl(di *TestDI) test.GomegaSubTestFunc {
 		random := utils.RandomString(20)
 		now := time.Now().Format(time.RFC3339)
 		reqBody := makeEchoRequestBody()
-		opts := append([]httpclient.RequestOptions{
+		opts := []httpclient.RequestOptions{
 			httpclient.WithHeader("X-Data", random),
 			httpclient.WithParam("time", now),
 			httpclient.WithParam("data", random),
 			httpclient.WithBody(reqBody),
-		})
+		}
 
 		uri, e := url.Parse(fmt.Sprintf(`http://localhost:%d%s`, webtest.CurrentPort(ctx), webtest.CurrentContextPath(ctx)))
 		g.Expect(e).ToNot(HaveOccurred())

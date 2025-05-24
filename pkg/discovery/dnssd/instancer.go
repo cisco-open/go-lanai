@@ -9,6 +9,7 @@ import (
 	"github.com/cisco-open/go-lanai/pkg/discovery/sd"
 	"github.com/cisco-open/go-lanai/pkg/utils/loop"
 	"net"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,11 +21,15 @@ const (
 	kMetaSRVName    = "_srv_name"
 	kMetaSRVService = "_srv_service"
 	kMetaSRVProto   = "_srv_proto"
+	kMetaScheme     = "scheme"
+	kTagSecure      = "secure"
+	kTagInsecure    = "insecure"
 )
 
 var (
 	defaultRefreshInterval = 30 * time.Second
 	defaultLookupTimeout   = 2 * time.Second
+	hostPatternRegexp      = regexp.MustCompile(`((?P<scheme>\w+)://)?(?P<host>.+)`)
 )
 
 type InstancerOptions func(opt *InstancerOption)
@@ -229,18 +234,26 @@ func staticInstancesWithTemplates(opt *InstancerOption) ([]*discovery.Instance, 
 		if e != nil {
 			return nil, e
 		}
-		addr, port, e := splitAddrAndPort(host)
+		scheme, addr, port, e := parseHostStringWithScheme(host)
 		if e != nil {
 			return nil, fmt.Errorf(`unable to parse host "%s": %v`, host, e)
 		}
 		instances[j] = &discovery.Instance{
-			ID:       net.JoinHostPort(addr, strconv.Itoa(port)),
+			ID:       host,
 			Service:  opt.Name,
 			Address:  addr,
 			Port:     port,
 			Meta:     map[string]string{},
 			Health:   discovery.HealthPassing,
 			RawEntry: host,
+		}
+		if len(scheme) != 0 {
+			instances[j].Meta[kMetaScheme] = scheme
+			if scheme == "http" {
+				instances[j].Tags = append(instances[j].Tags, kTagInsecure+"=true", kTagSecure+"=false")
+			} else {
+				instances[j].Tags = append(instances[j].Tags, kTagInsecure+"=false", kTagSecure+"=true")
+			}
 		}
 	}
 	sort.SliceStable(instances, func(i, j int) bool {
@@ -264,4 +277,19 @@ func splitAddrAndPort(value string) (string, int, error) {
 		}
 		return addr, port, nil
 	}
+}
+
+func parseHostStringWithScheme(value string) (scheme, hostname string, port int, err error) {
+	var host string
+	match := hostPatternRegexp.FindStringSubmatch(value)
+	for i, name := range hostPatternRegexp.SubexpNames() {
+		switch name {
+		case "scheme":
+			scheme = strings.ToLower(match[i])
+		case "host":
+			host = strings.ToLower(match[i])
+		}
+	}
+	hostname, port, err = splitAddrAndPort(host)
+	return
 }

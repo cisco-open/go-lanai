@@ -52,6 +52,12 @@ func AnyInstance() InstanceMockMatcher {
 	}
 }
 
+func AnyHealthyInstance() InstanceMockMatcher {
+	return func(inst *discovery.Instance) bool {
+		return inst.Health == discovery.HealthPassing
+	}
+}
+
 func NthInstance(n int) InstanceMockMatcher {
 	return func(inst *discovery.Instance) bool {
 		i := extractIndexIfPossible(inst)

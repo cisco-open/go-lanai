@@ -46,10 +46,14 @@ type SDOption struct {
 	// Default: -1 if InvalidateOnError = false, 0 if InvalidateOnError = true
 	InvalidateTimeout time.Duration
 	// Scheme HTTP scheme to use.
-	// If not set, the actual scheme is resolved from target instance's Meta/Tags.
+	// If not set, the actual scheme is resolved from target instance's Meta/Tags and DefaultScheme value.
 	// Possible values: "http", "https", "" (empty string).
 	// Default: ""
 	Scheme string
+	// DefaultScheme Default HTTP scheme to use, if Scheme is not set and resolver cannot resolve scheme from Meta/Tags.
+	// Possible values: "http", "https.
+	// Default: "http"
+	DefaultScheme string
 	// ContextPath Path prefix for any given Request.
 	// If not set, the context path is resolved from target instance's Meta/Tags.
 	// e.g. "/auth/api"
@@ -65,7 +69,7 @@ type SDOption struct {
 type SDTargetResolver struct {
 	SDOption
 	instancer discovery.Instancer
-	balancer balancer[*discovery.Instance]
+	balancer  balancer[*discovery.Instance]
 }
 
 // NewSDTargetResolver creates a TargetResolver that work with discovery.Instancer.
@@ -73,6 +77,7 @@ type SDTargetResolver struct {
 func NewSDTargetResolver(instancer discovery.Instancer, opts ...SDOptions) (*SDTargetResolver, error) {
 	opt := SDOption{
 		Selector:          discovery.InstanceIsHealthy(),
+		DefaultScheme:     "http",
 		InvalidateOnError: true,
 	}
 	for _, f := range opts {
@@ -87,9 +92,9 @@ func NewSDTargetResolver(instancer discovery.Instancer, opts ...SDOptions) (*SDT
 	}
 
 	return &SDTargetResolver{
-		SDOption: opt,
+		SDOption:  opt,
 		instancer: instancer,
-		balancer: newRoundRobinBalancer[*discovery.Instance](),
+		balancer:  newRoundRobinBalancer[*discovery.Instance](),
 	}, nil
 }
 
@@ -103,7 +108,7 @@ func (ke *SDTargetResolver) Resolve(_ context.Context, req *Request) (*url.URL, 
 
 	// prepare endpoints
 	inst, e := ke.balancer.Balance(svc.Instances(ke.Selector))
-	if e != nil || inst == nil{
+	if e != nil || inst == nil {
 		return nil, NewNoEndpointFoundError(fmt.Errorf("cannot find service [%s]", ke.instancer.ServiceName()))
 	}
 	return ke.targetURL(inst, req)
@@ -117,10 +122,12 @@ func (ke *SDTargetResolver) targetURL(inst *discovery.Instance, req *Request) (t
 
 	scheme := ke.Scheme
 	if len(scheme) == 0 {
-		if m, e := insecureInstanceMatcher.Matches(inst); m && e == nil {
+		if m, e := httpInstanceMatcher.Matches(inst); m && e == nil {
 			scheme = "http"
-		} else {
+		} else if m, e := httpsInstanceMatcher.Matches(inst); m && e == nil {
 			scheme = "https"
+		} else {
+			scheme = ke.DefaultScheme
 		}
 	}
 
@@ -150,6 +157,3 @@ func (ke *SDTargetResolver) handleError(svc *discovery.Service) bool {
 		return svc.FirstErrAt.Add(ke.InvalidateTimeout).Before(time.Now())
 	}
 }
-
-
-

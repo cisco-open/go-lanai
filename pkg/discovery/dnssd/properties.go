@@ -64,7 +64,9 @@ type FallbackProperties struct {
 	// Default is a golang template with single-line output to rewrite any service name into host.
 	// The template data contains field ".ServiceName".
 	// 		e.g. "{{.ServiceName}}.default.svc.cluster.local:8443"
-	// This value is used when the service name is not applicable to any entry in Mappings .
+	// This value is used when the service name is not applicable to any entry in Mappings.
+	// The value can contain scheme, hostname and port, in which "hostname" is required.
+	//      e.g. "http://{{.ServiceName}}.default.svc.cluster.local:8443"
 	Default string `json:"default"`
 }
 
@@ -89,6 +91,8 @@ type HostMappingProperties struct {
 	// Hosts is a list of known hosts. Each entry should be a golang template with single-line output.
 	// The template data contains field ".ServiceName"
 	// 		e.g. "pod-1.{{.ServiceName}}.default.svc.cluster.local:8989"
+	// The value can contain scheme, hostname and port, in which "hostname" is required.
+	//      e.g. "http://{{.ServiceName}}.default.svc.cluster.local:8443"
 	Hosts []string `json:"hosts"`
 }
 
