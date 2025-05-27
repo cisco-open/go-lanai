@@ -1640,7 +1640,7 @@ github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:53:			Read	
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:80:			AppendAll					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:106:			Append						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:120:			groupKey					100.0%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						42.9%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:38:					Use						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:48:					initialize					66.7%
 github.com/cisco-open/go-lanai/pkg/profiler/pprof.go:31:					Mappings					100.0%
