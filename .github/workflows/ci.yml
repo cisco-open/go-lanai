@@ -97,10 +97,23 @@ jobs:
 #          file_path: code-coverage-results.md
       - name: Upload Badges and Reports
         if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          branch: gh-pages
-          folder: dist
-          target-folder: pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: dist
+          destination_dir: pages
+          enable_jekyll: true
+          keep_files: true
+          commit_message: "Upload badges & reports from CI - ${{ github.job }}"
+#      - name: Upload Badges and Reports
+#        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+#        uses: JamesIves/github-pages-deploy-action@v4
+#        with:
+#          branch: gh-pages
+#          folder: dist
+#          target-folder: pages
+#          clean: false
+#          commit-message: "Upload badges & reports from CI
 
 
