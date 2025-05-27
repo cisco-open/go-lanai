@@ -37,6 +37,8 @@ jobs:
   main:
     name: Test, Analyze Code & Report
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: "Context"
         shell: bash
@@ -96,8 +98,6 @@ jobs:
       - name: Upload Badges and Reports
         if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         uses: JamesIves/github-pages-deploy-action@v4
-        permissions:
-          contents: write
         with:
           branch: gh-pages
           folder: dist
