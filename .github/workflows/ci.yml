@@ -103,9 +103,11 @@ jobs:
           publish_branch: gh-pages
           publish_dir: dist
           destination_dir: pages
+          exclude_assets: '.github,coverage.out,tests.json'
           enable_jekyll: true
           keep_files: true
           commit_message: "Upload badges & reports from CI - ${{ github.job }}"
+
 #      - name: Upload Badges and Reports
 #        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
 #        uses: JamesIves/github-pages-deploy-action@v4
