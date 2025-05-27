@@ -95,6 +95,10 @@ jobs:
 #          gist_id: 82b48469578014fc69d5aa64ef0a443f
 #          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.md
 #          file_path: code-coverage-results.md
+      - name: "Collect Reports"
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+        run: |
+          cp code-coverage-results.md dist/
       - name: Upload Badges and Reports
         if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         uses: peaceiris/actions-gh-pages@v4
@@ -108,14 +112,5 @@ jobs:
           keep_files: true
           commit_message: "Upload badges & reports from CI - ${{ github.job }}"
 
-#      - name: Upload Badges and Reports
-#        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-#        uses: JamesIves/github-pages-deploy-action@v4
-#        with:
-#          branch: gh-pages
-#          folder: dist
-#          target-folder: pages
-#          clean: false
-#          commit-message: "Upload badges & reports from CI
 
 

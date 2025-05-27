@@ -1,7 +1,7 @@
 # go-lanai
 
 ![Tests](https://github.com/cisco-open/go-lanai/actions/workflows/ci.yml/badge.svg?branch=main)
-[![Coverage](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/raw/go-lanai-main-coverage.svg)](https://gist.githubusercontent.com/stonedu1011/82b48469578014fc69d5aa64ef0a443f/#file-go-lanai-main-coverage-md)
+[![Coverage](https://cisco-open.github.io/go-lanai/pages/coverage-badge.svg)](https://cisco-open.github.io/go-lanai/pages/code-coverage-results.md)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0/)
 
 go-lanai is an application frameworks and a set of modules that make writing applications easy. It provides
