@@ -1,3 +1,14 @@
-**
+.tmp
+dist
+
+build
+cmd
+internal
+pkg
+test
+examples
+docs
+Makefile*
+
 !_config.yml
 !pages/**
