@@ -77,20 +77,30 @@ jobs:
           format: markdown
           output: both
           thresholds: "${{ inputs.low_cov }} ${{ inputs.high_cov }}"
-      - name: "Upload Badges"
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: exuanbo/actions-deploy-gist@v1
+#      - name: "Upload Badges"
+#        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+#        uses: exuanbo/actions-deploy-gist@v1
+#        with:
+#          token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
+#          gist_id: 82b48469578014fc69d5aa64ef0a443f
+#          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.svg
+#          file_path: dist/coverage-badge.svg
+#      - name: "Upload Reports"
+#        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
+#        uses: exuanbo/actions-deploy-gist@v1
+#        with:
+#          token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
+#          gist_id: 82b48469578014fc69d5aa64ef0a443f
+#          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.md
+#          file_path: code-coverage-results.md
+      - name: Upload Badges and Reports
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        permissions:
+          contents: write
         with:
-          token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
-          gist_id: 82b48469578014fc69d5aa64ef0a443f
-          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.svg
-          file_path: dist/coverage-badge.svg
-      - name: "Upload Reports"
-        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
-        uses: exuanbo/actions-deploy-gist@v1
-        with:
-          token: ${{ secrets.COVERAGE_BADGE_GIST_TOKEN }}
-          gist_id: 82b48469578014fc69d5aa64ef0a443f
-          gist_file_name: go-lanai-${{ github.head_ref || inputs.branch || 'main' }}-coverage.md
-          file_path: code-coverage-results.md
+          branch: gh-pages
+          folder: dist
+          target-folder: pages
+
 
