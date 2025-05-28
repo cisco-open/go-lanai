@@ -1615,9 +1615,9 @@ github.com/cisco-open/go-lanai/pkg/opensearch/tracing.go:79:					TracerHook					
 github.com/cisco-open/go-lanai/pkg/opensearch/tracing.go:91:					tracingProvider					100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:53:				NewDataCollector				75.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:64:				Start						88.9%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:78:				Stop						91.7%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:78:				Stop						100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:99:				Subscribe					87.5%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:111:				Unsubscribe					85.7%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:111:				Unsubscribe					100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:123:				collectFunc					100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:138:				collect						93.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/context.go:59:				MarshalJSON					66.7%
@@ -1640,7 +1640,7 @@ github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:53:			Read	
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:80:			AppendAll					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:106:			Append						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:120:			groupKey					100.0%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						100.0%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						42.9%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:38:					Use						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:48:					initialize					66.7%
 github.com/cisco-open/go-lanai/pkg/profiler/pprof.go:31:					Mappings					100.0%
@@ -3661,7 +3661,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:109:				isLoaded			
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:114:				markLoaded					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:129:				NewMemCache					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:146:				GetOrLoad					84.6%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						91.7%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						83.3%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:203:				Delete						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:207:				Reset						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:213:				Evict						100.0%
@@ -3670,7 +3670,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:232:				updateEntry
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:250:				load						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:261:				getOrNew					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:271:				newIfAbsent					100.0%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				100.0%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				88.9%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:302:				set						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:309:				get						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:319:				getValue					100.0%
