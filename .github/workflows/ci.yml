@@ -86,10 +86,9 @@ jobs:
           ---
           layout: report
           ---
-          
+          [Coverage Details](coverage.html)
           EOF
           cat code-coverage-results.md >> dist/code-coverage-results.md
-
       - name: "Upload Badges and Reports"
         if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         uses: peaceiris/actions-gh-pages@v4
