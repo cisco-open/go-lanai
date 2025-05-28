@@ -2,7 +2,7 @@
 .tmp
 dist
 
-# Sources in main
+# Sources from main
 build
 cmd
 internal
@@ -14,5 +14,12 @@ Makefile*
 
 # rest
 !_config.yml
-!pages/**
 !reports/**
+
+# jekyll
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor
+Gemfile.lock
