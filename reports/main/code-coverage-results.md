@@ -1,7 +1,7 @@
 ---
 layout: report
 ---
-
+[Coverage Details](coverage.html)
 ![Code Coverage](https://img.shields.io/badge/Code%20Coverage-82%25-success?style=flat)
 
 Package | Line Rate | Complexity
@@ -49,8 +49,8 @@ github.com/cisco-open/go-lanai/pkg/discovery | 91% | 0
 github.com/cisco-open/go-lanai/pkg/discovery/consulsd | 94% | 0
 github.com/cisco-open/go-lanai/pkg/discovery/dnssd | 91% | 0
 github.com/cisco-open/go-lanai/pkg/discovery/sd | 85% | 0
-github.com/cisco-open/go-lanai/pkg/dsync | 81% | 0
-github.com/cisco-open/go-lanai/pkg/dsync/consul | 91% | 0
+github.com/cisco-open/go-lanai/pkg/dsync | 83% | 0
+github.com/cisco-open/go-lanai/pkg/dsync/consul | 92% | 0
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92% | 0
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87% | 0
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80% | 0
@@ -77,7 +77,7 @@ github.com/cisco-open/go-lanai/pkg/opa/testdata | 100% | 0
 github.com/cisco-open/go-lanai/pkg/opensearch | 80% | 0
 github.com/cisco-open/go-lanai/pkg/opensearch/testdata | 98% | 0
 github.com/cisco-open/go-lanai/pkg/profiler | 57% | 0
-github.com/cisco-open/go-lanai/pkg/profiler/monitor | 78% | 0
+github.com/cisco-open/go-lanai/pkg/profiler/monitor | 79% | 0
 github.com/cisco-open/go-lanai/pkg/redis | 88% | 0
 github.com/cisco-open/go-lanai/pkg/scheduler | 100% | 0
 github.com/cisco-open/go-lanai/pkg/security | 75% | 0
@@ -186,6 +186,6 @@ github.com/cisco-open/go-lanai/test/utils | 80% | 0
 github.com/cisco-open/go-lanai/test/utils/golden | 89% | 0
 github.com/cisco-open/go-lanai/test/utils/gomega | 88% | 0
 github.com/cisco-open/go-lanai/test/webtest | 95% | 0
-**Summary** | **82%** (21990 / 26766) | **0**
+**Summary** | **82%** (21997 / 26766) | **0**
 
 _Minimum allowed line rate is `50%`_
