@@ -1,6 +1,8 @@
+# Build folders
 .tmp
 dist
 
+# Sources in main
 build
 cmd
 internal
@@ -10,5 +12,7 @@ examples
 docs
 Makefile*
 
+# rest
 !_config.yml
 !pages/**
+!reports/**
