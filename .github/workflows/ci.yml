@@ -82,7 +82,14 @@ jobs:
       - name: "Collect Reports"
         if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         run: |
-          cp -rfp code-coverage-results.md dist/code-coverage-results.md
+          cat > dist/code-coverage-results.md <<EOF
+          ---
+          layout: report
+          ---
+          
+          EOF
+          cat code-coverage-results.md >> dist/code-coverage-results.md
+
       - name: "Upload Badges and Reports"
         if: ${{ !cancelled() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
         uses: peaceiris/actions-gh-pages@v4
