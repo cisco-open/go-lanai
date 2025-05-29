@@ -41,6 +41,7 @@ type Global struct {
 	TmpDir     string `flag:"tmp-dir" desc:"temporary directory."`
 	OutputDir  string `flag:"output,o" desc:"output directory. All non-absolute paths for output are relative to this directory"`
 	Verbose    bool   `flag:"debug" desc:"show debug information"`
+	DryRun     bool   `flag:"dry-run" desc:"do not actually execute shell commands"`
 }
 
 func (g Global) AbsPath(base, path string) string {

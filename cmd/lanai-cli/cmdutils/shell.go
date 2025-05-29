@@ -149,6 +149,11 @@ func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8,
 		logger.WithContext(ctx).Infof("Shell Command: %s", cmd)
 	}
 
+	if GlobalArgs.DryRun {
+		logger.WithContext(ctx).Infof("Run: %s", cmd)
+		return 0, nil
+	}
+
 	if e := r.Run(ctx, p); e != nil {
 		if status, ok := interp.IsExitStatus(err); ok {
 			return status, e
