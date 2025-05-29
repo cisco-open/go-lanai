@@ -1,7 +1,7 @@
 ---
 layout: report
 ---
-[Coverage Details](coverage.html)
+[![Coverage Details](https://img.shields.io/badge/Coverage%20Details-grey?style=flat)](coverage.html)
 ![Code Coverage](https://img.shields.io/badge/Code%20Coverage-82%25-success?style=flat)
 
 Package | Line Rate | Complexity

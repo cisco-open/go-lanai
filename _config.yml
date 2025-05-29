@@ -21,7 +21,7 @@
 title: go-lanai
 email: stonedu@gmail.com
 description: >-
-  go-lanai is an application frameworks and a set of modules that make writing applications easy.
+  An application frameworks and a set of modules that make writing applications easy.
 baseurl: "/go-lanai"
 url: "https://cisco-open.github.io"
 domain: "cisco-open.github.io"
