@@ -1,12 +1,10 @@
 module github.com/cisco-open/go-lanai
 
-go 1.23.8
-
-toolchain go1.24.3
+go 1.24
 
 require (
 	dario.cat/mergo v1.0.2
-	github.com/IBM/sarama v1.45.1
+	github.com/IBM/sarama v1.45.2
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/aws/aws-sdk-go-v2 v1.36.3
@@ -120,7 +118,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect

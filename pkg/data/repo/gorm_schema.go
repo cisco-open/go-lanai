@@ -62,12 +62,12 @@ func newGormMetadata(db *gorm.DB, model interface{}) (GormMetadata, error) {
 		return GormMetadata{}, ErrorInvalidCrudModel.WithMessage("%T is not a valid model for gorm CRUD repository", model)
 	}
 
-	pType := reflect.PtrTo(sType)
+	pType := reflect.PointerTo(sType)
 	types := map[reflect.Type]typeKey{
 		pType:                                    typeModelPtr,
 		sType:                                    typeModel,
-		reflect.PtrTo(reflect.SliceOf(sType)):    typeModelSlicePtr,
-		reflect.PtrTo(reflect.SliceOf(pType)):    typeModelPtrSlicePtr,
+		reflect.PointerTo(reflect.SliceOf(sType)):    typeModelSlicePtr,
+		reflect.PointerTo(reflect.SliceOf(pType)):    typeModelPtrSlicePtr,
 		reflect.SliceOf(sType):                   typeModelSlice,
 		reflect.SliceOf(pType):                   typeModelPtrSlice,
 		reflect.TypeOf(map[string]interface{}{}): typeGenericMap,

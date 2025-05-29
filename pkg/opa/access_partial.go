@@ -152,7 +152,7 @@ func handlePartialResult(ctx context.Context, result *sdk.PartialResult, rErr er
 		case sdk.IsUndefinedErr(rErr):
 			return nil, ErrAccessDenied
 		case errors.Is(rErr, ErrQueriesNotResolved):
-			return nil, ErrAccessDenied.WithMessage(rErr.Error())
+			return nil, ErrAccessDenied.WithMessage("%s", rErr.Error())
 		default:
 			return nil, ErrAccessDenied.WithMessage("failed to perform partial evaluation: %v", rErr)
 		}

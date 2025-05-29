@@ -82,19 +82,19 @@ func (s *saramaSubscriber) Start(ctx context.Context) (err error) {
 
 	var e error
 	if s.consumer, e = sarama.NewConsumer(s.brokers, &s.config.sarama); e != nil {
-		err = translateSaramaBindingError(e, e.Error())
+		err = translateSaramaBindingError(e, "%s", e.Error())
 		return
 	}
 
 	if s.partitions, e = s.consumer.Partitions(s.topic); e != nil {
-		err = translateSaramaBindingError(e, e.Error())
+		err = translateSaramaBindingError(e, "%s", e.Error())
 		return
 	}
 
 	partitionConsumers := make([]sarama.PartitionConsumer, len(s.partitions))
 	for i, p := range s.partitions {
 		if partitionConsumers[i], e = s.consumer.ConsumePartition(s.topic, p, sarama.OffsetNewest); e != nil {
-			err = translateSaramaBindingError(e, e.Error())
+			err = translateSaramaBindingError(e, "%s", e.Error())
 			return
 		}
 	}
