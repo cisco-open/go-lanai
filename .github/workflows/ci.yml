@@ -76,6 +76,7 @@ jobs:
           badge: true
           fail_below_min: true
           indicators: false
+          hide_complexity: true
           format: markdown
           output: both
           thresholds: "${{ inputs.low_cov }} ${{ inputs.high_cov }}"
