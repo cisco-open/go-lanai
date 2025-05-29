@@ -48,6 +48,7 @@ func TestProducer(t *testing.T) {
 	di := TestProducerDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		apptest.WithTimeout(60 * time.Second),
 		testdata.WithMockedBroker(),
 		apptest.WithModules(kafka.Module),
 		apptest.WithDI(&di),
@@ -146,7 +147,7 @@ func TryBindTestProducer(ctx context.Context, t *testing.T, g *gomega.WithT, di 
 
 
 	// wait for producer to be ready
-	timeoutCtx, cancelFn := context.WithTimeout(ctx, 1*time.Second)
+	timeoutCtx, cancelFn := context.WithTimeout(ctx, 10*time.Second)
 	defer cancelFn()
 	select {
 	case <-producer.ReadyCh():

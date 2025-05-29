@@ -34,3 +34,8 @@ vendor/
 
 # Codegen
 output
+
+# gh-pages jekyll
+Gemfile
+Gemfile.*
+_site/**

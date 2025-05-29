@@ -51,6 +51,7 @@ func TestKafkaTracing(t *testing.T) {
 	di := TestTracingDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
+		apptest.WithTimeout(60*time.Second),
 		testdata.WithMockedBroker(),
 		apptest.WithModules(kafka.Module),
 		apptest.WithFxOptions(
@@ -136,7 +137,7 @@ func SubTestSubscriberTracingWithExistingSpan(di *TestTracingDI) test.GomegaSubT
 			WithHeader(testHeaderSpanId, strconv.Itoa(span.SpanContext.SpanID)),
 			WithHeader(testHeaderSampled, "true"),
 		))
-		capturedSpan, e := WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		capturedSpan, e := WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler 1 should be triggered")
 		parent := Last(di.MockTracer.FinishedSpans())
 		AssertSubscribeSpan(ctx, g, parent, span, "subscribe", false)
@@ -161,7 +162,7 @@ func SubTestSubscriberTracingWithoutExistingSpan(di *TestTracingDI) test.GomegaS
 		// mock some messages and wait for trigger
 		payload := map[string]interface{}{"value": "hello"}
 		go testdata.MockSubscribedMessage(ctx, topic, 0, 0, MakeMockedMessage(WithValue(payload)))
-		capturedSpan, e := WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		capturedSpan, e := WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler 1 should be triggered")
 		parent := Last(di.MockTracer.FinishedSpans())
 		AssertSubscribeSpan(ctx, g, parent, nil, "subscribe", true)

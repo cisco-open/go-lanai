@@ -36,7 +36,7 @@ type QueryTranslator[EXPR any] interface {
 var (
 	TermInternal = ast.VarTerm("internal")
 	OpInternal   = ast.Ref([]*ast.Term{TermInternal})
-	OpIn         = ast.Ref([]*ast.Term{TermInternal, ast.StringTerm("in")})
+	OpIn         = ast.Member.Ref()
 	OpEqual      = ast.Equality.Ref()
 	OpEq         = ast.Equal.Ref()
 	OpNeq        = ast.NotEqual.Ref()

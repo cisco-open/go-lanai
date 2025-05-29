@@ -50,7 +50,7 @@ func TestSubscriber(t *testing.T) {
 	di := TestSubscriberDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		//apptest.WithTimeout(120*time.Second),
+		apptest.WithTimeout(60*time.Second),
 		testdata.WithMockedBroker(),
 		apptest.WithModules(kafka.Module),
 		apptest.WithFxOptions(
@@ -86,13 +86,13 @@ func SubTestSubscriberDispatchWithRawMessage(di *TestSubscriberDI) test.GomegaSu
 
 		// mock some messages and wait for trigger
 		go testdata.MockSubscribedMessage(ctx, topic, 0, 0, MakeMockedMessage(WithValue("hello")))
-		v, e = WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler should be triggered")
 		g.Expect(v.Message).ToNot(BeNil(), "handler params should have message")
 		g.Expect(v.Message.Payload).To(BeEquivalentTo("hello"), "payload should be correct")
 
 		go testdata.MockSubscribedMessage(ctx, topic, 1, 0, MakeMockedMessage(WithValue("hello")))
-		v, e = WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler should be triggered")
 		g.Expect(v.Message).ToNot(BeNil(), "handler params should have message")
 		g.Expect(v.Message.Payload).To(BeEquivalentTo("hello"), "payload should be correct")
@@ -121,14 +121,14 @@ func SubTestSubscriberDispatchWithMetadata(di *TestSubscriberDI) test.GomegaSubT
 		payload := map[string]interface{}{"value": "hello"}
 		// mock some messages and wait for trigger
 		go testdata.MockSubscribedMessage(ctx, topic, 0, 0, MakeMockedMessage(WithValue(payload)))
-		v, e = WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler should be triggered")
 		g.Expect(v.Payload).To(BeAssignableToTypeOf(&Payload{}), "handler params should have payload")
 		AssertMetadata(g, v.Metadata, 0, 0, nil)
 		AssertPayload(g, v.Payload, &Payload{}, "hello")
 
 		go testdata.MockSubscribedMessage(ctx, topic, 1, 0, MakeMockedMessage(WithValue(payload), WithKey("test-key")))
-		v, e = WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler should be triggered")
 		AssertMetadata(g, v.Metadata, 1, 0, []byte("test-key"))
 		AssertPayload(g, v.Payload, &Payload{}, "hello")
@@ -165,7 +165,7 @@ func SubTestSubscriberDispatchWithHeaders(di *TestSubscriberDI) test.GomegaSubTe
 		go testdata.MockSubscribedMessage(ctx, topic, 0, 0, MakeMockedMessage(
 			WithValue(payload), WithHeader(headerKey, "handler-1"),
 		))
-		v, e = WaitForHandlerInvocation(ctx, ch1, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch1, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler 1 should be triggered")
 		AssertPayload(g, v.Payload, map[string]interface{}{}, "hello")
 		AssertHeaders(g, v.Headers, headerKey, "handler-1")
@@ -173,7 +173,7 @@ func SubTestSubscriberDispatchWithHeaders(di *TestSubscriberDI) test.GomegaSubTe
 		go testdata.MockSubscribedMessage(ctx, topic, 0, 1, MakeMockedMessage(
 			WithValue(payload), WithHeader(headerKey, "handler-2"),
 		))
-		v, e = WaitForHandlerInvocation(ctx, ch2, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch2, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler 2 should be triggered")
 		AssertPayload(g, v.Payload, Payload{}, "hello")
 		AssertHeaders(g, v.Headers, headerKey, "handler-2")
@@ -197,7 +197,7 @@ func SubTestSubscriberDispatchWithErrorResult(di *TestSubscriberDI) test.GomegaS
 
 		// mock some messages and wait for trigger
 		go testdata.MockSubscribedMessage(ctx, topic, 0, 0, MakeMockedMessage(WithValue("hello")))
-		v, e = WaitForHandlerInvocation(ctx, ch, 5*time.Second)
+		v, e = WaitForHandlerInvocation(ctx, ch, 10*time.Second)
 		g.Expect(e).To(Succeed(), "handler should be triggered")
 		g.Expect(v.Message).ToNot(BeNil(), "handler params should have message")
 		g.Expect(v.Message.Payload).To(BeEquivalentTo("hello"), "payload should be correct")

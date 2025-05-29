@@ -128,7 +128,7 @@ func SubTestContains() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		const rules = `allow if input.list[_] = "target"`
 		exprs := MustTranslatePartial(ctx, g, rules, "allow")
-		AssertExpressions(ctx, g, exprs, Expect("input.list", "internal.in", TargetValue))
+		AssertExpressions(ctx, g, exprs, Expect("input.list", "internal.member_2", TargetValue))
 	}
 }
 
@@ -141,9 +141,9 @@ func SubTestAnd() test.GomegaSubTestFunc {
 		}`
 		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs, ExpectAnd(
-			Expect(`input.list`, "internal.in", TargetValue),
+			Expect(`input.list`, "internal.member_2", TargetValue),
 			Expect(`input.map["map-key"]`, "eq", TargetValue),
-			Expect(`input.map_list["map-key"]`, "internal.in", TargetValue),
+			Expect(`input.map_list["map-key"]`, "internal.member_2", TargetValue),
 		))
 	}
 }
@@ -169,12 +169,12 @@ func SubTestMultiQueries() test.GomegaSubTestFunc {
 		}`
 		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
-			Expect(`input.list`, "internal.in", TargetValue),
+			Expect(`input.list`, "internal.member_2", TargetValue),
 			Expect(`input.map["map-key"]`, "eq", TargetValue),
 			ExpectAnd(
-				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.list`, "internal.member_2", TargetValue),
 				Expect(`input.map["map-key"]`, "eq", TargetValue),
-				Expect(`input.map_list["map-key"]`, "internal.in", TargetValue),
+				Expect(`input.map_list["map-key"]`, "internal.member_2", TargetValue),
 			),
 		)
 	}
@@ -238,9 +238,9 @@ func SubTestDuplicateQueries() test.GomegaSubTestFunc {
 		AssertExpressions(ctx, g, exprs,
 			Expect(`input.single`, "eq", TargetValue),
 			ExpectAnd(
-				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.list`, "internal.member_2", TargetValue),
 				Expect(`input.map["map-key"]`, "eq", TargetValue),
-				Expect(`input.map_list["map-key"]`, "internal.in", TargetValue),
+				Expect(`input.map_list["map-key"]`, "internal.member_2", TargetValue),
 			),
 		)
 	}
@@ -258,9 +258,9 @@ func SubTestDuplicateExprs() test.GomegaSubTestFunc {
 		}`
 		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
-			Expect(`input.list`, "internal.in", TargetValue),
+			Expect(`input.list`, "internal.member_2", TargetValue),
 			ExpectAnd(
-				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.list`, "internal.member_2", TargetValue),
 				Expect(`input.single`, "eq", TargetValue),
 			),
 		)
@@ -281,8 +281,8 @@ func SubTestMultiValuesOnUnknown() test.GomegaSubTestFunc {
 		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
 			ExpectAnd(
-				Expect(`input.list`, "internal.in", "another"),
-				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.list`, "internal.member_2", "another"),
+				Expect(`input.list`, "internal.member_2", TargetValue),
 			),
 		)
 	}
@@ -304,7 +304,7 @@ func SubTestEqualAndNotEqual() test.GomegaSubTestFunc {
 		exprs := MustTranslatePartial(ctx, g, rules, "allow")
 		AssertExpressions(ctx, g, exprs,
 			ExpectAnd(
-				Expect(`input.list`, "internal.in", TargetValue),
+				Expect(`input.list`, "internal.member_2", TargetValue),
 				Expect(`input.single`, "eq", TargetValue),
 				Expect(`input.single`, "neq", "another"),
 			),

@@ -50,7 +50,7 @@ func TestBinder(t *testing.T) {
 	di := TestBinderDI{}
 	test.RunTest(context.Background(), t,
 		apptest.Bootstrap(),
-		//apptest.WithTimeout(120 * time.Second),
+		apptest.WithTimeout(60 * time.Second),
 		testdata.WithMockedBroker(),
 		apptest.WithFxOptions(
 			fx.Provide(kafka.BindKafkaProperties, kafka.ProvideKafkaBinder),
