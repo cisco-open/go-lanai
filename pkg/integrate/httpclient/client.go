@@ -28,8 +28,13 @@ import (
 )
 
 var (
-	insecureInstanceMatcher = discovery.InstanceWithTagKV("secure", "false", true)
-	supportedSchemes        = utils.NewStringSet("http", "https")
+	httpInstanceMatcher = discovery.InstanceWithTagKV("secure", "false", true).
+				Or(discovery.InstanceWithTagKV("insecure", "true", true)).
+				Or(discovery.InstanceWithMetaKV("scheme", "http"))
+	httpsInstanceMatcher = discovery.InstanceWithTagKV("secure", "true", true).
+		Or(discovery.InstanceWithTagKV("insecure", "false", true)).
+		Or(discovery.InstanceWithMetaKV("scheme", "https"))
+	supportedSchemes = utils.NewStringSet("http", "https")
 )
 
 type clientDefaults struct {

@@ -18,6 +18,7 @@ package cmdutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/go-git/go-git/v5"
@@ -148,7 +149,7 @@ func (g *GitUtils) MarkWorktree(tag string, msg string, detach bool,  matchers..
 	if e := g.ResetToCommit(headHash, false); e != nil {
 		msg := fmt.Sprintf("unable to reset current branch after marking: %v. Worktree need manual clean up", e)
 		logger.WithContext(g.ctx).Errorf(`Git: %s`, msg)
-		return fmt.Errorf(msg)
+		return errors.New(msg)
 	}
 
 	return nil

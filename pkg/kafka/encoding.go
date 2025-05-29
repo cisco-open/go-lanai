@@ -30,7 +30,7 @@ func (enc jsonEncoder) MIMEType() string {
 
 func (enc jsonEncoder) Encode(v interface{}) (bytes []byte, err error) {
 	if bytes, err = json.Marshal(v); err != nil {
-		return bytes, ErrorSubTypeEncoding.WithCause(err, err.Error())
+		return bytes, ErrorSubTypeEncoding.WithCause(err, "%s", err.Error())
 	}
 	return
 }
@@ -49,7 +49,7 @@ func (enc binaryEncoder) Encode(v interface{}) (bytes []byte, err error) {
 		return val, nil
 	case encoding.BinaryMarshaler:
 		if bytes, err = val.MarshalBinary(); err != nil {
-			return bytes, ErrorSubTypeEncoding.WithCause(err, err.Error())
+			return bytes, ErrorSubTypeEncoding.WithCause(err, "%s", err.Error())
 		}
 		return
 	default:

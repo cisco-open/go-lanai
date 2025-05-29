@@ -219,7 +219,12 @@ func SubTestWithFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 			opt.FallbackHostMappings = []dnssd.HostMapping{
 				{
 					ServiceRegex: regexp.MustCompilePOSIX(ServiceName2),
-					Hosts:        []string{"inst-1.{{.ServiceName}}.test.mock:9999", "inst-2.{{.ServiceName}}.test.mock:8888"},
+					Hosts: []string{
+						"inst-1.{{.ServiceName}}.test.mock:9999",
+						"inst-2.{{.ServiceName}}.test.mock",
+						"http://inst-3.{{.ServiceName}}.test.mock:9999",
+						"https://inst-4.{{.ServiceName}}.test.mock",
+					},
 				},
 				{
 					ServiceRegex: regexp.MustCompilePOSIX(`.+`),
@@ -236,23 +241,41 @@ func SubTestWithFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 		// via service
 		svc := instancer.Service()
 		g.Expect(svc).ToNot(BeNil(), "instancer should return non-nil service")
-		g.Expect(svc.Insts).To(HaveLen(2), "instancer should return services with fallback instances")
+		g.Expect(svc.Insts).To(HaveLen(4), "instancer should return services with fallback instances")
 
 		// without additional selector
 		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
 			{
-				AlternativeID: "inst-1." + ServiceName2 + ".test.mock:9999",
+				AlternativeID:   "inst-1." + ServiceName2 + ".test.mock:9999",
 				AlternativeAddr: "inst-1." + ServiceName2 + ".test.mock",
-				Name:          ServiceName2,
-				Port:          9999,
-				Healthy:       true,
+				Name:            ServiceName2,
+				Port:            9999,
+				Healthy:         true,
 			},
 			{
-				AlternativeID: "inst-2." + ServiceName2 + ".test.mock:8888",
+				AlternativeID:   "inst-2." + ServiceName2 + ".test.mock",
 				AlternativeAddr: "inst-2." + ServiceName2 + ".test.mock",
-				Name:          ServiceName2,
-				Port:          8888,
-				Healthy:       true,
+				Name:            ServiceName2,
+				Port:            0,
+				Healthy:         true,
+			},
+			{
+				AlternativeID:   "http://inst-3." + ServiceName2 + ".test.mock:9999",
+				AlternativeAddr: "inst-3." + ServiceName2 + ".test.mock",
+				Name:            ServiceName2,
+				Port:            9999,
+				Healthy:         true,
+				AlternativeTags: []string{"insecure=true", "secure=false"},
+				AlternativeMeta: map[string]string{"scheme": "http"},
+			},
+			{
+				AlternativeID:   "https://inst-4." + ServiceName2 + ".test.mock",
+				AlternativeAddr: "inst-4." + ServiceName2 + ".test.mock",
+				Name:            ServiceName2,
+				Port:            0,
+				Healthy:         true,
+				AlternativeTags: []string{"insecure=false", "secure=true"},
+				AlternativeMeta: map[string]string{"scheme": "https"},
 			},
 		})
 		//with additional selector
@@ -271,11 +294,11 @@ func SubTestWithFallback(_ *TestDiscoveryDI) test.GomegaSubTestFunc {
 		// without additional selector
 		TryInstancerWithMatcher(g, instancer, nil, []*MockedService{
 			{
-				AlternativeID: "unknown-service.test.mock:0",
+				AlternativeID:   "unknown-service.test.mock",
 				AlternativeAddr: "unknown-service.test.mock",
-				Name:          "unknown-service",
-				Port:          0,
-				Healthy:       true,
+				Name:            "unknown-service",
+				Port:            0,
+				Healthy:         true,
 			},
 		})
 		//with additional selector
@@ -332,7 +355,9 @@ type MockedService struct {
 	Name            string
 	Port            int
 	Tags            []string
+	AlternativeTags []string // only used for assertion
 	Meta            map[string]string
+	AlternativeMeta map[string]string // only used for assertion
 	Healthy         bool
 }
 
@@ -372,6 +397,12 @@ func TryInstancerWithMatcher(g *gomega.WithT, instancer discovery.Instancer, mat
 			g.Expect(inst.Service).To(Equal(svc.Name), "instance with ID [%s] should have correct %s", expectedID, "Service")
 			g.Expect(inst.Address).To(Equal(expectedAddr), "instance with ID [%s] should have correct %s", expectedID, "Address")
 			g.Expect(inst.Port).To(Equal(svc.Port), "instance with ID [%s] should have correct %s", expectedID, "Port")
+			if len(svc.AlternativeTags) > 0 {
+				g.Expect(inst.Tags).To(Equal(svc.AlternativeTags), "instance with ID [%s] should have correct %s", expectedID, "Tags")
+			}
+			if len(svc.AlternativeMeta) > 0 {
+				g.Expect(inst.Meta).To(Equal(svc.AlternativeMeta), "instance with ID [%s] should have correct %s", expectedID, "Meta")
+			}
 			found = true
 		}
 		g.Expect(found).To(BeTrue(), "instance with ID [%s] should exists", expectedID)

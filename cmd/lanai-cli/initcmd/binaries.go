@@ -28,7 +28,7 @@ var defaultBinaries = map[string]string{
 	"github.com/axw/gocov/gocov":                          "v1.1.0",
 	"github.com/AlekSi/gocov-xml":                         "v1.1.0",
 	"gotest.tools/gotestsum":                              "v1.12.0",
-	"github.com/golangci/golangci-lint/cmd/golangci-lint": "v1.59.1",
+	"github.com/golangci/golangci-lint/cmd/golangci-lint": "v1.64.8",
 }
 
 func installBinaries(ctx context.Context) error {
@@ -40,11 +40,17 @@ func installBinaries(ctx context.Context) error {
 		binaries[p] = v
 	}
 	for _, b := range Module.Binaries {
-		if b.Package == "" || b.Version == "" {
+		switch {
+		case len(b.Package) == 0:
 			logger.Warnf(`Invalid binaries entry in Module.yml: package="%s", version="%s"`, b.Package, b.Version)
-			continue
+		case len(b.Version) == 0:
+			if _, ok := binaries[b.Package]; ok {
+				logger.Warnf(`Skipping default binaries install: %s@%s`, b.Package, binaries[b.Package])
+				delete(binaries, b.Package)
+			}
+		default:
+			binaries[b.Package] = b.Version
 		}
-		binaries[b.Package] = b.Version
 	}
 
 	for p, v := range binaries {

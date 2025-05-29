@@ -186,7 +186,7 @@ func (mw *SamlSingleLogoutMiddleware) determineSloEndpoint(_ *gin.Context, req *
 func (mw *SamlSingleLogoutMiddleware) validateLogoutRequest(_ *gin.Context, req *SamlLogoutRequest, spDetails *SamlSpDetails) error {
 	if !spDetails.SkipAuthRequestSignatureVerification {
 		if e := req.VerifySignature(); e != nil {
-			return ErrorSamlSloResponder.WithMessage(e.Error())
+			return ErrorSamlSloResponder.WithMessage("%s", e.Error())
 		}
 	}
 	return req.Validate()

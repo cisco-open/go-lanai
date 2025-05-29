@@ -23,6 +23,21 @@ mocks:
         Meta:
           version: "mock"
           context: ${server.context-path}
+      - ID: 2-mock-inst
+        Address: 127.0.0.1
+        Port: 0
+        Tags: ["insecure=true", "version=mock"]
+        Meta:
+          version: "mock"
+          context: ${server.context-path}
+      - ID: 3-mock-inst
+        Address: 127.0.0.1
+        Port: 0
+        Tags: ["version=mock"]
+        Meta:
+          version: "mock"
+          context: ${server.context-path}
+          scheme: "http"
     mockedserver-port-only:
       - ID: 0-mock-inst
         Address: 127.0.0.1
