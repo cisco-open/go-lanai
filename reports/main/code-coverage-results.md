@@ -1,8 +1,8 @@
 ---
 layout: report
-title: "Test Coverage Report"
+title: "Test Coverage Summary"
 report:
-  source: "abcde"
+  source: "irongut/CodeCoverageSummary@v1.3.0"
 ---
 [![Coverage Details](https://img.shields.io/badge/Coverage%20Details-grey?style=flat)](coverage.html)
 ![Code Coverage](https://img.shields.io/badge/Code%20Coverage-82%25-success?style=flat)
@@ -52,8 +52,8 @@ github.com/cisco-open/go-lanai/pkg/discovery | 91% | 0
 github.com/cisco-open/go-lanai/pkg/discovery/consulsd | 94% | 0
 github.com/cisco-open/go-lanai/pkg/discovery/dnssd | 91% | 0
 github.com/cisco-open/go-lanai/pkg/discovery/sd | 85% | 0
-github.com/cisco-open/go-lanai/pkg/dsync | 83% | 0
-github.com/cisco-open/go-lanai/pkg/dsync/consul | 92% | 0
+github.com/cisco-open/go-lanai/pkg/dsync | 81% | 0
+github.com/cisco-open/go-lanai/pkg/dsync/consul | 91% | 0
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92% | 0
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87% | 0
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80% | 0
@@ -135,7 +135,7 @@ github.com/cisco-open/go-lanai/pkg/tracing/init | 76% | 0
 github.com/cisco-open/go-lanai/pkg/tracing/instrument | 94% | 0
 github.com/cisco-open/go-lanai/pkg/tracing/jaeger | 81% | 0
 github.com/cisco-open/go-lanai/pkg/utils | 88% | 0
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils | 96% | 0
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils | 97% | 0
 github.com/cisco-open/go-lanai/pkg/utils/cryptoutils | 78% | 0
 github.com/cisco-open/go-lanai/pkg/utils/error | 83% | 0
 github.com/cisco-open/go-lanai/pkg/utils/loop | 95% | 0
@@ -145,7 +145,7 @@ github.com/cisco-open/go-lanai/pkg/utils/order | 93% | 0
 github.com/cisco-open/go-lanai/pkg/utils/reflectutils | 90% | 0
 github.com/cisco-open/go-lanai/pkg/utils/validation | 67% | 0
 github.com/cisco-open/go-lanai/pkg/utils/xsync | 100% | 0
-github.com/cisco-open/go-lanai/pkg/vault | 83% | 0
+github.com/cisco-open/go-lanai/pkg/vault | 81% | 0
 github.com/cisco-open/go-lanai/pkg/vault/appconfig | 88% | 0
 github.com/cisco-open/go-lanai/pkg/vault/health | 25% | 0
 github.com/cisco-open/go-lanai/pkg/vault/init | 75% | 0
@@ -189,6 +189,6 @@ github.com/cisco-open/go-lanai/test/utils | 80% | 0
 github.com/cisco-open/go-lanai/test/utils/golden | 89% | 0
 github.com/cisco-open/go-lanai/test/utils/gomega | 88% | 0
 github.com/cisco-open/go-lanai/test/webtest | 95% | 0
-**Summary** | **82%** (21997 / 26766) | **0**
+**Summary** | **82%** (21993 / 26766) | **0**
 
 _Minimum allowed line rate is `50%`_

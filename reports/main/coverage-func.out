@@ -789,7 +789,7 @@ github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:288:				verboseLog	
 github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:311:				diff						77.8%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:73:					newConsulLock					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:96:					Key						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:103:					Lock						100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:103:					Lock						83.3%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:116:					TryLock						85.7%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:132:					Release						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:136:					Lost						100.0%
@@ -807,7 +807,7 @@ github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:431:					delay						100.
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:440:					release						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:56:					NewConsulLockManager				100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:76:					Start						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:81:					Stop						100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:81:					Stop						87.5%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:97:					Lock						88.2%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:130:					startLoop					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:143:					stopLoop					100.0%
@@ -820,7 +820,7 @@ github.com/cisco-open/go-lanai/pkg/dsync/consul/pakcage.go:38:					provideSyncMa
 github.com/cisco-open/go-lanai/pkg/dsync/context.go:130:					LockWithKey					66.7%
 github.com/cisco-open/go-lanai/pkg/dsync/context.go:142:					NewJsonLockValuer				80.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:16:						newError					100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/errors.go:24:						Error						100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/errors.go:24:						Error						0.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:28:						Is						75.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:36:						Unwrap						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:40:						WithMessage					100.0%
@@ -981,7 +981,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:126:			GetO
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:161:			newEntryFunc					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:173:			load						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:184:			getOrNew					100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					85.7%
+github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:208:			set						0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:215:			get						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:225:			getValue					100.0%
@@ -3661,7 +3661,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:109:				isLoaded			
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:114:				markLoaded					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:129:				NewMemCache					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:146:				GetOrLoad					84.6%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						83.3%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						91.7%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:203:				Delete						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:207:				Reset						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:213:				Evict						100.0%
@@ -3670,7 +3670,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:232:				updateEntry
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:250:				load						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:261:				getOrNew					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:271:				newIfAbsent					100.0%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				88.9%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:302:				set						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:309:				get						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:319:				getValue					100.0%
@@ -3902,7 +3902,7 @@ github.com/cisco-open/go-lanai/pkg/vault/connection.go:116:					AddHooks					100
 github.com/cisco-open/go-lanai/pkg/vault/connection.go:120:					Logical						100.0%
 github.com/cisco-open/go-lanai/pkg/vault/connection.go:128:					Sys						100.0%
 github.com/cisco-open/go-lanai/pkg/vault/connection.go:137:					AutoRenewToken					83.3%
-github.com/cisco-open/go-lanai/pkg/vault/connection.go:149:					TokenRenewer					92.3%
+github.com/cisco-open/go-lanai/pkg/vault/connection.go:149:					TokenRenewer					84.6%
 github.com/cisco-open/go-lanai/pkg/vault/connection.go:178:					Close						100.0%
 github.com/cisco-open/go-lanai/pkg/vault/connection.go:190:					Clone						83.3%
 github.com/cisco-open/go-lanai/pkg/vault/enums.go:33:						UnmarshalText					100.0%
@@ -3930,7 +3930,7 @@ github.com/cisco-open/go-lanai/pkg/vault/tokenrefresher.go:39:					NewTokenRefre
 github.com/cisco-open/go-lanai/pkg/vault/tokenrefresher.go:46:					Start						83.3%
 github.com/cisco-open/go-lanai/pkg/vault/tokenrefresher.go:58:					Stop						100.0%
 github.com/cisco-open/go-lanai/pkg/vault/tokenrefresher.go:68:					isRefreshable					100.0%
-github.com/cisco-open/go-lanai/pkg/vault/tokenrefresher.go:74:					monitorRenew					80.0%
+github.com/cisco-open/go-lanai/pkg/vault/tokenrefresher.go:74:					monitorRenew					68.0%
 github.com/cisco-open/go-lanai/pkg/vault/tracing/instrument.go:32:				NewHook						100.0%
 github.com/cisco-open/go-lanai/pkg/vault/tracing/instrument.go:38:				BeforeOperation					100.0%
 github.com/cisco-open/go-lanai/pkg/vault/tracing/instrument.go:50:				AfterOperation					100.0%
