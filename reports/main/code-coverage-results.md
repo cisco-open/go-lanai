@@ -52,14 +52,14 @@ github.com/cisco-open/go-lanai/pkg/discovery | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/consulsd | 94%
 github.com/cisco-open/go-lanai/pkg/discovery/dnssd | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/sd | 85%
-github.com/cisco-open/go-lanai/pkg/dsync | 81%
+github.com/cisco-open/go-lanai/pkg/dsync | 78%
 github.com/cisco-open/go-lanai/pkg/dsync/consul | 91%
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 86%
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope | 89%
 github.com/cisco-open/go-lanai/pkg/integrate/security/seclient | 97%
-github.com/cisco-open/go-lanai/pkg/kafka | 78%
+github.com/cisco-open/go-lanai/pkg/kafka | 77%
 github.com/cisco-open/go-lanai/pkg/kafka/testdata | 94%
 github.com/cisco-open/go-lanai/pkg/log | 86%
 github.com/cisco-open/go-lanai/pkg/log/internal | 76%
@@ -135,7 +135,7 @@ github.com/cisco-open/go-lanai/pkg/tracing/init | 76%
 github.com/cisco-open/go-lanai/pkg/tracing/instrument | 94%
 github.com/cisco-open/go-lanai/pkg/tracing/jaeger | 81%
 github.com/cisco-open/go-lanai/pkg/utils | 88%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils | 96%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils | 97%
 github.com/cisco-open/go-lanai/pkg/utils/cryptoutils | 78%
 github.com/cisco-open/go-lanai/pkg/utils/error | 83%
 github.com/cisco-open/go-lanai/pkg/utils/loop | 95%
@@ -189,6 +189,6 @@ github.com/cisco-open/go-lanai/test/utils | 80%
 github.com/cisco-open/go-lanai/test/utils/golden | 89%
 github.com/cisco-open/go-lanai/test/utils/gomega | 88%
 github.com/cisco-open/go-lanai/test/webtest | 95%
-**Summary** | **82%** (22011 / 26783)
+**Summary** | **82%** (22004 / 26783)
 
 _Minimum allowed line rate is `50%`_
