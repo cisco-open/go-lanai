@@ -827,7 +827,7 @@ github.com/cisco-open/go-lanai/pkg/dsync/errors.go:36:						Unwrap						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:40:						WithMessage					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:48:						WithCause					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/leadership.go:44:					LeadershipLock					66.7%
-github.com/cisco-open/go-lanai/pkg/dsync/leadership.go:51:					startLeadershipLock				71.4%
+github.com/cisco-open/go-lanai/pkg/dsync/leadership.go:51:					startLeadershipLock				85.7%
 github.com/cisco-open/go-lanai/pkg/dsync/leadership.go:87:					leaderLockValuer				100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/package.go:60:						initialize					86.7%
 github.com/cisco-open/go-lanai/pkg/dsync/redis/lock.go:58:					newRedisLock					100.0%
@@ -879,7 +879,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:175:				WithMes
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:185:				newError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:193:				NewError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:199:				NewErrorWithResponse				100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				75.0%
+github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				87.5%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:229:				NewInternalError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:233:				NewDiscoveryDownError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:237:				NewNoEndpointFoundError				100.0%
@@ -1082,7 +1082,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:103:					Close						84.6%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:127:					Closed						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:133:					AddHandler					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:138:					monitorGroupErrors				0.0%
-github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:156:					handleGroup					83.3%
+github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:156:					handleGroup					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:179:					Setup						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:187:					Cleanup						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:196:					ConsumeClaim					83.3%
@@ -1641,7 +1641,7 @@ github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:53:			Read	
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:80:			AppendAll					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:106:			Append						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:120:			groupKey					100.0%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						42.9%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:38:					Use						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:48:					initialize					66.7%
 github.com/cisco-open/go-lanai/pkg/profiler/pprof.go:31:					Mappings					100.0%
@@ -3662,7 +3662,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:109:				isLoaded			
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:114:				markLoaded					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:129:				NewMemCache					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:146:				GetOrLoad					84.6%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						91.7%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						83.3%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:203:				Delete						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:207:				Reset						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:213:				Evict						100.0%
@@ -3671,7 +3671,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:232:				updateEntry
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:250:				load						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:261:				getOrNew					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:271:				newIfAbsent					100.0%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				100.0%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				88.9%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:302:				set						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:309:				get						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:319:				getValue					100.0%
