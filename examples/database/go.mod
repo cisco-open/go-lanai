@@ -1,8 +1,6 @@
 module github.com/cisco-open/go-lanai/examples/skeleton-service
 
-go 1.23.8
-
-toolchain go1.24.3
+go 1.24
 
 replace github.com/cisco-open/go-lanai => ./../../../go-lanai
 
@@ -24,7 +22,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
-	github.com/cockroachdb/copyist v1.7.0 // indirect
+	github.com/cockroachdb/copyist v1.7.1-0.20250219003815-c27ecfe8862a // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
