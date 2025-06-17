@@ -1,5 +1,5 @@
 kafka:
-  brokers: localhost:19092
+  brokers: 127.0.0.1:19092
   bindings:
     default:
       producer:
