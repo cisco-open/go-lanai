@@ -135,7 +135,7 @@ github.com/cisco-open/go-lanai/pkg/tracing/init | 76%
 github.com/cisco-open/go-lanai/pkg/tracing/instrument | 94%
 github.com/cisco-open/go-lanai/pkg/tracing/jaeger | 81%
 github.com/cisco-open/go-lanai/pkg/utils | 88%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils | 96%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils | 97%
 github.com/cisco-open/go-lanai/pkg/utils/cryptoutils | 78%
 github.com/cisco-open/go-lanai/pkg/utils/error | 83%
 github.com/cisco-open/go-lanai/pkg/utils/loop | 95%
@@ -145,7 +145,7 @@ github.com/cisco-open/go-lanai/pkg/utils/order | 93%
 github.com/cisco-open/go-lanai/pkg/utils/reflectutils | 90%
 github.com/cisco-open/go-lanai/pkg/utils/validation | 67%
 github.com/cisco-open/go-lanai/pkg/utils/xsync | 100%
-github.com/cisco-open/go-lanai/pkg/vault | 83%
+github.com/cisco-open/go-lanai/pkg/vault | 81%
 github.com/cisco-open/go-lanai/pkg/vault/appconfig | 88%
 github.com/cisco-open/go-lanai/pkg/vault/health | 25%
 github.com/cisco-open/go-lanai/pkg/vault/init | 75%
@@ -189,6 +189,6 @@ github.com/cisco-open/go-lanai/test/utils | 80%
 github.com/cisco-open/go-lanai/test/utils/golden | 89%
 github.com/cisco-open/go-lanai/test/utils/gomega | 88%
 github.com/cisco-open/go-lanai/test/webtest | 95%
-**Summary** | **82%** (22009 / 26783)
+**Summary** | **82%** (22007 / 26783)
 
 _Minimum allowed line rate is `50%`_
