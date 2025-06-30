@@ -55,7 +55,7 @@ github.com/cisco-open/go-lanai/pkg/discovery/sd | 85%
 github.com/cisco-open/go-lanai/pkg/dsync | 74%
 github.com/cisco-open/go-lanai/pkg/dsync/consul | 88%
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92%
-github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87%
+github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 86%
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope | 89%
 github.com/cisco-open/go-lanai/pkg/integrate/security/seclient | 97%

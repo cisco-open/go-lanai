@@ -879,7 +879,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:175:				WithMes
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:185:				newError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:193:				NewError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:199:				NewErrorWithResponse				100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				87.5%
+github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				75.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:229:				NewInternalError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:233:				NewDiscoveryDownError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:237:				NewNoEndpointFoundError				100.0%
@@ -1082,7 +1082,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:103:					Close						84.6%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:127:					Closed						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:133:					AddHandler					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:138:					monitorGroupErrors				0.0%
-github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:156:					handleGroup					83.3%
+github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:156:					handleGroup					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:179:					Setup						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:187:					Cleanup						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:196:					ConsumeClaim					83.3%
