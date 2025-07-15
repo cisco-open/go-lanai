@@ -72,14 +72,26 @@ report: test
 #		- ARGS="..."
 #		  e.g. ARGS="--issues-exit-code 0"
 # 		- PKGS="..." Override packages to lint. Default: ./...
-#		  e.g. PKGS="./pkg/... ./teset/..."
+#		  e.g. PKGS="./pkg/... ./test/..."
 lint: PKGS ?= "./..."
 lint:
+{{- $linterVer := toolMajorVer "**/cmd/golangci-lint" }}
+{{- if eq $linterVer 1 }}
 	$(GO) vet $(PKGS) 2>&1 | tee $(DESTDIR)/go-vet-report.out
 	golangci-lint -c build/ci/golangci.yml \
 	  --timeout 10m \
 	  --out-format colored-line-number,checkstyle:$(DESTDIR)/golangci-lint-report.xml \
 	  --issues-exit-code 0 $(ARGS) run $(PKGS)
+{{ else if ge $linterVer 2 }}
+	$(GO) vet $(PKGS) 2>&1 | tee $(DESTDIR)/go-vet-report.out
+	golangci-lint -c build/ci/golangci.yml \
+	  --timeout 10m --issues-exit-code 0 \
+	  --output.text.path stdout \
+	  --output.checkstyle.path $(DESTDIR)/golangci-lint-report.xml \
+	  $(ARGS) run $(PKGS)
+{{- else }}
+	echo '"golangci-lint" is not installed via "make init". "lint" skipped...
+{{- end }}
 
 # clean:
 # 	Undo previous "build".  clean $(DESTDIR) and build cache

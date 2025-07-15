@@ -18,8 +18,11 @@ package initcmd
 
 import (
 	"context"
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"text/template"
 )
 
@@ -65,6 +68,7 @@ func generateServiceBuildMakefile(ctx context.Context) error {
 		OutputPerm: 0644,
 		Overwrite:  Args.Force,
 		Model:      &Module,
+		Customizer: templateCommonCustomizer,
 	})
 }
 
@@ -76,6 +80,7 @@ func generateDockerfile(ctx context.Context) error {
 		OutputPerm: 0644,
 		Overwrite:  Args.Force,
 		Model:      &Module,
+		Customizer: templateCommonCustomizer,
 	})
 }
 
@@ -87,6 +92,7 @@ func generateDockerLaunchScript(ctx context.Context) error {
 		OutputPerm: 0755,
 		Overwrite:  Args.Force,
 		Model:      &Module,
+		Customizer: templateCommonCustomizer,
 	})
 }
 
@@ -98,5 +104,37 @@ func generateLibsCICDMakefile(ctx context.Context) error {
 		OutputPerm: 0644,
 		Overwrite:  true,
 		Model:      &Module,
+		Customizer: templateCommonCustomizer,
 	})
+}
+
+func templateCommonCustomizer(t *template.Template) {
+	t.Funcs(template.FuncMap{
+		"toolMajorVer": tmplFuncToolMajorVersion,
+	})
+}
+
+// tmplFuncToolMajorVersion return major version of installed tool with given pattern as int.
+// Returns -1 if not found
+// e.g. tmplFuncToolMajorVersion("**/cmd/golangci-lint")
+func tmplFuncToolMajorVersion(pattern string) int {
+	binaries, ok := Module.Data[kDataBinaries].(map[string]string)
+	if !ok {
+		return -1
+	}
+	for pkg, v := range binaries {
+		if ok, e := doublestar.Match(pattern, pkg); e != nil || !ok {
+			continue
+		}
+		split := strings.Split(v, ".")
+		if len(split) == 0 {
+			return -1
+		}
+		major := strings.Trim(split[0], "v")
+		if i, e := strconv.Atoi(major); e == nil {
+			return i
+		}
+		return -1
+	}
+	return -1
 }
