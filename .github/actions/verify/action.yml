@@ -24,9 +24,9 @@ runs:
         go tool cover -func=dist/coverage.out -o dist/coverage-func.out
 
     - name: "Code Quality Analysis"
-      uses: golangci/golangci-lint-action@v6
+      uses: golangci/golangci-lint-action@v8
       with:
-        version: v1.64.8
+        version: v2.2.2
         args: -c=build/ci/golangci.yml --timeout=10m --issues-exit-code=${{ inputs.fail_on_lint_issues == 'true' && 1 || 0 }}
         # if fail_on_lint_issues == true, we assume it's a PR verification
         only-new-issues: ${{ inputs.fail_on_lint_issues == 'true' && 'true' || 'false' }}
