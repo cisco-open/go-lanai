@@ -1,0 +1,32 @@
+
+execs:
+  with-gofile:
+    main: "pkg/main_test.go"
+    port: 9999
+  with-package:
+    main: "pkg"
+    port: 9998
+  with-full-package:
+    main: "github.com/cisco-open/go-lanai/cmd/lanai-cli/initcmd/testdata/pkg"
+    port: 9997
+
+generates:
+  - path: "pkg/main_test.go"
+  - path: "pkg"
+  - path: "github.com/cisco-open/go-lanai/cmd/lanai-cli/initcmd/testdata/pkg"
+
+sources:
+  - path: "pkg/"
+  - path: ".tmp/../pkg"
+  - path: "github.com/cisco-open/go-lanai/cmd/lanai-cli/initcmd/testdata/simple_gomod/pkg"
+  - path: "non-src"
+
+resources:
+  - pattern: "configs"
+    output: "configs"
+
+binaries:
+  - package: github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+    version: "v2.2.2"
+  - package: github.com/golangci/golangci-lint/cmd/golangci-lint
+    version: ""

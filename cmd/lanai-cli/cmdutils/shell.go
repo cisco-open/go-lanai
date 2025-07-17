@@ -18,6 +18,7 @@ package cmdutils
 
 import (
 	"context"
+	"errors"
 	"io"
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
@@ -41,6 +42,8 @@ type ShCmdOption struct {
 	Stdout io.Writer
 	Stderr io.Writer
 }
+
+var DryRunTypeShell DryRunCmdType = "shell"
 
 // ShellCmd add shell commends
 func ShellCmd(cmds ...string) ShCmdOptions {
@@ -150,6 +153,17 @@ func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8,
 	}
 
 	if GlobalArgs.DryRun {
+		if GlobalArgs.DryRunFunc != nil {
+			switch rs, e := GlobalArgs.DryRunFunc(ctx, DryRunTypeShell, cmd, opt, r, p); {
+			case e != nil && !errors.Is(e, ErrDryRunIgnored):
+				if status, ok := rs.(uint8); ok {
+					return status, e
+				}
+				return 1, e
+			case e == nil:
+				return 0, nil
+			}
+		}
 		logger.WithContext(ctx).Infof("Run: %s", cmd)
 		return 0, nil
 	}

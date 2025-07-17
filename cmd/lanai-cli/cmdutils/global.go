@@ -17,6 +17,8 @@
 package cmdutils
 
 import (
+	"context"
+	"errors"
 	"github.com/cisco-open/go-lanai/pkg/log"
 	"os"
 	"path"
@@ -42,7 +44,21 @@ type Global struct {
 	OutputDir  string `flag:"output,o" desc:"output directory. All non-absolute paths for output are relative to this directory"`
 	Verbose    bool   `flag:"debug" desc:"show debug information"`
 	DryRun     bool   `flag:"dry-run" desc:"do not actually execute shell commands"`
+	// DryRunFunc Used for tests. To provide an alternative behavior when DryRun flag is detected.
+	// If not set (default case in non-testing execution), the behavior depends on supporting components.
+	// e.g. for shell command, the command is logged.
+	DryRunFunc DryRunFunc
 }
+
+var ErrDryRunIgnored = errors.New("dry-run: ignored command")
+
+type DryRunCmdType string
+
+// DryRunFunc Used for tests. To provide an alternative behavior when DryRun flag is detected.
+// Implementing function could return special error ErrDryRunIgnored to indicate there is no alternative way to perform dry-run,
+// and the caller should apply default behavior
+type DryRunFunc func(ctx context.Context, cmdType DryRunCmdType, args...interface{}) (interface{}, error)
+
 
 func (g Global) AbsPath(base, path string) string {
 	if filepath.IsAbs(path) {

@@ -171,7 +171,7 @@ func fixPkgPath(ctx context.Context, path string, module string) (pkgPath string
 }
 
 // fixSourceDir attempts to fix given relative source directory and check if there is any source code in it
-func fixSourceDir(ctx context.Context, dir string, module string) (string, error) {
+func fixSourceDir(_ context.Context, dir string, module string) (string, error) {
 	// remove ./, ../, etc
 	dir = filepath.Clean(dir)
 	// remove module prefix

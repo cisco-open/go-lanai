@@ -2,7 +2,7 @@ package initcmd
 
 import (
 	"context"
-	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdtest"
 	"github.com/cisco-open/go-lanai/test"
 	"github.com/onsi/gomega"
 	"testing"
@@ -10,7 +10,7 @@ import (
 
 func TestInstallBinaries(t *testing.T) {
 	test.RunTest(context.Background(), t,
-		test.Setup(SetupGlobalArgs()),
+		cmdtest.WithDryRun(nil),
 		test.GomegaSubTest(SubTestWithBinaryOverride(), "WithBinaryOverride"),
 	)
 }
@@ -18,13 +18,6 @@ func TestInstallBinaries(t *testing.T) {
 /*************************
 	Sub-Test Cases
  *************************/
-
-func SetupGlobalArgs() test.SetupFunc {
-	return func(ctx context.Context, t *testing.T) (context.Context, error) {
-		cmdutils.GlobalArgs.DryRun = true
-		return ctx, nil
-	}
-}
 
 func SubTestWithBinaryOverride() test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
