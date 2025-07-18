@@ -33,7 +33,7 @@ func newBase64Value(defaultVal []byte, p *[]byte) *Base64Value {
 }
 
 // pflag.Value
-func (v Base64Value) String() string {
+func (v *Base64Value) String() string {
 	if v.ptr == nil {
 		return "nil"
 	}
