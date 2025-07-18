@@ -272,7 +272,7 @@ func GoModTidy(ctx context.Context, extraShellOptions []ShCmdOptions, opts ...Go
 }
 
 func GetGoMod(ctx context.Context, opts ...GoCmdOptions) (*GoMod, error) {
-	cmd := fmt.Sprintf("go mod edit -json")
+	cmd := "go mod edit -json"
 	for _, f := range opts {
 		f(&cmd)
 	}

@@ -23,6 +23,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"go.uber.org/fx"
+	"math"
 	"net"
 	"net/http"
 	"strconv"
@@ -77,6 +78,7 @@ func startSpanHook(tracer opentracing.Tracer) BeforeHook {
 		if host, portString, e := net.SplitHostPort(req.URL.Host); e == nil {
 			hostname = host
 			port, _ = strconv.Atoi(portString)
+			port = port % math.MaxUint16
 		}
 		opts = append(opts,
 			tracing.SpanHttpMethod(req.Method),
@@ -84,6 +86,7 @@ func startSpanHook(tracer opentracing.Tracer) BeforeHook {
 			func(span opentracing.Span) {
 				ext.PeerHostname.Set(span, hostname)
 				if port != 0 {
+					//nolint:gosec // integer overflow conversion, range check already performed
 					ext.PeerPort.Set(span, uint16(port))
 				}
 			},

@@ -124,7 +124,7 @@ type Tenancy struct {
 
 // SkipTenancyCheck is used for embedding models to override tenancy check behavior.
 // It should be called within model's hooks. this function would panic if context is not set yet
-func (Tenancy) SkipTenancyCheck(tx *gorm.DB) {
+func (*Tenancy) SkipTenancyCheck(tx *gorm.DB) {
 	SkipTenancyCheck()(tx)
 }
 
@@ -167,7 +167,7 @@ func (t *Tenancy) BeforeUpdate(tx *gorm.DB) error {
 	return err
 }
 
-func (t Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
+func (t *Tenancy) extractTenantId(_ context.Context, dest interface{}) (uuid.UUID, error) {
 	v := reflect.ValueOf(dest)
 	for ; v.Kind() == reflect.Ptr; v = v.Elem() {
 		// SuppressWarnings go:S108 empty block is intended
@@ -224,7 +224,7 @@ func (t *Tenancy) updateTenantPath(_ context.Context, dest interface{}, tenancyP
 	return nil
 }
 
-func (Tenancy) findStructField(sv reflect.Value, name string, ft reflect.Type) (f reflect.StructField, fv reflect.Value, ok bool) {
+func (*Tenancy) findStructField(sv reflect.Value, name string, ft reflect.Type) (f reflect.StructField, fv reflect.Value, ok bool) {
 	f, ok = reflectutils.FindStructField(sv.Type(), func(t reflect.StructField) bool {
 		return t.Name == name && ft.AssignableTo(t.Type)
 	})
@@ -234,7 +234,7 @@ func (Tenancy) findStructField(sv reflect.Value, name string, ft reflect.Type) (
 	return
 }
 
-func (Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.Type) (string, reflect.Value, bool) {
+func (*Tenancy) findMapValue(mv reflect.Value, keys utils.StringSet, ft reflect.Type) (string, reflect.Value, bool) {
 	for iter := mv.MapRange(); iter.Next(); {
 		k := iter.Key().String()
 		if !keys.Has(k) {

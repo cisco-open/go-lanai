@@ -137,8 +137,9 @@ func (b *AuthenticatorBuilder) mfaOptions(f *PasswordAuthFeature) (Authenticator
 			s.store = newRedisOtpStore(b.defaults.redisClient)
 		}
 		s.factory = newTotpFactory(func(factory *totpFactory) {
+			//nolint:gosec // integer overflow conversion, the number is small, won't be an issue
 			factory.digits = otp.Digits(f.otpLength)
-			factory.secretSize = int(f.otpSecretSize)
+			factory.secretSize = f.otpSecretSize
 		})
 	})
 

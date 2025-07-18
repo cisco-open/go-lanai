@@ -49,7 +49,7 @@ func (v *Base64Value) Set(s string) error {
 	return nil
 }
 
-func (v Base64Value) Type() string {
+func (v *Base64Value) Type() string {
 	return "base64"
 }
 
@@ -78,7 +78,7 @@ func (v Base64Value) Type() string {
 //	panic("implement me")
 //}
 
-func (v Base64Value) decode(s string) ([]byte, error) {
+func (v *Base64Value) decode(s string) ([]byte, error) {
 	var data []byte
 	_, e := base64.StdEncoding.Decode([]byte(s), data)
 	return data, e

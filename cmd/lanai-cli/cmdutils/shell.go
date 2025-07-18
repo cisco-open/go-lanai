@@ -132,20 +132,20 @@ func RunShellCommands(ctx context.Context, opts ...ShCmdOptions) (uint8, error) 
 }
 
 func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8, error){
-	p, err := syntax.NewParser().Parse(strings.NewReader(cmd), "")
-	if err != nil {
-		return 1, err
+	p, e := syntax.NewParser().Parse(strings.NewReader(cmd), "")
+	if e != nil {
+		return 1, e
 	}
 
-	r, err := interp.New(
+	r, e := interp.New(
 		interp.Params("-e"),
 		interp.Dir(opt.Dir),
 		interp.Env(expand.ListEnviron(opt.Env...)),
 		interp.OpenHandler(openHandler),
 		interp.StdIO(opt.Stdin, opt.Stdout, opt.Stderr),
 	)
-	if err != nil {
-		return 1, err
+	if e != nil {
+		return 1, e
 	}
 
 	if opt.ShowCmd && !ShCmdLogDisabled {
@@ -169,7 +169,7 @@ func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8,
 	}
 
 	if e := r.Run(ctx, p); e != nil {
-		if status, ok := interp.IsExitStatus(err); ok {
+		if status, ok := interp.IsExitStatus(e); ok {
 			return status, e
 		}
 		return 1, e

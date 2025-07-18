@@ -70,7 +70,7 @@ func RunDropReplace(cmd *cobra.Command, _ []string) error {
 	if e != nil {
 		return fmt.Errorf("failed to drop invalid replace: %v", e)
 	}
-	changed = len(dropped) != 0
+	changed = changed || len(dropped) != 0
 
 	if changed {
 		if e := cmdutils.GoModTidy(cmd.Context(), nil); e != nil {
@@ -79,7 +79,7 @@ func RunDropReplace(cmd *cobra.Command, _ []string) error {
 	}
 
 	// mark changes if requested
-	msg := fmt.Sprintf("dropped replaces in go.mod for CI/CD process")
+	msg := "dropped replaces in go.mod for CI/CD process"
 	tag, e := markChangesIfRequired(cmd.Context(), msg, cmdutils.GitFilePattern("go.mod", "go.sum"))
 	if e == nil && tag != "" {
 		logger.WithContext(cmd.Context()).Infof(`Modified go.mod/go.sum are tagged with Git Tag [%s]`, tag)

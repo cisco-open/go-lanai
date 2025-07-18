@@ -29,7 +29,8 @@ import (
     "time"
 )
 
-var kCtxEmbeddedRedis = struct{}{}
+type ckEmbeddedRedis struct{}
+var kCtxEmbeddedRedis = ckEmbeddedRedis{}
 
 /*******************
 	Public

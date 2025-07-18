@@ -115,7 +115,7 @@ func KeyEncoder(enc Encoder) ProducerOptions {
 
 // Partitions configure Producer's topic provisioning, by specifying min partition required
 // and their replica number (min.insync.replicas) in case topics are auto-created
-func Partitions(partitionCount int, replicationFactor int) ProducerOptions {
+func Partitions(partitionCount int32, replicationFactor int16) ProducerOptions {
 	return func(config *bindingConfig) {
 		if partitionCount < 1 {
 			partitionCount = 1
@@ -123,8 +123,8 @@ func Partitions(partitionCount int, replicationFactor int) ProducerOptions {
 		if replicationFactor < 1 {
 			replicationFactor = 1
 		}
-		config.producer.provisioning.partitionCount = int32(partitionCount)
-		config.producer.provisioning.replicationFactor = int16(replicationFactor)
+		config.producer.provisioning.partitionCount = partitionCount
+		config.producer.provisioning.replicationFactor = replicationFactor
 	}
 }
 

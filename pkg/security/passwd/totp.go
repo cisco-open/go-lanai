@@ -44,7 +44,7 @@ type totpFactory struct {
 	skew       uint
 	digits     otp.Digits
 	alg        otp.Algorithm
-	secretSize int
+	secretSize uint
 }
 
 type totpFactoryOptions func(*totpFactory)

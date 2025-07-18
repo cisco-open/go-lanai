@@ -76,7 +76,7 @@ func (m *GomegaErrorMatcher) Match(actual interface{}) (success bool, err error)
 func (m *GomegaErrorMatcher) FailureMessage(actual interface{}) (message string) {
 	var msg string
 	if m.code != 0 {
-		msg = fmt.Sprintf("to be an error with type [%T], code [%#016x] and mask [%#016x]", m.error, uint64(m.code), uint64(m.mask))
+		msg = fmt.Sprintf("to be an error with type [%T], code [%#016x] and mask [%#016x]", m.error, m.code, m.mask)
 	} else {
 		msg = fmt.Sprintf(`to equals to error [%T] - %v`, m.error, m.error)
 	}
@@ -86,7 +86,7 @@ func (m *GomegaErrorMatcher) FailureMessage(actual interface{}) (message string)
 func (m *GomegaErrorMatcher) NegatedFailureMessage(actual interface{}) (message string) {
 	var msg string
 	if m.code != 0 {
-		msg = fmt.Sprintf("not to be an error with type [%T], code [%#016x] and mask [%#016x]", m.error, uint64(m.code), uint64(m.mask))
+		msg = fmt.Sprintf("not to be an error with type [%T], code [%#016x] and mask [%#016x]", m.error, m.code, m.mask)
 	} else {
 		msg = fmt.Sprintf(`to not equal to error [%T] - %v`, m.error, m.error)
 	}
@@ -101,7 +101,7 @@ func (m *GomegaErrorMatcher) formatActual(actual interface{}) interface{} {
 	}
 	var coder errorutils.ErrorCoder
 	if errors.As(actualErr, &coder) {
-		desc = desc + fmt.Sprintf(" <Code %#016x>", uint64(coder.Code()))
+		desc = desc + fmt.Sprintf(" <Code %#016x>", coder.Code())
 	}
 	return desc
 }

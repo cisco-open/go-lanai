@@ -89,11 +89,10 @@ func ParseMetadataFromFile(fileLocation string) (*saml.EntityDescriptor, []byte,
 }
 
 func FetchMetadata(ctx context.Context, httpClient *http.Client, metadataURL *url.URL) (*saml.EntityDescriptor, []byte, error) {
-	req, err := http.NewRequest("GET", metadataURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", metadataURL.String(), nil)
 	if err != nil {
 		return nil, nil, err
 	}
-	req = req.WithContext(ctx)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

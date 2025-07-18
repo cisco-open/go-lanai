@@ -123,7 +123,7 @@ type EncryptedRaw struct {
 }
 
 // GormDataType implements schema.GormDataTypeInterface
-func (EncryptedRaw) GormDataType() string {
+func (*EncryptedRaw) GormDataType() string {
 	return "jsonb"
 }
 

@@ -33,6 +33,7 @@ func NewMockedSubscriber(topic string) *MockedSubscriber {
 			Logger: messageLogger,
 		},
 		T:     topic,
+		//nolint:gosec // integer overflow conversion, not a problem for this purpose
 		Parts: []int32{int32(utils.RandomIntN(0xffff))},
 	}
 }

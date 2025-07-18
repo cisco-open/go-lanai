@@ -69,16 +69,28 @@ linters:
       comparison: false
     exhaustive:
       default-signifies-exhaustive: true
-    gosec:
-      severity: medium
+    recvcheck:
+      disable-builtin: false
+      exclusions:
+       - "*.UnmarshalText"
+       - "*.UnmarshalJSON"
+       - "*.UnmarshalYAML"
+       - "*.UnmarshalXML"
+       - "*.UnmarshalBinary"
+       - "*.GobDecode"
+       - "*.String"
+       - "*.Scan"
     staticcheck:
       checks:
         - "all"
-        - "-QF*"
-        - "-S1039" # unnecessary use of fmt.Sprintf
-        # assigning the result of this type assertion to a variable could eliminate type assertions in switch cases
+        # Following are too verbose. Re-enable if we could control output based on severities
+        - "-QF*" # Quickfixes
+        - "-ST1*" # Stylistic issues.
         # TODO Tech debt to fix
-        - "-S*"
+        - "-S*" # Any other code simplication issues. Too many places (~100)
+        - "-S1034" # "could eliminate this type assertion". Too many places (~100)
+        - "-SA1019" # "Using a deprecated function, variable, constant or field". Re-enable when OPA is migrated
+        - "-SA1006" # "printf-style function without additional arguments". We probably won't fix these
   exclusions:
     generated: lax
     presets:
@@ -102,12 +114,12 @@ severity:
     - linters:
         - contextcheck
         - noctx
-        - staticcheck
         - recvcheck
       severity: warning
     - linters:
         - errorlint
         - exhaustive
+        - staticcheck
         - unused
       severity: info
 

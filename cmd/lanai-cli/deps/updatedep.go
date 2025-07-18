@@ -71,7 +71,7 @@ func RunUpdateDep(cmd *cobra.Command, _ []string) error {
 	}
 
 	// mark changes if requested
-	msg := fmt.Sprintf("updated versions of private modules")
+	msg := "updated versions of private modules"
 	tag, e := markChangesIfRequired(cmd.Context(), msg, cmdutils.GitFilePattern("go.mod", "go.sum"))
 	if e == nil && tag != "" {
 		logger.WithContext(cmd.Context()).Infof(`Modified go.mod/go.sum are tagged with Git Tag [%s]`, tag)

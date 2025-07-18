@@ -210,7 +210,7 @@ type oauth2ErrorCarrier struct {
 }
 
 // MarshalBinary implements encoding.BinaryMarshaler interface
-func (e OAuth2Error) MarshalBinary() ([]byte, error) {
+func (e *OAuth2Error) MarshalBinary() ([]byte, error) {
 	buffer := bytes.NewBuffer([]byte{})
 	encoder := gob.NewEncoder(buffer)
 	carrier := oauth2ErrorCarrier{

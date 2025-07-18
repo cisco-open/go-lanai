@@ -161,6 +161,7 @@ type rsaPublicJwk struct {
 func (j rsaPublicJwk) toJwk() (Jwk, error) {
 	key := &rsa.PublicKey{
 		N: j.Modulus.BigInt(),
+		//nolint:gosec // integer overflow conversion, it would fail if overflow happens
 		E: int(j.Exponent.BigInt().Uint64()),
 	}
 	return NewJwk(j.Id, j.Id, key), nil
@@ -218,6 +219,7 @@ func makeOKPJwk(key ed25519.PublicKey, params generalJwk) okpJwk {
 
 func bigEndian(i int) []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, 8))
+	//nolint:gosec // integer overflow conversion, write the value as-is. The given number is the exponent which is positive
 	if e := binary.Write(buf, binary.BigEndian, uint64(i)); e != nil {
 		return nil
 	}

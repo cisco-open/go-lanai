@@ -135,7 +135,7 @@ func ValidateApproval(c context.Context, approval map[string]bool, client oauth2
 
 func LoadAndValidateClientId(c context.Context, clientId string, clientStore oauth2.OAuth2ClientStore) (oauth2.OAuth2Client, error) {
 	if clientId == "" {
-		return nil, oauth2.NewInvalidAuthorizeRequestError(fmt.Sprintf("A client id must be provided"))
+		return nil, oauth2.NewInvalidAuthorizeRequestError("A client id must be provided")
 	}
 
 	client, e := clientStore.LoadClientByClientId(c, clientId)

@@ -63,6 +63,7 @@ func SpanHttpMethod(v string) SpanOption {
 
 func SpanHttpStatusCode(v int) SpanOption {
 	return func(span opentracing.Span) {
+		//nolint:gosec // integer overflow conversion, type mismatch between libs, actual value won't be greater than uint16 range
 		ext.HTTPStatusCode.Set(span, uint16(v))
 	}
 }

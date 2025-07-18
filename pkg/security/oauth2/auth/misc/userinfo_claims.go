@@ -74,11 +74,11 @@ func (c *UserInfoClaims) UnmarshalJSON(bytes []byte) error {
 	return c.FieldClaimsMapper.DoUnmarshalJSON(c, bytes)
 }
 
-func (c UserInfoClaims) Get(claim string) interface{} {
+func (c *UserInfoClaims) Get(claim string) interface{} {
 	return c.FieldClaimsMapper.Get(c, claim)
 }
 
-func (c UserInfoClaims) Has(claim string) bool {
+func (c *UserInfoClaims) Has(claim string) bool {
 	return c.FieldClaimsMapper.Has(c, claim)
 }
 
@@ -86,6 +86,6 @@ func (c *UserInfoClaims) Set(claim string, value interface{}) {
 	c.FieldClaimsMapper.Set(c, claim, value)
 }
 
-func (c UserInfoClaims) Values() map[string]interface{} {
+func (c *UserInfoClaims) Values() map[string]interface{} {
 	return c.FieldClaimsMapper.Values(c)
 }

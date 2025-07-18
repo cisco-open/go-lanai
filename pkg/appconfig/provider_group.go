@@ -35,11 +35,11 @@ func NewStaticProviderGroup(order int, providers ...Provider) *StaticProviderGro
 	}
 }
 
-func (g StaticProviderGroup) Order() int {
+func (g *StaticProviderGroup) Order() int {
 	return g.Precedence
 }
 
-func (g StaticProviderGroup) Providers(_ context.Context, _ bootstrap.ApplicationConfig) []Provider {
+func (g *StaticProviderGroup) Providers(_ context.Context, _ bootstrap.ApplicationConfig) []Provider {
 	return g.StaticProviders
 }
 

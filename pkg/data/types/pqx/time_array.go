@@ -26,6 +26,7 @@ import (
 )
 
 // TimeArray register driver.Valuer & sql.Scanner
+//nolint:recvcheck // for scanBytes
 type TimeArray []time.Time
 
 // Value implements driver.Valuer
