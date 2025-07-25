@@ -43,7 +43,8 @@ const (
 	gb = mb * kb
 )
 
-var ctxKeyStartTime = struct{}{}
+type ckStartTime struct {}
+var ctxKeyStartTime = ckStartTime{}
 
 /*********************
 	Function Alias

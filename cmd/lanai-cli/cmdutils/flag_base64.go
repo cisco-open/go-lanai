@@ -33,7 +33,7 @@ func newBase64Value(defaultVal []byte, p *[]byte) *Base64Value {
 }
 
 // pflag.Value
-func (v Base64Value) String() string {
+func (v *Base64Value) String() string {
 	if v.ptr == nil {
 		return "nil"
 	}
@@ -49,7 +49,7 @@ func (v *Base64Value) Set(s string) error {
 	return nil
 }
 
-func (v Base64Value) Type() string {
+func (v *Base64Value) Type() string {
 	return "base64"
 }
 
@@ -78,7 +78,7 @@ func (v Base64Value) Type() string {
 //	panic("implement me")
 //}
 
-func (v Base64Value) decode(s string) ([]byte, error) {
+func (v *Base64Value) decode(s string) ([]byte, error) {
 	var data []byte
 	_, e := base64.StdEncoding.Decode([]byte(s), data)
 	return data, e

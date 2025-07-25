@@ -66,15 +66,15 @@ type ProviderMeta struct {
 	Precedence int                    //the precedence for which the settings will take effect.
 }
 
-func (m ProviderMeta) GetSettings() map[string]interface{} {
+func (m *ProviderMeta) GetSettings() map[string]interface{} {
 	return m.Settings
 }
 
-func (m ProviderMeta) Order() int {
+func (m *ProviderMeta) Order() int {
 	return m.Precedence
 }
 
-func (m ProviderMeta) IsLoaded() bool {
+func (m *ProviderMeta) IsLoaded() bool {
 	return m.Loaded
 }
 

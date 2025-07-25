@@ -54,7 +54,7 @@ func WithMockedBroker() test.Options {
         }),
         apptest.WithDynamicProperties(map[string]apptest.PropertyValuerFunc{
             "kafka.brokers": func(ctx context.Context) interface{} {
-                return fmt.Sprintf("localhost:%d", cfg.Port)
+                return fmt.Sprintf("127.0.0.1:%d", cfg.Port)
             },
         }),
         apptest.WithFxOptions(fx.Provide(func() *MockBroker {
@@ -80,7 +80,7 @@ type MockedBrokerConfig struct {
 }
 
 func NewMockedBroker(t *testing.T, cfg *MockedBrokerConfig) *MockBroker {
-    mock := sarama.NewMockBrokerAddr(t, 0, fmt.Sprintf(`localhost:%d`, cfg.Port))
+    mock := sarama.NewMockBrokerAddr(t, 0, fmt.Sprintf(`127.0.0.1:%d`, cfg.Port))
     ret := &MockBroker{
         MockBroker: mock,
         t:          t,

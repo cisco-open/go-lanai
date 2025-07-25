@@ -99,10 +99,11 @@ func parseStructForFlags(v reflect.Value) (ret []*flagMeta, err error) {
 		}
 
 		meta, e := parseStructFieldForFlags(f, fv)
-		if e != nil || meta == nil {
+		if e != nil {
 			return nil, e
+		} else if meta != nil {
+			ret = append(ret, meta)
 		}
-		ret = append(ret, meta)
 	}
 	return
 }

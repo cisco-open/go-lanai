@@ -127,11 +127,11 @@ func (m *OPMetadata) UnmarshalJSON(bytes []byte) error {
 	return m.FieldClaimsMapper.DoUnmarshalJSON(m, bytes)
 }
 
-func (m OPMetadata) Get(claim string) interface{} {
+func (m *OPMetadata) Get(claim string) interface{} {
 	return m.FieldClaimsMapper.Get(m, claim)
 }
 
-func (m OPMetadata) Has(claim string) bool {
+func (m *OPMetadata) Has(claim string) bool {
 	return m.FieldClaimsMapper.Has(m, claim)
 }
 
@@ -139,6 +139,6 @@ func (m *OPMetadata) Set(claim string, value interface{}) {
 	m.FieldClaimsMapper.Set(m, claim, value)
 }
 
-func (m OPMetadata) Values() map[string]interface{} {
+func (m *OPMetadata) Values() map[string]interface{} {
 	return m.FieldClaimsMapper.Values(m)
 }

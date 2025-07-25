@@ -17,24 +17,30 @@
 package kafka_test
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/pkg/actuator/health"
-    "github.com/cisco-open/go-lanai/pkg/bootstrap"
-    "github.com/cisco-open/go-lanai/pkg/kafka"
-    "github.com/cisco-open/go-lanai/pkg/kafka/testdata"
-    "github.com/cisco-open/go-lanai/test"
-    "github.com/cisco-open/go-lanai/test/apptest"
-    "github.com/onsi/gomega"
-    . "github.com/onsi/gomega"
-    "go.uber.org/fx"
-    "testing"
-    "time"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/pkg/actuator/health"
+	"github.com/cisco-open/go-lanai/pkg/bootstrap"
+	"github.com/cisco-open/go-lanai/pkg/kafka"
+	"github.com/cisco-open/go-lanai/pkg/kafka/testdata"
+	"github.com/cisco-open/go-lanai/test"
+	"github.com/cisco-open/go-lanai/test/apptest"
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
+	"go.uber.org/fx"
+	"testing"
+	"time"
 )
 
 /*************************
 	Setup Test
  *************************/
+
+//func TestMain(m *testing.M) {
+//	sarama.Logger = log.New(os.Stdout, "[Sarama] ", log.LstdFlags)
+//	sarama.DebugLogger = log.New(os.Stdout, "[Sarama] ", log.LstdFlags)
+//	m.Run()
+//}
 
 /*************************
 	Tests

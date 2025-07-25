@@ -14,58 +14,130 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# yaml-language-server: $schema=https://golangci-lint.run/jsonschema/golangci.jsonschema.json
+
 # Ref: https://golangci-lint.run/usage/configuration/
+version: "2"
 run:
-  go: '1.22'
-  tests: false
+  relative-path-mode: gomod
   modules-download-mode: readonly
+  allow-parallel-runners: true
+  tests: false
 
-output:
-  sort-results: true
-
-# https://golangci-lint.run/usage/linters/
+#  https://golangci-lint.run/usage/configuration/#linters-configuration
 linters:
-#  enable-all: true
-#  disable-all: true
-  presets:
-    - bugs
-#  enable:
-#    - asciicheck
-#    - ...
-  disable:
-
-linters-settings:
-  # https://golangci-lint.run/usage/linters/#exhaustive:
-  exhaustive:
-    default-signifies-exhaustive: true
-  # https://golangci-lint.run/usage/linters/#errorlint
-  errorlint:
-    # we don't enforce to use %w. devs should do it using their own judgement
-    errorf: false
-    # error constants is still very common in many libraries. e.g. context.Cancelled
-    # So we allow plain error switching for now.
-    # TODO we should revise this setting when patterns are more consistent within golang communities
-    comparison: false
-
-severity:
-  # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
-  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
-  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
-  default-severity: error
-  rules:
-    - linters:
-        - contextcheck
-        - noctx
-        - staticcheck
-      severity: warning
-    - linters:
-        - errorlint
-        - exhaustive
-        - unused
-      severity: info
+  # https://golangci-lint.run/usage/linters/
+  default: none
+  enable:
+    # Default ones
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+#    - unused
+    # Previously "bugs" preset
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - durationcheck
+    - errchkjson
+    - errorlint
+    - exhaustive
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gosec
+    - gosmopolitan
+    - loggercheck
+    - makezero
+    - musttag
+    - nilerr
+    - nilnesserr
+    - noctx
+    - protogetter
+    - reassign
+    - recvcheck
+    - rowserrcheck
+    - spancheck
+    - sqlclosecheck
+    - testifylint
+    - zerologlint
+  settings:
+    errorlint:
+      errorf: false
+      comparison: false
+    exhaustive:
+      default-signifies-exhaustive: true
+    recvcheck:
+      disable-builtin: false
+      exclusions:
+       - "*.UnmarshalText"
+       - "*.UnmarshalJSON"
+       - "*.UnmarshalYAML"
+       - "*.UnmarshalXML"
+       - "*.UnmarshalBinary"
+       - "*.GobDecode"
+       - "*.String"
+       - "*.Scan"
+    staticcheck:
+      checks:
+        - "all"
+        # Following are too verbose. Re-enable if we could control output based on severities
+        - "-QF*" # Quickfixes
+        - "-ST1*" # Stylistic issues.
+        # TODO Tech debt to fix
+        - "-S*" # Any other code simplication issues. Too many places (~100)
+        - "-S1034" # "could eliminate this type assertion". Too many places (~100)
+        - "-SA1019" # "Using a deprecated function, variable, constant or field". Re-enable when OPA is migrated
+        - "-SA1006" # "printf-style function without additional arguments". We probably won't fix these
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
 
+
+# https://golangci-lint.run/usage/configuration/#severity-configuration
+severity:
+  # - Code climate: https://docs.codeclimate.com/docs/issues#issue-severity
+  # - Checkstyle: https://checkstyle.sourceforge.io/property_types.html#severity
+  # - GitHub: https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message
+  default: "@linter"
+  rules:
+    - linters:
+        - contextcheck
+        - noctx
+        - recvcheck
+      severity: warning
+    - linters:
+        - errorlint
+        - exhaustive
+        - staticcheck
+        - unused
+      severity: info
+
+# https://golangci-lint.run/usage/configuration/#output-configuration
+output:
+#  path-prefix: "dist"
+  formats:
+    text:
+      print-linter-name: true
+      print-issued-lines: true
+      colors: true
+  sort-order:
+    - linter
+    - severity
+  show-stats: true
+
+# https://golangci-lint.run/usage/configuration/#formatters-configuration
+formatters:
+  exclusions:
+    generated: lax
 

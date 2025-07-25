@@ -24,6 +24,7 @@ import (
 	"strings"
 )
 
+//nolint:recvcheck // for scanString
 type Version []int
 
 func (v Version) Lt(other Version) bool {

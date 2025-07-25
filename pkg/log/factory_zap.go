@@ -169,7 +169,7 @@ func (f *zapLoggerFactory) refresh(properties *Properties) error {
 }
 
 func (f *zapLoggerFactory) resolveEffectiveLevel(key string) LoggingLevel {
-	prefix := key
+	var prefix string
 	for i := len(key); i > 0; i = strings.LastIndex(prefix, keySeparator) {
 		prefix = key[0:i]
 		if ll, ok := f.logLevels[prefix]; ok {

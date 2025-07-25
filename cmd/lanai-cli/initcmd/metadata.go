@@ -17,17 +17,22 @@
 package initcmd
 
 import (
-    "context"
-    "fmt"
-    "github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
-    "path"
-    "path/filepath"
-    "strings"
+	"context"
+	"fmt"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
+	"path"
+	"path/filepath"
+	"strings"
+)
+
+const (
+	kDataBinaries = "binaries"
 )
 
 type ModuleMetadata struct {
 	CliModPath  string                 `json:"-"`
 	Module      *cmdutils.GoModule     `json:"-"`
+	Data        map[string]interface{} `json:"-"`
 	Name        string                 `json:"name"`
 	Executables map[string]*Executable `json:"execs"`
 	Resources   []*Resource            `json:"resources"`
@@ -72,6 +77,7 @@ func validateModuleMetadata(ctx context.Context) error {
 	if Module.Module = cmdutils.ResolveTargetModule(ctx); Module.Module == nil {
 		return fmt.Errorf("unable to resolve module name in %s", cmdutils.GlobalArgs.WorkingDir)
 	}
+	Module.Data = map[string]interface{}{}
 
 	// fix Executable
 	for k, v := range Module.Executables {
@@ -126,6 +132,13 @@ func validateModuleMetadata(ctx context.Context) error {
 		Module.Name = path.Base(Module.Module.Path)
 	}
 
+	// resolve Binaries
+	binaries, e := resolveBinaries(ctx)
+	if e != nil {
+		return e
+	}
+	Module.Data[kDataBinaries] = binaries
+
 	// TODO more validation
 	return nil
 }
@@ -158,7 +171,7 @@ func fixPkgPath(ctx context.Context, path string, module string) (pkgPath string
 }
 
 // fixSourceDir attempts to fix given relative source directory and check if there is any source code in it
-func fixSourceDir(ctx context.Context, dir string, module string) (string, error) {
+func fixSourceDir(_ context.Context, dir string, module string) (string, error) {
 	// remove ./, ../, etc
 	dir = filepath.Clean(dir)
 	// remove module prefix

@@ -270,7 +270,7 @@ func SubTestAdditionalDI(di *webDI) test.GomegaSubTestFunc {
 func SubTestWebController(di *webDI) test.GomegaSubTestFunc {
 	return func(ctx context.Context, t *testing.T, g *gomega.WithT) {
 		port := di.Register.ServerPort()
-		url := fmt.Sprintf("http://localhost:%d/test/api", port)
+		url := fmt.Sprintf("http://127.0.0.1:%d/test/api", port)
 		resp, e := http.DefaultClient.Get(url)
 		g.Expect(e).To(gomega.Succeed(), "http client should be succeeded")
 		g.Expect(resp).To(gomega.Not(gomega.BeNil()), "http response should not be nil ")

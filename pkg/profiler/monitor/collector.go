@@ -51,6 +51,7 @@ type dataCollector struct {
 }
 
 func NewDataCollector(storage DataStorage) *dataCollector {
+	//nolint:gosec // integer overflow conversion, library limitations
 	proc, e := process.NewProcess(int32(os.Getpid()))
 	if e != nil {
 		panic(e)
@@ -137,6 +138,7 @@ func (c *dataCollector) collectFunc(ctx context.Context, ticker *time.Ticker) fu
 
 func (c *dataCollector) collect(ctx context.Context, now time.Time) {
 	// collect facts
+	//nolint:gosec // integer overflow conversion, timestemp never been negative and won't cause issue in many years
 	timestamp := uint64(now.Unix()) * 1000
 	cpuTimes, e := c.process.Times()
 	var ms runtime.MemStats

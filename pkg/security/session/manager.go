@@ -92,6 +92,7 @@ func (m *Manager) SessionHandlerFunc() gin.HandlerFunc {
 		}
 
 		if e := Set(c, session); e != nil {
+			//nolint:nilnesserr // error is registered with context
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}

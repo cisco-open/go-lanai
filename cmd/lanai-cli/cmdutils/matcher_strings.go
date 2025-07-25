@@ -64,7 +64,7 @@ func WithSubString(substr string, caseInsensitive bool) StringMatcher {
 }
 
 func AnyNonEmptyString() StringMatcher {
-    desc := fmt.Sprintf("matches any non-empty string")
+    desc := "matches any non-empty string"
     return &GenericMatcher[string]{
         MatchFunc: func(_ context.Context, value string) (bool, error) {
             return value != "", nil

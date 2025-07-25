@@ -1,0 +1,23 @@
+execs:
+  testapp:
+    main: "pkg"
+    port: 9998
+
+generates:
+  - path: "pkg/non-exists.go"
+  - path: "pkg/non-exists"
+  - path: "github.com/cisco-open/go-lanai/cmd/lanai-cli/initcmd/testdata/non-exists"
+
+sources:
+  - path: "pkg"
+  - path: "non-src"
+
+resources:
+  - pattern: "configs"
+    output: "configs"
+
+binaries:
+  - package: github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+    version: "v2.2.2"
+  - package: github.com/golangci/golangci-lint/cmd/golangci-lint
+    version: ""

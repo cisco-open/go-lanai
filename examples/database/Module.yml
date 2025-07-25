@@ -19,5 +19,5 @@ sources:
 #  - path: "pkg/controller"
 
 #binaries:
-#  - package: "github.com/golangci/golangci-lint/cmd/golangci-lint"
-#    version: "1.54.2"
+#  - package: "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+#    version: "2.2.2"

@@ -18,6 +18,7 @@ package cmdutils
 
 import (
 	"context"
+	"errors"
 	"io"
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
@@ -41,6 +42,8 @@ type ShCmdOption struct {
 	Stdout io.Writer
 	Stderr io.Writer
 }
+
+var DryRunTypeShell DryRunCmdType = "shell"
 
 // ShellCmd add shell commends
 func ShellCmd(cmds ...string) ShCmdOptions {
@@ -129,20 +132,20 @@ func RunShellCommands(ctx context.Context, opts ...ShCmdOptions) (uint8, error) 
 }
 
 func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8, error){
-	p, err := syntax.NewParser().Parse(strings.NewReader(cmd), "")
-	if err != nil {
-		return 1, err
+	p, e := syntax.NewParser().Parse(strings.NewReader(cmd), "")
+	if e != nil {
+		return 1, e
 	}
 
-	r, err := interp.New(
+	r, e := interp.New(
 		interp.Params("-e"),
 		interp.Dir(opt.Dir),
 		interp.Env(expand.ListEnviron(opt.Env...)),
 		interp.OpenHandler(openHandler),
 		interp.StdIO(opt.Stdin, opt.Stdout, opt.Stderr),
 	)
-	if err != nil {
-		return 1, err
+	if e != nil {
+		return 1, e
 	}
 
 	if opt.ShowCmd && !ShCmdLogDisabled {
@@ -150,12 +153,23 @@ func runSingleCommand(ctx context.Context, cmd string, opt *ShCmdOption) (uint8,
 	}
 
 	if GlobalArgs.DryRun {
+		if GlobalArgs.DryRunFunc != nil {
+			switch rs, e := GlobalArgs.DryRunFunc(ctx, DryRunTypeShell, cmd, opt, r, p); {
+			case e != nil && !errors.Is(e, ErrDryRunIgnored):
+				if status, ok := rs.(uint8); ok {
+					return status, e
+				}
+				return 1, e
+			case e == nil:
+				return 0, nil
+			}
+		}
 		logger.WithContext(ctx).Infof("Run: %s", cmd)
 		return 0, nil
 	}
 
 	if e := r.Run(ctx, p); e != nil {
-		if status, ok := interp.IsExitStatus(err); ok {
+		if status, ok := interp.IsExitStatus(e); ok {
 			return status, e
 		}
 		return 1, e

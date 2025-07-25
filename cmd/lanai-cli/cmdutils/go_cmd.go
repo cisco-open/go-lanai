@@ -41,6 +41,15 @@ var (
 	packageImportPathCacheOnce = sync.Once{}
 )
 
+// ResetGoCmd Used for tests. Reset any package-level variables related to go command
+func ResetGoCmd() {
+	targetTmpGoModFile = ""
+	targetModule = nil
+	targetModuleOnce = sync.Once{}
+	packageImportPathCache = nil
+	packageImportPathCacheOnce = sync.Once{}
+}
+
 type GoCmdOptions func(goCmd *string)
 
 func GoCmdModFile(modFile string) GoCmdOptions {
@@ -263,7 +272,7 @@ func GoModTidy(ctx context.Context, extraShellOptions []ShCmdOptions, opts ...Go
 }
 
 func GetGoMod(ctx context.Context, opts ...GoCmdOptions) (*GoMod, error) {
-	cmd := fmt.Sprintf("go mod edit -json")
+	cmd := "go mod edit -json"
 	for _, f := range opts {
 		f(&cmd)
 	}

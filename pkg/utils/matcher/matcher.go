@@ -171,7 +171,7 @@ func (m *NegateMatcher) Matches(i interface{}) (ret bool, err error) {
 	return !ret, err
 }
 
-func (m NegateMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
+func (m *NegateMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) {
 	ret, err = m.Matcher.MatchesWithContext(c, i)
 	return !ret, err
 }

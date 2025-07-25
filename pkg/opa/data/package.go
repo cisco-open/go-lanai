@@ -102,7 +102,7 @@ func FilterByPolicies(flags ...DBOperationFlag) func(*gorm.DB) *gorm.DB {
 // - Having incorrect parameters cause panic
 func FilterWithQueries(op DBOperationFlag, query string, more ...interface{}) func(*gorm.DB) *gorm.DB {
 	policies := map[DBOperationFlag]string{op: query}
-	for i := range more {
+	for i := 0; i < len(more); i += 2 {
 		if op, ok := more[i].(DBOperationFlag); ok && i + 1 < len(more) {
 			if v, ok := more[i+1].(string); !ok {
 				panic("FilterByQueries scope only support DBOperationFlag and string pairs")
@@ -110,7 +110,6 @@ func FilterWithQueries(op DBOperationFlag, query string, more ...interface{}) fu
 				policies[op] = v
 			}
 		}
-		i++
 	}
 	return func(tx *gorm.DB) *gorm.DB {
 		if tx.Statement.Context == nil {
@@ -146,11 +145,10 @@ func FilterWithExtraData(kvs ...string) func(*gorm.DB) *gorm.DB {
 			existing = map[string]interface{}{}
 			ctx = context.WithValue(ctx, ckFilterExtraData{}, existing)
 		}
-		for i := range kvs {
+		for i := 0; i < len(kvs); i += 2 {
 			if i + 1 < len(kvs) && len(kvs[i]) != 0 {
 				existing[kvs[i]] = kvs[i+1]
 			}
-			i++
 		}
 		tx.Statement.Context = ctx
 		return tx

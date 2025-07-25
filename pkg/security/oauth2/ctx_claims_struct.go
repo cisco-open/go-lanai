@@ -269,13 +269,13 @@ func (m *FieldClaimsMapper) aggregateEmbeddedClaims(owner interface{}, initial i
 	}
 
 	i := initial
-	next := true
 	for _,index := range m.interfaces {
 		fv := v.FieldByIndex(index)
 		if !fv.IsValid() || fv.IsZero() {
 			continue
 		}
 		if claims, ok := fv.Interface().(Claims); ok {
+			var next bool
 			i, next = accumulator(i, claims)
 			if !next {
 				break
