@@ -59,7 +59,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87%
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope | 89%
 github.com/cisco-open/go-lanai/pkg/integrate/security/seclient | 97%
-github.com/cisco-open/go-lanai/pkg/kafka | 77%
+github.com/cisco-open/go-lanai/pkg/kafka | 76%
 github.com/cisco-open/go-lanai/pkg/kafka/testdata | 94%
 github.com/cisco-open/go-lanai/pkg/log | 86%
 github.com/cisco-open/go-lanai/pkg/log/internal | 76%
@@ -80,7 +80,7 @@ github.com/cisco-open/go-lanai/pkg/opa/testdata | 100%
 github.com/cisco-open/go-lanai/pkg/opensearch | 80%
 github.com/cisco-open/go-lanai/pkg/opensearch/testdata | 98%
 github.com/cisco-open/go-lanai/pkg/profiler | 57%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor | 77%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor | 79%
 github.com/cisco-open/go-lanai/pkg/redis | 88%
 github.com/cisco-open/go-lanai/pkg/scheduler | 100%
 github.com/cisco-open/go-lanai/pkg/security | 75%
