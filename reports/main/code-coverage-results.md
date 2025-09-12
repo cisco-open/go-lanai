@@ -189,6 +189,6 @@ github.com/cisco-open/go-lanai/test/utils | 80%
 github.com/cisco-open/go-lanai/test/utils/golden | 89%
 github.com/cisco-open/go-lanai/test/utils/gomega | 88%
 github.com/cisco-open/go-lanai/test/webtest | 95%
-**Summary** | **82%** (22011 / 26781)
+**Summary** | **82%** (22008 / 26781)
 
 _Minimum allowed line rate is `50%`_
