@@ -982,7 +982,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:126:			GetO
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:161:			newEntryFunc					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:173:			load						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:184:			getOrNew					100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					100.0%
+github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					85.7%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:208:			set						0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:215:			get						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:225:			getValue					100.0%
