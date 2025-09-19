@@ -879,7 +879,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:175:				WithMes
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:185:				newError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:193:				NewError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:199:				NewErrorWithResponse				100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				87.5%
+github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				75.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:229:				NewInternalError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:233:				NewDiscoveryDownError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:237:				NewNoEndpointFoundError				100.0%
@@ -1153,7 +1153,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/properties.go:144:					BindKafkaPropert
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:32:					topicExists					83.3%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:54:					provisionTopic					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:67:					tryCreateTopic					66.7%
-github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				58.8%
+github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				41.2%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:43:					newSaramaSubscriber				100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:55:					Topic						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:59:					Partitions					100.0%

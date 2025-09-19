@@ -59,7 +59,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87%
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope | 89%
 github.com/cisco-open/go-lanai/pkg/integrate/security/seclient | 97%
-github.com/cisco-open/go-lanai/pkg/kafka | 77%
+github.com/cisco-open/go-lanai/pkg/kafka | 76%
 github.com/cisco-open/go-lanai/pkg/kafka/testdata | 94%
 github.com/cisco-open/go-lanai/pkg/log | 86%
 github.com/cisco-open/go-lanai/pkg/log/internal | 76%
@@ -189,6 +189,6 @@ github.com/cisco-open/go-lanai/test/utils | 80%
 github.com/cisco-open/go-lanai/test/utils/golden | 89%
 github.com/cisco-open/go-lanai/test/utils/gomega | 88%
 github.com/cisco-open/go-lanai/test/webtest | 95%
-**Summary** | **82%** (22004 / 26781)
+**Summary** | **82%** (22000 / 26781)
 
 _Minimum allowed line rate is `50%`_
