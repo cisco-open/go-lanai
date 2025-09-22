@@ -789,8 +789,8 @@ github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:268:				logUpdate		
 github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:288:				verboseLog					75.0%
 github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:311:				diff						77.8%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:73:					newConsulLock					100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:96:					Key						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:103:					Lock						83.3%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:96:					Key						0.0%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:103:					Lock						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:116:					TryLock						85.7%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:132:					Release						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:136:					Lost						100.0%
@@ -1153,7 +1153,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/properties.go:144:					BindKafkaPropert
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:32:					topicExists					83.3%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:54:					provisionTopic					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:67:					tryCreateTopic					66.7%
-github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				41.2%
+github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				58.8%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:43:					newSaramaSubscriber				100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:55:					Topic						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:59:					Partitions					100.0%
@@ -3662,7 +3662,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:109:				isLoaded			
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:114:				markLoaded					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:129:				NewMemCache					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:146:				GetOrLoad					84.6%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						83.3%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						91.7%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:203:				Delete						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:207:				Reset						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:213:				Evict						100.0%
@@ -3671,7 +3671,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:232:				updateEntry
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:250:				load						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:261:				getOrNew					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:271:				newIfAbsent					100.0%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				88.9%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:302:				set						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:309:				get						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:319:				getValue					100.0%
