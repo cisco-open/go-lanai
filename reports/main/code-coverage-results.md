@@ -52,8 +52,8 @@ github.com/cisco-open/go-lanai/pkg/discovery | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/consulsd | 94%
 github.com/cisco-open/go-lanai/pkg/discovery/dnssd | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/sd | 85%
-github.com/cisco-open/go-lanai/pkg/dsync | 83%
-github.com/cisco-open/go-lanai/pkg/dsync/consul | 92%
+github.com/cisco-open/go-lanai/pkg/dsync | 81%
+github.com/cisco-open/go-lanai/pkg/dsync/consul | 91%
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87%
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80%
@@ -80,7 +80,7 @@ github.com/cisco-open/go-lanai/pkg/opa/testdata | 100%
 github.com/cisco-open/go-lanai/pkg/opensearch | 80%
 github.com/cisco-open/go-lanai/pkg/opensearch/testdata | 98%
 github.com/cisco-open/go-lanai/pkg/profiler | 57%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor | 77%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor | 79%
 github.com/cisco-open/go-lanai/pkg/redis | 88%
 github.com/cisco-open/go-lanai/pkg/scheduler | 100%
 github.com/cisco-open/go-lanai/pkg/security | 75%
