@@ -52,7 +52,7 @@ github.com/cisco-open/go-lanai/pkg/discovery | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/consulsd | 94%
 github.com/cisco-open/go-lanai/pkg/discovery/dnssd | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/sd | 85%
-github.com/cisco-open/go-lanai/pkg/dsync | 83%
+github.com/cisco-open/go-lanai/pkg/dsync | 81%
 github.com/cisco-open/go-lanai/pkg/dsync/consul | 91%
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87%
@@ -145,7 +145,7 @@ github.com/cisco-open/go-lanai/pkg/utils/order | 93%
 github.com/cisco-open/go-lanai/pkg/utils/reflectutils | 90%
 github.com/cisco-open/go-lanai/pkg/utils/validation | 67%
 github.com/cisco-open/go-lanai/pkg/utils/xsync | 100%
-github.com/cisco-open/go-lanai/pkg/vault | 81%
+github.com/cisco-open/go-lanai/pkg/vault | 83%
 github.com/cisco-open/go-lanai/pkg/vault/appconfig | 88%
 github.com/cisco-open/go-lanai/pkg/vault/health | 25%
 github.com/cisco-open/go-lanai/pkg/vault/init | 75%
