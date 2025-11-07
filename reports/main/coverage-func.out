@@ -879,7 +879,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:175:				WithMes
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:185:				newError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:193:				NewError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:199:				NewErrorWithResponse				100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				75.0%
+github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				87.5%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:229:				NewInternalError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:233:				NewDiscoveryDownError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:237:				NewNoEndpointFoundError				100.0%
@@ -1616,7 +1616,7 @@ github.com/cisco-open/go-lanai/pkg/opensearch/tracing.go:79:					TracerHook					
 github.com/cisco-open/go-lanai/pkg/opensearch/tracing.go:91:					tracingProvider					100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:53:				NewDataCollector				75.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:65:				Start						88.9%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:79:				Stop						100.0%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:79:				Stop						91.7%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:100:				Subscribe					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:112:				Unsubscribe					85.7%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:124:				collectFunc					100.0%
@@ -1641,7 +1641,7 @@ github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:53:			Read	
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:80:			AppendAll					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:106:			Append						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:120:			groupKey					100.0%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						100.0%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						42.9%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:38:					Use						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:48:					initialize					66.7%
 github.com/cisco-open/go-lanai/pkg/profiler/pprof.go:31:					Mappings					100.0%
