@@ -800,7 +800,7 @@ github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:169:					updateState				
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:193:					startLoop					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:199:					stopLoop					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:206:					refresh						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:218:					lockLoop					93.1%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:218:					lockLoop					82.8%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:277:					acquireLock					71.4%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:343:					handleAcquisitionFailure			78.9%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:390:					monitorLock					82.4%
@@ -808,11 +808,11 @@ github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:431:					delay						100.
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:440:					release						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:56:					NewConsulLockManager				100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:76:					Start						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:81:					Stop						87.5%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:81:					Stop						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:97:					Lock						88.2%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:130:					startLoop					100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:130:					startLoop					85.7%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:143:					stopLoop					100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:152:					waitForSession					100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:152:					waitForSession					88.9%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:172:					updateSession					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:184:					sessionLoop					94.1%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:228:					keepSession					100.0%
@@ -821,9 +821,9 @@ github.com/cisco-open/go-lanai/pkg/dsync/consul/pakcage.go:38:					provideSyncMa
 github.com/cisco-open/go-lanai/pkg/dsync/context.go:130:					LockWithKey					66.7%
 github.com/cisco-open/go-lanai/pkg/dsync/context.go:142:					NewJsonLockValuer				80.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:16:						newError					100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/errors.go:24:						Error						0.0%
-github.com/cisco-open/go-lanai/pkg/dsync/errors.go:28:						Is						75.0%
-github.com/cisco-open/go-lanai/pkg/dsync/errors.go:36:						Unwrap						100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/errors.go:24:						Error						100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/errors.go:28:						Is						0.0%
+github.com/cisco-open/go-lanai/pkg/dsync/errors.go:36:						Unwrap						0.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:40:						WithMessage					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/errors.go:48:						WithCause					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/leadership.go:44:					LeadershipLock					66.7%
@@ -879,7 +879,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:175:				WithMes
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:185:				newError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:193:				NewError					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:199:				NewErrorWithResponse				100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				75.0%
+github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:212:				NewErrorWithStatusCode				87.5%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:229:				NewInternalError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:233:				NewDiscoveryDownError				0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go:237:				NewNoEndpointFoundError				100.0%
@@ -1086,7 +1086,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:156:					handleGroup					10
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:179:					Setup						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:187:					Cleanup						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:196:					ConsumeClaim					83.3%
-github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:211:					handleMessage					40.0%
+github.com/cisco-open/go-lanai/pkg/kafka/consumer.go:211:					handleMessage					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/dispatcher.go:64:					assign						83.3%
 github.com/cisco-open/go-lanai/pkg/kafka/dispatcher.go:102:					AddHandler					79.2%
 github.com/cisco-open/go-lanai/pkg/kafka/dispatcher.go:154:					Dispatch					84.2%
@@ -1153,7 +1153,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/properties.go:144:					BindKafkaPropert
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:32:					topicExists					83.3%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:54:					provisionTopic					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:67:					tryCreateTopic					66.7%
-github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				58.8%
+github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				41.2%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:43:					newSaramaSubscriber				100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:55:					Topic						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:59:					Partitions					100.0%
@@ -3662,7 +3662,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:109:				isLoaded			
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:114:				markLoaded					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:129:				NewMemCache					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:146:				GetOrLoad					84.6%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						83.3%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:181:				Update						91.7%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:203:				Delete						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:207:				Reset						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:213:				Evict						100.0%
@@ -3671,7 +3671,7 @@ github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:232:				updateEntry
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:250:				load						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:261:				getOrNew					100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:271:				newIfAbsent					100.0%
-github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				88.9%
+github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:286:				replaceIfPresent				100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:302:				set						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:309:				get						100.0%
 github.com/cisco-open/go-lanai/pkg/utils/cacheutils/cache.go:319:				getValue					100.0%
