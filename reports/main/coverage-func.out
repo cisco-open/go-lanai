@@ -790,7 +790,7 @@ github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:288:				verboseLog	
 github.com/cisco-open/go-lanai/pkg/discovery/sd/instancer.go:311:				diff						77.8%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:73:					newConsulLock					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:96:					Key						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:103:					Lock						100.0%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:103:					Lock						83.3%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:116:					TryLock						85.7%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:132:					Release						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:136:					Lost						100.0%
@@ -1616,7 +1616,7 @@ github.com/cisco-open/go-lanai/pkg/opensearch/tracing.go:79:					TracerHook					
 github.com/cisco-open/go-lanai/pkg/opensearch/tracing.go:91:					tracingProvider					100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:53:				NewDataCollector				75.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:65:				Start						88.9%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:79:				Stop						100.0%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:79:				Stop						91.7%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:100:				Subscribe					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:112:				Unsubscribe					85.7%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/collector.go:124:				collectFunc					100.0%
