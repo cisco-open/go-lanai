@@ -52,8 +52,8 @@ github.com/cisco-open/go-lanai/pkg/discovery | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/consulsd | 94%
 github.com/cisco-open/go-lanai/pkg/discovery/dnssd | 92%
 github.com/cisco-open/go-lanai/pkg/discovery/sd | 85%
-github.com/cisco-open/go-lanai/pkg/dsync | 70%
-github.com/cisco-open/go-lanai/pkg/dsync/consul | 88%
+github.com/cisco-open/go-lanai/pkg/dsync | 80%
+github.com/cisco-open/go-lanai/pkg/dsync/consul | 91%
 github.com/cisco-open/go-lanai/pkg/dsync/redis | 92%
 github.com/cisco-open/go-lanai/pkg/integrate/httpclient | 87%
 github.com/cisco-open/go-lanai/pkg/integrate/security | 80%
@@ -189,6 +189,6 @@ github.com/cisco-open/go-lanai/test/utils | 80%
 github.com/cisco-open/go-lanai/test/utils/golden | 89%
 github.com/cisco-open/go-lanai/test/utils/gomega | 88%
 github.com/cisco-open/go-lanai/test/webtest | 95%
-**Summary** | **82%** (21996 / 26781)
+**Summary** | **82%** (22006 / 26781)
 
 _Minimum allowed line rate is `50%`_
