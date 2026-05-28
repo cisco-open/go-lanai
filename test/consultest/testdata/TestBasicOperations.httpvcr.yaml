@@ -27,20 +27,21 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 4
+        content_length: 5
         uncompressed: false
-        body: "true"
+        body: |
+            true
         headers:
             Content-Length:
-                - "4"
+                - "5"
             Content-Type:
-                - application/json
+                - application/octet-stream
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -58,6 +59,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
         url: http://localhost:8500/v1/kv/test/new-value
@@ -68,22 +71,32 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 109
+        content_length: 175
         uncompressed: false
-        body: '[{"LockIndex":0,"Key":"test/new-value","Flags":0,"Value":"Z29vZA==","CreateIndex":99439,"ModifyIndex":99439}]'
+        body: |-
+            [
+                {
+                    "LockIndex": 0,
+                    "Key": "test/new-value",
+                    "Flags": 0,
+                    "Value": "Z29vZA==",
+                    "CreateIndex": 25,
+                    "ModifyIndex": 25
+                }
+            ]
         headers:
             Content-Length:
-                - "109"
+                - "175"
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Index:
-                - "99439"
+                - "25"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -107,6 +120,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "2"
         url: http://localhost:8500/v1/kv/test?recurse=
@@ -117,22 +132,32 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 109
+        content_length: 175
         uncompressed: false
-        body: '[{"LockIndex":0,"Key":"test/new-value","Flags":0,"Value":"Z29vZA==","CreateIndex":99439,"ModifyIndex":99439}]'
+        body: |-
+            [
+                {
+                    "LockIndex": 0,
+                    "Key": "test/new-value",
+                    "Flags": 0,
+                    "Value": "Z29vZA==",
+                    "CreateIndex": 25,
+                    "ModifyIndex": 25
+                }
+            ]
         headers:
             Content-Length:
-                - "109"
+                - "175"
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Index:
-                - "99439"
+                - "25"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:

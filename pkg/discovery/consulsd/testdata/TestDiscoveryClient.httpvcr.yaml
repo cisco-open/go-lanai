@@ -17,7 +17,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "0"
         url: http://localhost:8500/v1/agent/service/register
@@ -34,12 +34,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -59,7 +61,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
         url: http://localhost:8500/v1/agent/service/register
@@ -76,12 +78,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -101,7 +105,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "2"
         url: http://localhost:8500/v1/agent/service/register
@@ -118,12 +122,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -143,7 +149,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "3"
         url: http://localhost:8500/v1/agent/service/register
@@ -160,12 +166,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -183,6 +191,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "4"
         url: http://localhost:8500/v1/health/service/service1
@@ -195,20 +205,275 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '[{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330890,"ModifyIndex":330890},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330891,"ModifyIndex":330891},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330892,"ModifyIndex":330892},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119},{"Node":"32c18459b2f9","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":330892,"ModifyIndex":330892}]}]'
+        body: |-
+            [
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8011",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=1",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            }
+                        },
+                        "Meta": {
+                            "instance": "1",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8011,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 87,
+                        "ModifyIndex": 87
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8012",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=2"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            }
+                        },
+                        "Meta": {
+                            "instance": "2",
+                            "version": "0.0.2"
+                        },
+                        "Port": 8012,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 88,
+                        "ModifyIndex": 88
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8013",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=3",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            }
+                        },
+                        "Meta": {
+                            "instance": "3",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8013,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 89,
+                        "ModifyIndex": 89
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        },
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "service:service1-8013",
+                            "Name": "Service 'service1' check",
+                            "Status": "critical",
+                            "Notes": "",
+                            "Output": "",
+                            "ServiceID": "service1-8013",
+                            "ServiceName": "service1",
+                            "ServiceTags": [
+                                "instance=3",
+                                "legacy=true"
+                            ],
+                            "Type": "http",
+                            "Interval": "10s",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 89,
+                            "ModifyIndex": 89
+                        }
+                    ]
+                }
+            ]
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "330892"
+                - "89"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -232,6 +497,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "5"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8011
@@ -248,12 +515,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -271,6 +540,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "6"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8012
@@ -287,12 +558,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -310,6 +583,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "7"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8013
@@ -326,12 +601,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -349,6 +626,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "8"
         url: http://localhost:8500/v1/agent/service/deregister/service2-8021
@@ -365,12 +644,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -390,7 +671,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "9"
         url: http://localhost:8500/v1/agent/service/register
@@ -407,12 +688,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -432,7 +715,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "10"
         url: http://localhost:8500/v1/agent/service/register
@@ -449,12 +732,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -474,7 +759,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "11"
         url: http://localhost:8500/v1/agent/service/register
@@ -491,12 +776,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -516,7 +803,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "12"
         url: http://localhost:8500/v1/agent/service/register
@@ -533,12 +820,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -556,6 +845,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "13"
         url: http://localhost:8500/v1/health/service/service1
@@ -568,20 +859,275 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '[{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330898,"ModifyIndex":330898},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330899,"ModifyIndex":330899},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330900,"ModifyIndex":330900},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119},{"Node":"32c18459b2f9","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":330900,"ModifyIndex":330900}]}]'
+        body: |-
+            [
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8011",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=1",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            }
+                        },
+                        "Meta": {
+                            "instance": "1",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8011,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 95,
+                        "ModifyIndex": 95
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8012",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=2"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            }
+                        },
+                        "Meta": {
+                            "instance": "2",
+                            "version": "0.0.2"
+                        },
+                        "Port": 8012,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 96,
+                        "ModifyIndex": 96
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8013",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=3",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            }
+                        },
+                        "Meta": {
+                            "instance": "3",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8013,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 97,
+                        "ModifyIndex": 97
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        },
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "service:service1-8013",
+                            "Name": "Service 'service1' check",
+                            "Status": "critical",
+                            "Notes": "",
+                            "Output": "",
+                            "ServiceID": "service1-8013",
+                            "ServiceName": "service1",
+                            "ServiceTags": [
+                                "instance=3",
+                                "legacy=true"
+                            ],
+                            "Type": "http",
+                            "Interval": "10s",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 97,
+                            "ModifyIndex": 97
+                        }
+                    ]
+                }
+            ]
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "330900"
+                - "97"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -605,6 +1151,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "14"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8011
@@ -621,12 +1169,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -644,6 +1194,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "15"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8012
@@ -660,12 +1212,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -683,6 +1237,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "16"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8013
@@ -699,12 +1255,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -722,6 +1280,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "17"
         url: http://localhost:8500/v1/agent/service/deregister/service2-8021
@@ -738,12 +1298,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -763,7 +1325,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "18"
         url: http://localhost:8500/v1/agent/service/register
@@ -780,12 +1342,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -805,7 +1369,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "19"
         url: http://localhost:8500/v1/agent/service/register
@@ -822,12 +1386,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -847,7 +1413,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "20"
         url: http://localhost:8500/v1/agent/service/register
@@ -864,12 +1430,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -889,7 +1457,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "21"
         url: http://localhost:8500/v1/agent/service/register
@@ -906,12 +1474,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -929,6 +1499,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "22"
         url: http://localhost:8500/v1/health/service/service1
@@ -941,20 +1513,275 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '[{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330906,"ModifyIndex":330906},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330907,"ModifyIndex":330907},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330908,"ModifyIndex":330908},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119},{"Node":"32c18459b2f9","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":330908,"ModifyIndex":330908}]}]'
+        body: |-
+            [
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8011",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=1",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            }
+                        },
+                        "Meta": {
+                            "instance": "1",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8011,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 103,
+                        "ModifyIndex": 103
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8012",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=2"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            }
+                        },
+                        "Meta": {
+                            "instance": "2",
+                            "version": "0.0.2"
+                        },
+                        "Port": 8012,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 104,
+                        "ModifyIndex": 104
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8013",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=3",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            }
+                        },
+                        "Meta": {
+                            "instance": "3",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8013,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 105,
+                        "ModifyIndex": 105
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        },
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "service:service1-8013",
+                            "Name": "Service 'service1' check",
+                            "Status": "critical",
+                            "Notes": "",
+                            "Output": "",
+                            "ServiceID": "service1-8013",
+                            "ServiceName": "service1",
+                            "ServiceTags": [
+                                "instance=3",
+                                "legacy=true"
+                            ],
+                            "Type": "http",
+                            "Interval": "10s",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 105,
+                            "ModifyIndex": 105
+                        }
+                    ]
+                }
+            ]
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "330908"
+                - "105"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -978,6 +1805,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "23"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8011
@@ -994,12 +1823,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1017,6 +1848,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "24"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8012
@@ -1033,12 +1866,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1056,6 +1891,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "25"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8013
@@ -1072,12 +1909,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1095,6 +1934,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "26"
         url: http://localhost:8500/v1/agent/service/deregister/service2-8021
@@ -1111,12 +1952,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1136,7 +1979,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "27"
         url: http://localhost:8500/v1/agent/service/register
@@ -1153,12 +1996,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1178,7 +2023,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "28"
         url: http://localhost:8500/v1/agent/service/register
@@ -1195,12 +2040,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1220,7 +2067,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "29"
         url: http://localhost:8500/v1/agent/service/register
@@ -1237,12 +2084,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1262,7 +2111,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "30"
         url: http://localhost:8500/v1/agent/service/register
@@ -1279,12 +2128,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1302,6 +2153,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "31"
         url: http://localhost:8500/v1/health/service/service1
@@ -1314,20 +2167,275 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '[{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330914,"ModifyIndex":330914},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8012","Service":"service1","Tags":["instance=2"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8012},"wan_ipv4":{"Address":"127.0.0.1","Port":8012}},"Meta":{"instance":"2","version":"0.0.2"},"Port":8012,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330915,"ModifyIndex":330915},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330916,"ModifyIndex":330916},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119},{"Node":"32c18459b2f9","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":330916,"ModifyIndex":330916}]}]'
+        body: |-
+            [
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8011",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=1",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            }
+                        },
+                        "Meta": {
+                            "instance": "1",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8011,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 111,
+                        "ModifyIndex": 111
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8012",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=2"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8012
+                            }
+                        },
+                        "Meta": {
+                            "instance": "2",
+                            "version": "0.0.2"
+                        },
+                        "Port": 8012,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 112,
+                        "ModifyIndex": 112
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8013",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=3",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            }
+                        },
+                        "Meta": {
+                            "instance": "3",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8013,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 113,
+                        "ModifyIndex": 113
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        },
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "service:service1-8013",
+                            "Name": "Service 'service1' check",
+                            "Status": "critical",
+                            "Notes": "",
+                            "Output": "",
+                            "ServiceID": "service1-8013",
+                            "ServiceName": "service1",
+                            "ServiceTags": [
+                                "instance=3",
+                                "legacy=true"
+                            ],
+                            "Type": "http",
+                            "Interval": "10s",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 113,
+                            "ModifyIndex": 113
+                        }
+                    ]
+                }
+            ]
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "330916"
+                - "113"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -1351,6 +2459,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "32"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8012
@@ -1367,12 +2477,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1390,9 +2502,11 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "33"
-        url: http://localhost:8500/v1/health/service/service1?index=330916
+        url: http://localhost:8500/v1/health/service/service1?index=113
         method: GET
       response:
         proto: HTTP/1.1
@@ -1402,20 +2516,199 @@ interactions:
         trailer: {}
         content_length: -1
         uncompressed: true
-        body: '[{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8011","Service":"service1","Tags":["instance=1","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8011},"wan_ipv4":{"Address":"127.0.0.1","Port":8011}},"Meta":{"instance":"1","legacy":"true","version":"0.0.1"},"Port":8011,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330914,"ModifyIndex":330914},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119}]},{"Node":{"ID":"d9438204-a274-3cff-ec57-c74a1aff9817","Node":"32c18459b2f9","Address":"127.0.0.1","Datacenter":"dc1","TaggedAddresses":{"lan":"127.0.0.1","lan_ipv4":"127.0.0.1","wan":"127.0.0.1","wan_ipv4":"127.0.0.1"},"Meta":{"consul-network-segment":""},"CreateIndex":16,"ModifyIndex":215122},"Service":{"ID":"service1-8013","Service":"service1","Tags":["instance=3","legacy=true"],"Address":"127.0.0.1","TaggedAddresses":{"lan_ipv4":{"Address":"127.0.0.1","Port":8013},"wan_ipv4":{"Address":"127.0.0.1","Port":8013}},"Meta":{"instance":"3","legacy":"true","version":"0.0.1"},"Port":8013,"Weights":{"Passing":1,"Warning":1},"EnableTagOverride":false,"Proxy":{"Mode":"","MeshGateway":{},"Expose":{}},"Connect":{},"PeerName":"","CreateIndex":330916,"ModifyIndex":330916},"Checks":[{"Node":"32c18459b2f9","CheckID":"serfHealth","Name":"Serf Health Status","Status":"passing","Notes":"","Output":"Agent alive and reachable","ServiceID":"","ServiceName":"","ServiceTags":[],"Type":"","Interval":"","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":215119,"ModifyIndex":215119},{"Node":"32c18459b2f9","CheckID":"service:service1-8013","Name":"Service ''service1'' check","Status":"critical","Notes":"","Output":"","ServiceID":"service1-8013","ServiceName":"service1","ServiceTags":["instance=3","legacy=true"],"Type":"http","Interval":"10s","Timeout":"","ExposedPort":0,"Definition":{},"CreateIndex":330916,"ModifyIndex":330916}]}]'
+        body: |-
+            [
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8011",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=1",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8011
+                            }
+                        },
+                        "Meta": {
+                            "instance": "1",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8011,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 111,
+                        "ModifyIndex": 111
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        }
+                    ]
+                },
+                {
+                    "Node": {
+                        "ID": "6d9184ed-8f6d-df59-10fe-07d7154cb4da",
+                        "Node": "7d20c661678a",
+                        "Address": "127.0.0.1",
+                        "Datacenter": "dc1",
+                        "TaggedAddresses": {
+                            "lan": "127.0.0.1",
+                            "lan_ipv4": "127.0.0.1",
+                            "wan": "127.0.0.1",
+                            "wan_ipv4": "127.0.0.1"
+                        },
+                        "Meta": {
+                            "consul-network-segment": ""
+                        },
+                        "CreateIndex": 13,
+                        "ModifyIndex": 15
+                    },
+                    "Service": {
+                        "ID": "service1-8013",
+                        "Service": "service1",
+                        "Tags": [
+                            "instance=3",
+                            "legacy=true"
+                        ],
+                        "Address": "127.0.0.1",
+                        "TaggedAddresses": {
+                            "lan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            },
+                            "wan_ipv4": {
+                                "Address": "127.0.0.1",
+                                "Port": 8013
+                            }
+                        },
+                        "Meta": {
+                            "instance": "3",
+                            "legacy": "true",
+                            "version": "0.0.1"
+                        },
+                        "Port": 8013,
+                        "Weights": {
+                            "Passing": 1,
+                            "Warning": 1
+                        },
+                        "EnableTagOverride": false,
+                        "Proxy": {
+                            "Mode": "",
+                            "MeshGateway": {},
+                            "Expose": {}
+                        },
+                        "Connect": {},
+                        "PeerName": "",
+                        "CreateIndex": 113,
+                        "ModifyIndex": 113
+                    },
+                    "Checks": [
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "serfHealth",
+                            "Name": "Serf Health Status",
+                            "Status": "passing",
+                            "Notes": "",
+                            "Output": "Agent alive and reachable",
+                            "ServiceID": "",
+                            "ServiceName": "",
+                            "ServiceTags": [],
+                            "Type": "",
+                            "Interval": "",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 13,
+                            "ModifyIndex": 13
+                        },
+                        {
+                            "Node": "7d20c661678a",
+                            "CheckID": "service:service1-8013",
+                            "Name": "Service 'service1' check",
+                            "Status": "critical",
+                            "Notes": "",
+                            "Output": "",
+                            "ServiceID": "service1-8013",
+                            "ServiceName": "service1",
+                            "ServiceTags": [
+                                "instance=3",
+                                "legacy=true"
+                            ],
+                            "Type": "http",
+                            "Interval": "10s",
+                            "Timeout": "",
+                            "ExposedPort": 0,
+                            "Definition": {},
+                            "CreateIndex": 113,
+                            "ModifyIndex": 113
+                        }
+                    ]
+                }
+            ]
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Effective-Consistency:
                 - leader
             X-Consul-Index:
-                - "330918"
+                - "115"
             X-Consul-Knownleader:
                 - "false"
             X-Consul-Lastcontact:
@@ -1439,6 +2732,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "34"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8011
@@ -1455,12 +2750,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1478,6 +2775,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "35"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8012
@@ -1495,13 +2794,13 @@ interactions:
             Content-Length:
                 - "95"
             Content-Type:
-                - text/plain; charset=utf-8
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 404 Not Found
         code: 404
         duration: 200µs
@@ -1519,6 +2818,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "36"
         url: http://localhost:8500/v1/agent/service/deregister/service1-8013
@@ -1535,12 +2836,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -1558,6 +2861,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "37"
         url: http://localhost:8500/v1/agent/service/deregister/service2-8021
@@ -1574,12 +2879,14 @@ interactions:
         headers:
             Content-Length:
                 - "0"
+            Content-Type:
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs

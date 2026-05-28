@@ -18,11 +18,12 @@ package ittest
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
 	"mime"
 	"net/url"
 	"reflect"
 	"strings"
+
+	"github.com/spyzhov/ajson"
 )
 
 type RecordLiteralBodyMatcher GenericMatcherFunc[[]byte, []byte]
@@ -63,7 +64,7 @@ func (m RecordFormBodyMatcher) Matches(out []byte, record []byte) error {
 
 // NewRecordFormBodyMatcher returns RecordBodyMatcher that matches request bodies as application/x-www-form-urlencoded.
 // any value in the fuzzyKeys is not compared. But outgoing body need to have all keys contained in the record body
-func NewRecordFormBodyMatcher(fuzzyKeys...string) RecordBodyMatcher {
+func NewRecordFormBodyMatcher(fuzzyKeys ...string) RecordBodyMatcher {
 	valuesMatcher := newValuesMatcher("form body", nil, fuzzyKeys...)
 	return RecordLiteralBodyMatcher(func(out []byte, record []byte) error {
 		outForm := parseFormBody(out)
@@ -89,6 +90,9 @@ func (m RecordJsonBodyMatcher) Matches(out []byte, record []byte) error {
 func NewRecordJsonBodyMatcher(fuzzyJsonPaths ...string) RecordBodyMatcher {
 	parsedPaths := parseJsonPaths(fuzzyJsonPaths)
 	return RecordJsonBodyMatcher(func(out []byte, record []byte) error {
+		if len(out) == 0 && len(record) == 0 {
+			return nil
+		}
 		rRoot, rMatched, e := parseJsonWithFilter(record, parsedPaths)
 		if e != nil {
 			return e
@@ -166,10 +170,9 @@ func parseFormBody(data []byte) url.Values {
 		if len(kv) < 2 {
 			continue
 		}
-		if v , e := url.QueryUnescape(kv[1]); e == nil {
+		if v, e := url.QueryUnescape(kv[1]); e == nil {
 			parsed.Add(kv[0], v)
 		}
 	}
 	return parsed
 }
-

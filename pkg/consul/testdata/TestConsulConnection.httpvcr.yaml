@@ -27,20 +27,21 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 4
+        content_length: 5
         uncompressed: false
-        body: "true"
+        body: |
+            true
         headers:
             Content-Length:
-                - "4"
+                - "5"
             Content-Type:
-                - application/json
+                - application/octet-stream
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -58,6 +59,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "1"
         url: http://localhost:8500/v1/kv/test/new-value
@@ -68,22 +71,32 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 109
+        content_length: 175
         uncompressed: false
-        body: '[{"LockIndex":0,"Key":"test/new-value","Flags":0,"Value":"Z29vZA==","CreateIndex":99439,"ModifyIndex":99439}]'
+        body: |-
+            [
+                {
+                    "LockIndex": 0,
+                    "Key": "test/new-value",
+                    "Flags": 0,
+                    "Value": "Z29vZA==",
+                    "CreateIndex": 25,
+                    "ModifyIndex": 25
+                }
+            ]
         headers:
             Content-Length:
-                - "109"
+                - "175"
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Index:
-                - "99439"
+                - "25"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
@@ -107,6 +120,8 @@ interactions:
         body: ""
         form: {}
         headers:
+            Content-Type:
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "2"
         url: http://localhost:8500/v1/kv/test?recurse=
@@ -117,22 +132,110 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 109
-        uncompressed: false
-        body: '[{"LockIndex":0,"Key":"test/new-value","Flags":0,"Value":"Z29vZA==","CreateIndex":99439,"ModifyIndex":99439}]'
+        content_length: -1
+        uncompressed: true
+        body: |-
+            [
+                {
+                    "LockIndex": 0,
+                    "Key": "test/new-value",
+                    "Flags": 0,
+                    "Value": "Z29vZA==",
+                    "CreateIndex": 25,
+                    "ModifyIndex": 25
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default,testprofile/test.from-app",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=",
+                    "CreateIndex": 46,
+                    "ModifyIndex": 46
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default,testprofile/test.from-app-profile",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=",
+                    "CreateIndex": 47,
+                    "ModifyIndex": 47
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default,testprofile/test.from-default-profile",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0LXByb2ZpbGU=",
+                    "CreateIndex": 45,
+                    "ModifyIndex": 45
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default/test.from-app",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0",
+                    "CreateIndex": 43,
+                    "ModifyIndex": 43
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default/test.from-app-profile",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0",
+                    "CreateIndex": 44,
+                    "ModifyIndex": 44
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default/test.from-default",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0",
+                    "CreateIndex": 41,
+                    "ModifyIndex": 41
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/default/test.from-default-profile",
+                    "Flags": 0,
+                    "Value": "ZGVmYXVsdC1jb250ZXh0",
+                    "CreateIndex": 42,
+                    "ModifyIndex": 42
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/test-app,testprofile/test.from-app-profile",
+                    "Flags": 0,
+                    "Value": "dGVzdC1hcHAtcHJvZmlsZQ==",
+                    "CreateIndex": 50,
+                    "ModifyIndex": 50
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/test-app/test.from-app",
+                    "Flags": 0,
+                    "Value": "dGVzdC1hcHA=",
+                    "CreateIndex": 48,
+                    "ModifyIndex": 48
+                },
+                {
+                    "LockIndex": 0,
+                    "Key": "testconfig/test-app/test.from-app-profile",
+                    "Flags": 0,
+                    "Value": "dGVzdC1hcHA=",
+                    "CreateIndex": 49,
+                    "ModifyIndex": 49
+                }
+            ]
         headers:
-            Content-Length:
-                - "109"
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
             X-Consul-Index:
-                - "99439"
+                - "50"
             X-Consul-Knownleader:
                 - "true"
             X-Consul-Lastcontact:
