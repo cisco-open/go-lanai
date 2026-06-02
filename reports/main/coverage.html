@@ -379,7 +379,7 @@
 				
 				<option value="file161">github.com/cisco-open/go-lanai/pkg/integrate/httpclient/context.go (93.5%)</option>
 				
-				<option value="file162">github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go (77.1%)</option>
+				<option value="file162">github.com/cisco-open/go-lanai/pkg/integrate/httpclient/error.go (80.0%)</option>
 				
 				<option value="file163">github.com/cisco-open/go-lanai/pkg/integrate/httpclient/hooks.go (100.0%)</option>
 				
@@ -425,7 +425,7 @@
 				
 				<option value="file184">github.com/cisco-open/go-lanai/pkg/kafka/binder.go (69.0%)</option>
 				
-				<option value="file185">github.com/cisco-open/go-lanai/pkg/kafka/consumer.go (76.3%)</option>
+				<option value="file185">github.com/cisco-open/go-lanai/pkg/kafka/consumer.go (75.0%)</option>
 				
 				<option value="file186">github.com/cisco-open/go-lanai/pkg/kafka/dispatcher.go (79.3%)</option>
 				
@@ -1405,7 +1405,7 @@
 				
 				<option value="file674">github.com/cisco-open/go-lanai/test/ittest/httpvcr_matchers.go (91.7%)</option>
 				
-				<option value="file675">github.com/cisco-open/go-lanai/test/ittest/httpvcr_matchers_body.go (76.9%)</option>
+				<option value="file675">github.com/cisco-open/go-lanai/test/ittest/httpvcr_matchers_body.go (77.6%)</option>
 				
 				<option value="file676">github.com/cisco-open/go-lanai/test/ittest/httpvcr_matchers_head.go (96.0%)</option>
 				
@@ -2496,7 +2496,7 @@ func (ep *EnvEndpoint) Read(ctx context.Context, input *Input) (*EnvDescriptor, 
                 }
 
                 values := provider.GetSettings()
-                _ = appconfig.VisitEach(values, func(k string, v interface{}) error </span><span class="cov10" title="888">{
+                _ = appconfig.VisitEach(values, func(k string, v interface{}) error </span><span class="cov10" title="878">{
                         v = ep.sanitizer.Sanitize(ctx, k, v)
                         psrc.Properties[k] = PValueDescriptor{Value: v, Origin: ""}
                         return nil
@@ -2686,16 +2686,16 @@ func NewSanitizer(keyPatterns []string) *Sanitizer <span class="cov3" title="5">
         }</span>
 }
 
-func (s Sanitizer) Sanitize(ctx context.Context, key string, value interface{}) interface{} <span class="cov10" title="888">{
+func (s Sanitizer) Sanitize(ctx context.Context, key string, value interface{}) interface{} <span class="cov10" title="878">{
         // 1. can we sanitize?
         switch value.(type) </span>{
-        case string, []string, utils.StringSet:<span class="cov9" title="680"></span>
-        default:<span class="cov8" title="208">
+        case string, []string, utils.StringSet:<span class="cov9" title="672"></span>
+        default:<span class="cov8" title="206">
                 return value</span>
         }
 
         // 2. does key match?
-        <span class="cov9" title="680">if ok, e := s.keyMatcher.MatchesWithContext(ctx, key); e != nil || !ok </span><span class="cov9" title="680">{
+        <span class="cov9" title="672">if ok, e := s.keyMatcher.MatchesWithContext(ctx, key); e != nil || !ok </span><span class="cov9" title="672">{
                 return value
         }</span>
         <span class="cov0" title="0">return "********"</span>
@@ -5350,17 +5350,17 @@ func (c *config) ProviderGroups() []ProviderGroup <span class="cov4" title="205"
 /*********************
         Helpers
  *********************/
-func value(nested map[string]interface{}, flatKey string) (ret interface{}) <span class="cov6" title="11446">{
-        e := visit(nested, flatKey, func(_ string, v interface{}, isLeaf bool, _ int) interface{} </span><span class="cov7" title="22932">{
-                if isLeaf </span><span class="cov6" title="6084">{
+func value(nested map[string]interface{}, flatKey string) (ret interface{}) <span class="cov6" title="11445">{
+        e := visit(nested, flatKey, func(_ string, v interface{}, isLeaf bool, _ int) interface{} </span><span class="cov7" title="22929">{
+                if isLeaf </span><span class="cov6" title="6083">{
                         ret = v
                 }</span>
-                <span class="cov7" title="22932">return nil</span>
+                <span class="cov7" title="22929">return nil</span>
         })
-        <span class="cov6" title="11446">if e != nil </span><span class="cov6" title="5362">{
+        <span class="cov6" title="11445">if e != nil </span><span class="cov6" title="5362">{
                 return nil
         }</span>
-        <span class="cov6" title="6084">return</span>
+        <span class="cov6" title="6083">return</span>
 }
 
 // setValue set given val in map using flat key.
@@ -5393,12 +5393,12 @@ type visitFunc func(keyPath string, v interface{}, isLeaf bool, expectedSliceLen
 // visit traverse the given tree (map) along the path represented as flatKey (e.g. flat.key[0].path)
 // it calls overrideFunc with each node's partial key path and its value. if returned value is non-nil, it will
 // replace the node
-func visit(nested map[string]interface{}, flatKey string, overrideFunc visitFunc) error  <span class="cov7" title="13104">{
+func visit(nested map[string]interface{}, flatKey string, overrideFunc visitFunc) error  <span class="cov7" title="13103">{
         targetKey := NormalizeKey(flatKey)
         nestedKeys := UnFlattenKey(targetKey)
         partialKey := ""
         var tmp interface{} = nested
-        for i, nestedKey := range nestedKeys </span><span class="cov7" title="32675">{
+        for i, nestedKey := range nestedKeys </span><span class="cov7" title="32672">{
                 // set index if nested key is "[index]" format
                 var index = -1
                 indexStart := strings.Index(nestedKey, "[")
@@ -5409,13 +5409,13 @@ func visit(nested map[string]interface{}, flatKey string, overrideFunc visitFunc
                         nestedKey = nestedKey[0:indexStart]
                 }</span>
 
-                <span class="cov7" title="32675">m, ok := tmp.(map[string]interface{})
+                <span class="cov7" title="32672">m, ok := tmp.(map[string]interface{})
                 if !ok </span><span class="cov6" title="5363">{
                         return fmt.Errorf("incorrect type at key path %s. expected map[string]interface{}, but got %T", partialKey, tmp)
                 }</span>
 
                 // get value and attempt to override
-                <span class="cov7" title="27312">tmp = m[nestedKey]
+                <span class="cov7" title="27309">tmp = m[nestedKey]
                 isLast := i == len(nestedKeys) - 1
                 partialKey = joinKeyPaths(partialKey, nestedKey)
                 if v := overrideFunc(partialKey, tmp, isLast &amp;&amp; index &lt; 0, index + 1); v != nil </span><span class="cov5" title="1237">{
@@ -5423,7 +5423,7 @@ func visit(nested map[string]interface{}, flatKey string, overrideFunc visitFunc
                         tmp = v
                 }</span>
 
-                <span class="cov7" title="27312">if index &gt;= 0 </span><span class="cov3" title="48">{
+                <span class="cov7" title="27309">if index &gt;= 0 </span><span class="cov3" title="48">{
                         // slice
                         s, ok := tmp.([]interface{})
                         if !ok || len(s) &lt;= index </span><span class="cov2" title="6">{
@@ -5438,18 +5438,18 @@ func visit(nested map[string]interface{}, flatKey string, overrideFunc visitFunc
                         }</span>
                 }
         }
-        <span class="cov6" title="7735">return nil</span>
+        <span class="cov6" title="7734">return nil</span>
 }
 
-func joinKeyPaths(left string, right interface{}) string <span class="cov7" title="27354">{
+func joinKeyPaths(left string, right interface{}) string <span class="cov7" title="27351">{
         switch r := right.(type) </span>{
-        case string:<span class="cov7" title="27354">
+        case string:<span class="cov7" title="27351">
                 switch </span>{
-                case left == "":<span class="cov7" title="13104">
+                case left == "":<span class="cov7" title="13103">
                         return r</span>
                 case right == "":<span class="cov0" title="0">
                         return left</span>
-                default:<span class="cov7" title="14250">
+                default:<span class="cov7" title="14248">
                         return left + "." + r</span>
                 }
         case int:<span class="cov0" title="0">
@@ -5487,7 +5487,7 @@ func mergeAdditionalProfiles(profiles []string, src map[string]interface{}) ([]s
  *********************/
 
 func resolve(ctx context.Context, nested map[string]interface{}) error <span class="cov4" title="413">{
-        doResolve := func(key string, value interface{}) error </span><span class="cov7" title="55951">{
+        doResolve := func(key string, value interface{}) error </span><span class="cov7" title="55925">{
                 _, e := resolveValue(ctx, key, value, nested, nil)
                 return e
         }</span>
@@ -5500,24 +5500,24 @@ func resolve(ctx context.Context, nested map[string]interface{}) error <span cla
 
 // resolveValue recursively resolve the value of key by replacing placeholders with actual value
 // Note: here the key is the flattened key
-func resolveValue(ctx context.Context, key string, val interface{}, source map[string]interface{}, visited []string) (resolvedVal interface{}, err error) <span class="cov7" title="57099">{
+func resolveValue(ctx context.Context, key string, val interface{}, source map[string]interface{}, visited []string) (resolvedVal interface{}, err error) <span class="cov7" title="57072">{
         //if value is not string, no need to resolve it further
-        if _, ok := val.(string); !ok </span><span class="cov6" title="11669">{
+        if _, ok := val.(string); !ok </span><span class="cov6" title="11693">{
                 return val, nil
         }</span>
 
-        <span class="cov7" title="45430">placeholders, isEmbedded, e := parsePlaceHolder(val.(string))
+        <span class="cov7" title="45379">placeholders, isEmbedded, e := parsePlaceHolder(val.(string))
         if e != nil </span><span class="cov0" title="0">{
                 return "", e
-        }</span> else<span class="cov7" title="45430"> if len(placeholders) == 0 </span><span class="cov7" title="44289">{
+        }</span> else<span class="cov7" title="45379"> if len(placeholders) == 0 </span><span class="cov7" title="44239">{
                 return val, nil
         }</span>
 
         // check for circular reference
-        <span class="cov5" title="1141">visited = append(visited, key)
+        <span class="cov5" title="1140">visited = append(visited, key)
         logger.WithContext(ctx).Debugf("resolving key: " + key)
-        for _, ph := range placeholders </span><span class="cov5" title="1150">{
-                for i, k := range visited </span><span class="cov5" title="1176">{
+        for _, ph := range placeholders </span><span class="cov5" title="1149">{
+                for i, k := range visited </span><span class="cov5" title="1174">{
                         if strings.Compare(k, ph.key) == 0 </span><span class="cov2" title="6">{
                                 circular := strings.Join(visited[i:], "-&gt;") + "-&gt;" + ph.key
                                 return "", fmt.Errorf("placeholder ${%s} can't be resolved due to circular reference: %s", ph.key, circular)
@@ -5525,9 +5525,9 @@ func resolveValue(ctx context.Context, key string, val interface{}, source map[s
                 }
         }
 
-        <span class="cov5" title="1135">resolvedKV := make(map[string]interface{})
+        <span class="cov5" title="1134">resolvedKV := make(map[string]interface{})
         resolvedPlaceholder := make(map[string]placeholder)
-        for _, ph := range placeholders </span><span class="cov5" title="1144">{
+        for _, ph := range placeholders </span><span class="cov5" title="1143">{
                 v := value(source, ph.key)
                 switch resolved, e := resolveValue(ctx, ph.key, v, source, visited); </span>{
                 case e == nil &amp;&amp; resolved == nil:<span class="cov5" title="533">
@@ -5543,7 +5543,7 @@ func resolveValue(ctx context.Context, key string, val interface{}, source map[s
                         logger.WithContext(ctx).Warnf(e.Error())
                         resolvedKV[ph.key] = ph.defaultVal
                         resolvedPlaceholder[ph.key] = ph</span>
-                default:<span class="cov2" title="12">
+                default:<span class="cov2" title="11">
                         return nil, e</span>
                 }
         }
@@ -5598,15 +5598,15 @@ func (ph placeholder) String() string <span class="cov4" title="484">{
 //                         - 100.0 -&gt; float
 //                         - true/false -&gt; bool
 //                         - other values -&gt; string
-func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded bool, error error) <span class="cov7" title="45439">{
+func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded bool, error error) <span class="cov7" title="45388">{
         //use this as a stack to check for nested placeholder brackets
         //the algorithm is to put left bracket on the stack, and pop it off when we see a right bracket
         //this way if the stack is at length greater than 1 when we encounter another left bracket, we have a nested situation
         var bracketStack []bracket
 
-        for i := 0; i &lt; len(strValue); i++ </span><span class="cov10" title="1313637">{
+        for i := 0; i &lt; len(strValue); i++ </span><span class="cov10" title="1311721">{
                 //if we encounters ${
-                if i &lt;= len(strValue)-len(placeHolderPrefix) &amp;&amp; strings.Compare(strValue[i:i+len(placeHolderPrefix)], placeHolderPrefix) == 0 </span><span class="cov5" title="1162">{
+                if i &lt;= len(strValue)-len(placeHolderPrefix) &amp;&amp; strings.Compare(strValue[i:i+len(placeHolderPrefix)], placeHolderPrefix) == 0 </span><span class="cov5" title="1161">{
                         bracketStack = append(bracketStack, bracket{placeHolderPrefix, i + 1})
                         if len(bracketStack) &gt; 1 </span><span class="cov1" title="1">{
                                 return nil, false, errors.New(strValue + " has nested place holders, which is not supported")
@@ -5614,9 +5614,9 @@ func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded b
                 }
 
                 //if we encounter }
-                <span class="cov9" title="1313636">if strings.Compare(strValue[i:i+1], placeHolderSuffix) == 0 </span><span class="cov5" title="1208">{
+                <span class="cov9" title="1311720">if strings.Compare(strValue[i:i+1], placeHolderSuffix) == 0 </span><span class="cov5" title="1207">{
                         stackLen := len(bracketStack)
-                        if bracketStack != nil &amp;&amp; stackLen &gt;= 1 </span><span class="cov5" title="1160">{
+                        if bracketStack != nil &amp;&amp; stackLen &gt;= 1 </span><span class="cov5" title="1159">{
                                 leftBracket := bracketStack[stackLen-1]  //gets the top of the stack
                                 bracketStack = bracketStack[:stackLen-1] //pop the top of the stack
                                 split := strings.SplitN(strValue[leftBracket.index+1 : i], placeHolderDefaultDelimiter, 2)
@@ -5626,7 +5626,7 @@ func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded b
                                 if len(split) &gt; 1 </span><span class="cov5" title="568">{
                                         ph.defaultVal = utils.ParseString(split[1])
                                 }</span>
-                                <span class="cov5" title="1160">placeholders = append(placeholders, ph)
+                                <span class="cov5" title="1159">placeholders = append(placeholders, ph)
 
                                 if leftBracket.index &gt; len(placeHolderPrefix)-1 || i &lt; len(strValue)-1 </span><span class="cov4" title="494">{
                                         isEmbedded = true
@@ -5634,7 +5634,7 @@ func parsePlaceHolder(strValue string) (placeholders []placeholder, isEmbedded b
                         } //else there's no matching ${, so we skip it
                 }
         }
-        <span class="cov7" title="45438">return placeholders, isEmbedded, nil</span>
+        <span class="cov7" title="45387">return placeholders, isEmbedded, nil</span>
 }
 </pre>
 		
@@ -6468,24 +6468,24 @@ func ProcessKeyFormat(nested map[string]interface{}, processor func(string, ...f
         return result.(map[string]interface{}), err
 }</span>
 
-func processKeyFormat(value interface{}, processor func(string, ...func(*Options)) string) (interface{}, error) <span class="cov9" title="137954">{
+func processKeyFormat(value interface{}, processor func(string, ...func(*Options)) string) (interface{}, error) <span class="cov9" title="138045">{
 
         switch value := value.(type) </span>{
-        case map[string]interface{}:<span class="cov9" title="65026">
+        case map[string]interface{}:<span class="cov9" title="65105">
                 result := make(map[string]interface{})
                 //if empty map, can't do anything
                 if reflect.DeepEqual(value, map[string]interface{}{}) </span><span class="cov5" title="525">{
                         return result, nil
                 }</span>
-                <span class="cov9" title="64501">for k, v := range value </span><span class="cov9" title="132349">{
+                <span class="cov9" title="64580">for k, v := range value </span><span class="cov9" title="132440">{
                         newKey := processor(k)
                         visitedValue, fe := processKeyFormat(v, processor)
                         if fe != nil </span><span class="cov0" title="0">{
                                 return nil, fe
                         }</span>
-                        <span class="cov9" title="132349">result[newKey] = visitedValue</span>
+                        <span class="cov9" title="132440">result[newKey] = visitedValue</span>
                 }
-                <span class="cov9" title="64501">return result, nil</span>
+                <span class="cov9" title="64580">return result, nil</span>
         case []interface{}:<span class="cov6" title="960">
                 //if empty slice
                 var result []interface{}
@@ -6500,7 +6500,7 @@ func processKeyFormat(value interface{}, processor func(string, ...func(*Options
                         <span class="cov6" title="1675">result = append(result, visitedValue)</span>
                 }
                 <span class="cov6" title="919">return result, nil</span>
-        default:<span class="cov9" title="71968">
+        default:<span class="cov9" title="71980">
                 return value, nil</span>
         }
 }
@@ -6518,20 +6518,20 @@ func VisitEach(nested map[string]interface{}, apply func(string, interface{}) er
 }
 
 //the recursive visit stops at the first error
-func recursiveVisit(key string, value interface{}, apply func(string, interface{}) error, opts *Options) (err error) <span class="cov9" title="105079">{
+func recursiveVisit(key string, value interface{}, apply func(string, interface{}) error, opts *Options) (err error) <span class="cov9" title="105060">{
         switch value := value.(type) </span>{
-        case map[string]interface{}:<span class="cov9" title="47384">
+        case map[string]interface{}:<span class="cov9" title="47401">
                 //if empty map, can't do anything
                 if reflect.DeepEqual(value, map[string]interface{}{}) </span><span class="cov2" title="5">{
                         return
                 }</span>
-                <span class="cov9" title="47379">for k, v := range value </span><span class="cov9" title="103191">{
+                <span class="cov9" title="47396">for k, v := range value </span><span class="cov9" title="103172">{
                         // create new key
                         newKey := k
-                        if key != "" </span><span class="cov9" title="78283">{
+                        if key != "" </span><span class="cov9" title="78264">{
                                 newKey = key + opts.Delimiter + newKey
                         }</span>
-                        <span class="cov9" title="103191">fe := recursiveVisit(newKey, v, apply, opts)
+                        <span class="cov9" title="103172">fe := recursiveVisit(newKey, v, apply, opts)
                         if fe != nil </span><span class="cov1" title="3">{
                                 err = fe
                                 return
@@ -6553,10 +6553,10 @@ func recursiveVisit(key string, value interface{}, apply func(string, interface{
                                 return
                         }</span>
                 }
-        default:<span class="cov9" title="56876">
+        default:<span class="cov9" title="56840">
                 err = apply(key, value)</span>
         }
-        <span class="cov9" title="105071">return</span>
+        <span class="cov9" title="105052">return</span>
 }
 
 type UfOptions struct {
@@ -6632,7 +6632,7 @@ func uf(k string, v interface{}, opts *UfOptions) (n interface{}, err error) <sp
         <span class="cov8" title="25859">return n, nil</span>
 }
 
-func UnFlattenKey(k string, configures...func(*Options)) []string <span class="cov9" title="158562">{
+func UnFlattenKey(k string, configures...func(*Options)) []string <span class="cov9" title="158651">{
         opts := &amp;Options{
                 Delimiter: ".",
         }
@@ -6641,25 +6641,25 @@ func UnFlattenKey(k string, configures...func(*Options)) []string <span class="c
                 configure(opts)
         }</span>
 
-        <span class="cov9" title="158562">return strings.Split(k, opts.Delimiter)</span>
+        <span class="cov9" title="158651">return strings.Split(k, opts.Delimiter)</span>
 }
 
 const dash = rune('-')
 
 // NormalizeKey convert camelCase key to snake-case
-func NormalizeKey(key string, configures...func(*Options)) string <span class="cov9" title="145458">{
+func NormalizeKey(key string, configures...func(*Options)) string <span class="cov9" title="145548">{
         keys := UnFlattenKey(key, configures...)
 
         result := ""
 
-        for i, key := range keys </span><span class="cov10" title="169950">{
+        for i, key := range keys </span><span class="cov10" title="170038">{
                 result = result + utils.CamelToSnakeCase(key)
-                if i &lt; len(keys) - 1 </span><span class="cov8" title="24492">{
+                if i &lt; len(keys) - 1 </span><span class="cov8" title="24490">{
                         result = result + "."
                 }</span>
         }
 
-        <span class="cov9" title="145458">return result</span>
+        <span class="cov9" title="145548">return result</span>
 }</pre>
 		
 		<pre class="file" id="file45" style="display: none">// Copyright 2023 Cisco Systems, Inc. and its affiliates
@@ -6803,7 +6803,7 @@ func (m *ProviderMeta) GetSettings() map[string]interface{} <span class="cov10" 
         return m.Settings
 }</span>
 
-func (m *ProviderMeta) Order() int <span class="cov9" title="6686">{
+func (m *ProviderMeta) Order() int <span class="cov9" title="6670">{
         return m.Precedence
 }</span>
 
@@ -6858,7 +6858,7 @@ func NewStaticProviderGroup(order int, providers ...Provider) *StaticProviderGro
         }
 }</span>
 
-func (g *StaticProviderGroup) Order() int <span class="cov10" title="6014">{
+func (g *StaticProviderGroup) Order() int <span class="cov10" title="6016">{
         return g.Precedence
 }</span>
 
@@ -6890,7 +6890,7 @@ func NewDynamicProviderGroup(order int) *DynamicProviderGroup <span class="cov7"
         }
 }</span>
 
-func (g *DynamicProviderGroup) Order() int <span class="cov8" title="2164">{
+func (g *DynamicProviderGroup) Order() int <span class="cov8" title="2150">{
         return g.Precedence
 }</span>
 
@@ -7619,13 +7619,13 @@ func (b *Bootstrapper) NewApp(cliCtx *CliExecContext, priorityOptions []fx.Optio
         resolvedModules.Add(miscModules...)
         for changed := true; changed;  </span><span class="cov6" title="236">{
                 before := len(resolvedModules)
-                for module := range resolvedModules </span><span class="cov8" title="2282">{
+                for module := range resolvedModules </span><span class="cov8" title="2288">{
                         resolvedModules.Add(module.Modules...)
                 }</span>
                 <span class="cov6" title="236">changed = before != len(resolvedModules)</span>
         }
         <span class="cov6" title="205">modules := resolvedModules.Values()
-        sort.SliceStable(modules, func(i, j int) bool </span><span class="cov10" title="6218">{ return modules[i].Precedence &lt; modules[j].Precedence }</span>)
+        sort.SliceStable(modules, func(i, j int) bool </span><span class="cov10" title="6135">{ return modules[i].Precedence &lt; modules[j].Precedence }</span>)
 
         // add priority options first
         <span class="cov6" title="205">var options []fx.Option
@@ -7894,7 +7894,7 @@ type OrderedCliRunner struct {
         CliRunner CliRunner
 }
 
-func (r OrderedCliRunner) Order() int <span class="cov2" title="4">{
+func (r OrderedCliRunner) Order() int <span class="cov3" title="6">{
         return r.Precedence
 }</span>
 
@@ -10672,8 +10672,8 @@ func (c *Connection) ListKeyValuePairs(ctx context.Context, path string) (result
 
         <span class="cov5" title="8">prefix := path + "/"
         results = make(map[string]interface{})
-        for _, entry := range entries </span><span class="cov8" title="28">{
-                if !strings.HasPrefix(entry.Key, prefix) </span><span class="cov6" title="12">{
+        for _, entry := range entries </span><span class="cov8" title="38">{
+                if !strings.HasPrefix(entry.Key, prefix) </span><span class="cov7" title="22">{
                         continue</span>
                 }
 
@@ -11650,7 +11650,7 @@ func (gormErrorTranslator) Order() int <span class="cov4" title="36">{
 }</span>
 
 func (gormErrorTranslator) Translate(_ context.Context, err error) error <span class="cov7" title="280">{
-        for k, v := range GormErrorMapping </span><span class="cov10" title="3967">{
+        for k, v := range GormErrorMapping </span><span class="cov10" title="4090">{
                 if errors.Is(err, k) </span><span class="cov5" title="56">{
                         return v
                 }</span>
@@ -12390,7 +12390,7 @@ func (t PostgresErrorTranslator) translateDuplicateKeyErrorMessage(e data.DataEr
         <span class="cov2" title="3">if valMsg != "" </span><span class="cov2" title="3">{
                 msg = fmt.Sprintf("%s; %s", msg, valMsg)
         }</span>
-        <span class="cov2" title="3">return e.WithCause(e.Cause(), msg)</span>
+        <span class="cov2" title="3">return e.WithCause(e.Cause(), "%s", msg)</span>
 }
 
 // translateErrorCode translate postgres error code to data.DataError code
@@ -19069,7 +19069,7 @@ type ConsulLock struct {
         lastErr        error
 }
 
-func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock <span class="cov4" title="11">{
+func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock <span class="cov3" title="11">{
         ret := ConsulLock{
                 client: client,
                 option: ConsulLockOption{
@@ -19086,77 +19086,77 @@ func newConsulLock(client *api.Client, opts ...ConsulLockOptions) *ConsulLock <s
         close(ret.lockLostCh)
         ret.stateCond = xsync.NewCond(&amp;ret.mtx)
 
-        for _, fn := range opts </span><span class="cov4" title="11">{
+        for _, fn := range opts </span><span class="cov3" title="11">{
                 fn(&amp;ret.option)
         }</span>
-        <span class="cov4" title="11">return &amp;ret</span>
+        <span class="cov3" title="11">return &amp;ret</span>
 }
 
-func (l *ConsulLock) Key() string <span class="cov2" title="2">{
+func (l *ConsulLock) Key() string <span class="cov1" title="2">{
         return l.option.Key
 }</span>
 
 // Lock implements dsync.Lock
 // The acquired lock may get revoked from server-side, unless the session is specifically created without any
 // associated health checks.
-func (l *ConsulLock) Lock(ctx context.Context) error <span class="cov4" title="9">{
+func (l *ConsulLock) Lock(ctx context.Context) error <span class="cov3" title="9">{
         l.lazyStart()
-        return l.waitForState(ctx, func(state consulLockState) (bool, error) </span><span class="cov5" title="18">{
+        return l.waitForState(ctx, func(state consulLockState) (bool, error) </span><span class="cov4" title="19">{
                 switch </span>{
-                case l.state == stateAcquired:<span class="cov3" title="5">
+                case l.state == stateAcquired:<span class="cov2" title="5">
                         return true, nil</span>
                 case l.loopContext == nil:<span class="cov0" title="0">
                         return true, context.Canceled</span>
                 }
-                <span class="cov4" title="13">return false, nil</span>
+                <span class="cov3" title="14">return false, nil</span>
         })
 }
 
-func (l *ConsulLock) TryLock(ctx context.Context) error <span class="cov3" title="6">{
+func (l *ConsulLock) TryLock(ctx context.Context) error <span class="cov2" title="6">{
         l.lazyStart()
         // TryLock differ from Lock that it also return on any error state
-        return l.waitForState(ctx, func(state consulLockState) (bool, error) </span><span class="cov4" title="10">{
+        return l.waitForState(ctx, func(state consulLockState) (bool, error) </span><span class="cov3" title="10">{
                 switch </span>{
-                case l.state == stateAcquired:<span class="cov3" title="4">
+                case l.state == stateAcquired:<span class="cov2" title="4">
                         return true, nil</span>
-                case l.state == stateError:<span class="cov2" title="2">
+                case l.state == stateError:<span class="cov1" title="2">
                         return true, l.lastErr</span>
                 case l.loopContext == nil:<span class="cov0" title="0">
                         return true, context.Canceled</span>
                 }
-                <span class="cov3" title="4">return false, nil</span>
+                <span class="cov2" title="4">return false, nil</span>
         })
 }
 
-func (l *ConsulLock) Release() error <span class="cov5" title="19">{
+func (l *ConsulLock) Release() error <span class="cov4" title="19">{
         return l.release()
 }</span>
 
-func (l *ConsulLock) Lost() &lt;-chan struct{} <span class="cov2" title="2">{
+func (l *ConsulLock) Lost() &lt;-chan struct{} <span class="cov1" title="2">{
         l.mtx.Lock()
         defer l.mtx.Unlock()
         return l.lockLostCh
 }</span>
 
-func (l *ConsulLock) lazyStart() <span class="cov4" title="15">{
+func (l *ConsulLock) lazyStart() <span class="cov3" title="15">{
         l.mtx.Lock()
         defer l.mtx.Unlock()
 
         // Check if we're already maintaining the lock loop
-        if l.loopContext == nil </span><span class="cov4" title="10">{
+        if l.loopContext == nil </span><span class="cov3" title="10">{
                 l.startLoop()
         }</span>
-        <span class="cov4" title="15">return</span>
+        <span class="cov3" title="15">return</span>
 }
 
-func (l *ConsulLock) waitForState(ctx context.Context, stateMatcher func(consulLockState) (bool, error)) error <span class="cov4" title="15">{
+func (l *ConsulLock) waitForState(ctx context.Context, stateMatcher func(consulLockState) (bool, error)) error <span class="cov3" title="15">{
         l.mtx.Lock()
         defer l.mtx.Unlock()
-        for </span><span class="cov5" title="28">{
-                if ok, e := stateMatcher(l.state); ok </span><span class="cov4" title="11">{
+        for </span><span class="cov4" title="29">{
+                if ok, e := stateMatcher(l.state); ok </span><span class="cov3" title="11">{
                         return e
                 }</span>
-                <span class="cov5" title="17">switch e := l.stateCond.Wait(ctx); </span>{
+                <span class="cov4" title="18">switch e := l.stateCond.Wait(ctx); </span>{
                 case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):<span class="cov2" title="3">
                         return e</span>
                 }
@@ -19165,47 +19165,47 @@ func (l *ConsulLock) waitForState(ctx context.Context, stateMatcher func(consulL
 
 // updateState atomically update state, execute additional setters and broadcast the change.
 // if given state &lt; 0, only setters are executed
-func (l *ConsulLock) updateState(s consulLockState, setters ...func()) <span class="cov10" title="456">{
+func (l *ConsulLock) updateState(s consulLockState, setters ...func()) <span class="cov10" title="5419">{
         l.mtx.Lock()
         defer l.mtx.Unlock()
 
-        for _, fn := range setters </span><span class="cov9" title="447">{
+        for _, fn := range setters </span><span class="cov9" title="5410">{
                 fn()
         }</span>
 
-        <span class="cov10" title="456">if s &lt; 0 </span><span class="cov8" title="225">{
+        <span class="cov10" title="5419">if s &lt; 0 </span><span class="cov9" title="2707">{
                 return
         }</span>
-        <span class="cov9" title="231">if s == stateAcquired &amp;&amp; l.state != s </span><span class="cov3" title="7">{
+        <span class="cov9" title="2712">if s == stateAcquired &amp;&amp; l.state != s </span><span class="cov3" title="7">{
                 l.lockLostCh = make(chan struct{}, 1)
-        }</span> else<span class="cov8" title="224"> if l.state == stateAcquired &amp;&amp; l.state != s </span><span class="cov3" title="7">{
+        }</span> else<span class="cov9" title="2705"> if l.state == stateAcquired &amp;&amp; l.state != s </span><span class="cov3" title="7">{
                 close(l.lockLostCh)
         }</span>
 
-        <span class="cov9" title="231">if s == stateError || l.state != s </span><span class="cov8" title="230">{
+        <span class="cov9" title="2712">if s == stateError || l.state != s </span><span class="cov9" title="2711">{
                 defer l.stateCond.Broadcast()
         }</span>
-        <span class="cov9" title="231">l.state = s</span>
+        <span class="cov9" title="2712">l.state = s</span>
 }
 
 // startLoop kickoff lock loop. mutex lock is required when call this function
-func (l *ConsulLock) startLoop() <span class="cov4" title="10">{
+func (l *ConsulLock) startLoop() <span class="cov3" title="10">{
         l.loopContext, l.loopCancelFunc = context.WithCancel(l.option.Context)
         go l.lockLoop(l.loopContext, l.loopCancelFunc)
 }</span>
 
 // stopLoop stop lock loop. mutex lock is required when call this function
-func (l *ConsulLock) stopLoop() <span class="cov4" title="9">{
+func (l *ConsulLock) stopLoop() <span class="cov3" title="9">{
         l.loopCancelFunc()
         l.loopContext = nil
         l.loopCancelFunc = nil
 }</span>
 
 // refresh is called by session manager to notify potential change of session ID
-func (l *ConsulLock) refresh() <span class="cov4" title="11">{
+func (l *ConsulLock) refresh() <span class="cov3" title="11">{
         l.mtx.Lock()
         defer l.mtx.Unlock()
-        if l.refreshFunc != nil </span><span class="cov4" title="9">{
+        if l.refreshFunc != nil </span><span class="cov3" title="9">{
                 l.refreshFunc()
         }</span>
 }
@@ -19214,37 +19214,37 @@ func (l *ConsulLock) refresh() <span class="cov4" title="11">{
 // The lock state loop between Acquired and Error
 // When unable to maintain the lock, the loop cancel the current context and try to lazyStart a new one
 // Note: given context may also be cancelled outside, e.g. lock is released
-func (l *ConsulLock) lockLoop(ctx context.Context, cancelFunc context.CancelFunc) <span class="cov4" title="10">{
+func (l *ConsulLock) lockLoop(ctx context.Context, cancelFunc context.CancelFunc) <span class="cov3" title="10">{
         defer cancelFunc()
 LOOP:
-        for </span><span class="cov9" title="248">{
+        for </span><span class="cov9" title="2704">{
                 select </span>{
-                case &lt;-ctx.Done():<span class="cov4" title="9">
+                case &lt;-ctx.Done():<span class="cov3" title="9">
                         break LOOP</span>
-                default:<span class="cov9" title="239"></span>
+                default:<span class="cov9" title="2695"></span>
                 }
 
                 // update refresh func, but keep the current state
-                <span class="cov9" title="239">refreshCtx, fn := context.WithCancel(ctx)
-                l.updateState(-1, func() </span><span class="cov9" title="238">{ l.refreshFunc = fn }</span>)
+                <span class="cov9" title="2695">refreshCtx, fn := context.WithCancel(ctx)
+                l.updateState(-1, func() </span><span class="cov9" title="2695">{ l.refreshFunc = fn }</span>)
 
                 // grab current session.
                 // Note: in case of error, we don't reset previously used session,
                 //                  the release function will try to release lock using previously used session
-                <span class="cov9" title="238">session, e := l.option.SessionFunc(refreshCtx)
+                <span class="cov9" title="2695">session, e := l.option.SessionFunc(refreshCtx)
                 switch </span>{
                 case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):<span class="cov1" title="1">
                         // current acquisition is cancelled
                         continue</span>
-                case e != nil:<span class="cov8" title="225">
-                        l.updateState(stateError, func() </span><span class="cov8" title="225">{ l.lastErr = dsync.ErrSessionUnavailable }</span>)
-                        <span class="cov8" title="225">continue</span>
-                default:<span class="cov4" title="12">
-                        l.updateState(-1, func() </span><span class="cov4" title="12">{ l.session = session }</span>)
+                case e != nil:<span class="cov9" title="2681">
+                        l.updateState(stateError, func() </span><span class="cov9" title="2681">{ l.lastErr = dsync.ErrSessionUnavailable }</span>)
+                        <span class="cov9" title="2681">continue</span>
+                default:<span class="cov3" title="12">
+                        l.updateState(-1, func() </span><span class="cov3" title="12">{ l.session = session }</span>)
                 }
 
                 // try to acquire lock
-                <span class="cov4" title="12">switch e := l.acquireLock(refreshCtx, session, 0); </span>{
+                <span class="cov3" title="12">switch e := l.acquireLock(refreshCtx, session, 0); </span>{
                 case errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded):<span class="cov0" title="0">
                         // current acquisition is cancelled
                         continue</span>
@@ -19252,9 +19252,9 @@ LOOP:
                         // lock acquired, continue
                         logger.WithContext(refreshCtx).Debugf("acquired lock [%s]", l.option.Key)
                         l.updateState(stateAcquired, func() </span><span class="cov3" title="7">{ l.lastErr = nil }</span>)
-                default:<span class="cov3" title="5">
-                        l.updateState(stateError, func() </span><span class="cov3" title="5">{ l.lastErr = e }</span>)
-                        <span class="cov3" title="5">continue</span>
+                default:<span class="cov2" title="5">
+                        l.updateState(stateError, func() </span><span class="cov2" title="5">{ l.lastErr = e }</span>)
+                        <span class="cov2" title="5">continue</span>
                 }
 
                 // up to this point, we have acquired the lock. enter monitor state
@@ -19270,10 +19270,10 @@ LOOP:
         }
 
         // we lost lock
-        <span class="cov4" title="9">l.updateState(stateUnknown)</span>
+        <span class="cov3" title="9">l.updateState(stateUnknown)</span>
 }
 
-func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait time.Duration) error <span class="cov4" title="12">{
+func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait time.Duration) error <span class="cov3" title="12">{
         kv := l.client.KV()
         pair := &amp;api.KVPair{
                 Key:     l.option.Key,
@@ -19284,7 +19284,7 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
 
         waitUntilAvailable := maxWait &lt;= 0
         var waitCtx context.Context
-        if waitUntilAvailable </span><span class="cov4" title="12">{
+        if waitUntilAvailable </span><span class="cov3" title="12">{
                 waitCtx = ctx
         }</span> else<span class="cov0" title="0"> {
                 var cancelFunc context.CancelFunc
@@ -19292,8 +19292,8 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
                 defer cancelFunc()
         }</span>
 
-<span class="cov4" title="12">LOOP:
-        for </span><span class="cov4" title="14">{
+<span class="cov3" title="12">LOOP:
+        for </span><span class="cov3" title="14">{
                 // try to acquire lock
                 switch acquired, _, e := kv.Acquire(pair, nil); </span>{
                 case e != nil:<span class="cov2" title="3">
@@ -19307,8 +19307,8 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
                 }
 
                 // handle failure, might wait until lock become available and try again
-                <span class="cov3" title="4">switch current, e := l.handleAcquisitionFailure(waitCtx, session, waitUntilAvailable); </span>{
-                case e != nil:<span class="cov2" title="2">
+                <span class="cov2" title="4">switch current, e := l.handleAcquisitionFailure(waitCtx, session, waitUntilAvailable); </span>{
+                case e != nil:<span class="cov1" title="2">
                         return e</span>
                 case current == session:<span class="cov0" title="0">
                         break LOOP</span>
@@ -19317,7 +19317,7 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
                 }
 
                 // at this point, lock is not held by any session, but it may be in LockDelay period. pause and retry
-                <span class="cov2" title="2">if !l.delay(ctx, l.option.RetryDelay) </span><span class="cov0" title="0">{
+                <span class="cov1" title="2">if !l.delay(ctx, l.option.RetryDelay) </span><span class="cov0" title="0">{
                         return context.Canceled
                 }</span>
         }
@@ -19339,7 +19339,7 @@ func (l *ConsulLock) acquireLock(ctx context.Context, session string, maxWait ti
 // 4. consul become unavailable
 //
 // Note: when this function returns, the lock might be in lock-delay period, meaning no session can acquire lock.
-func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session string, waitUntilAvailable bool) (currentOwner string, err error) <span class="cov3" title="4">{
+func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session string, waitUntilAvailable bool) (currentOwner string, err error) <span class="cov2" title="4">{
         kv := l.client.KV()
         qOpts := (&amp;api.QueryOptions{
                 WaitTime: l.option.QueryWaitTime,
@@ -19351,17 +19351,17 @@ func (l *ConsulLock) handleAcquisitionFailure(ctx context.Context, session strin
                 pair, meta, e := kv.Get(l.option.Key, qOpts)
                 var owner string
                 switch </span>{
-                case e != nil:<span class="cov2" title="2">
+                case e != nil:<span class="cov1" title="2">
                         return "", fmt.Errorf("failed to read lock: %v", e)</span>
                 case pair != nil &amp;&amp; pair.Flags != lockFlagValue:<span class="cov0" title="0">
                         return "", api.ErrLockConflict</span>
-                case pair != nil:<span class="cov3" title="4">
+                case pair != nil:<span class="cov2" title="4">
                         owner = pair.Session</span>
                 }
 
                 // potentially retryable situations
-                <span class="cov3" title="5">switch </span>{
-                case owner == "" || owner == session:<span class="cov2" title="2">
+                <span class="cov2" title="5">switch </span>{
+                case owner == "" || owner == session:<span class="cov1" title="2">
                         // the lock is held by current session OR the lock is not held by any session
                         return owner, nil</span>
                 case !waitUntilAvailable:<span class="cov0" title="0">
@@ -19394,21 +19394,21 @@ func (l *ConsulLock) monitorLock(ctx context.Context, session string) error <spa
 
         var err error
 LOOP:
-        for </span><span class="cov5" title="17">{
+        for </span><span class="cov3" title="17">{
                 select </span>{
-                case &lt;-ctx.Done():<span class="cov3" title="6">
+                case &lt;-ctx.Done():<span class="cov2" title="6">
                         break LOOP</span>
-                default:<span class="cov4" title="11"></span>
+                default:<span class="cov3" title="11"></span>
                 }
 
-                <span class="cov4" title="11">pair, meta, e := kv.Get(l.option.Key, opts)
+                <span class="cov3" title="11">pair, meta, e := kv.Get(l.option.Key, opts)
                 switch err = e; </span>{
-                case e != nil &amp;&amp; api.IsRetryableError(e):<span class="cov3" title="6">
+                case e != nil &amp;&amp; api.IsRetryableError(e):<span class="cov2" title="6">
                         // network error or something we can retry later
                         if l.delay(ctx, l.option.RetryDelay) </span><span class="cov0" title="0">{
                                 opts.WaitIndex = 0
                         }</span>
-                case e == nil &amp;&amp; pair != nil &amp;&amp; pair.Session == session:<span class="cov3" title="4">
+                case e == nil &amp;&amp; pair != nil &amp;&amp; pair.Session == session:<span class="cov2" title="4">
                         // everything is fine, we enter long wait monitoring
                         opts.WaitIndex = meta.LastIndex</span>
                 case e == nil:<span class="cov1" title="1">
@@ -19427,33 +19427,33 @@ LOOP:
 }
 
 // wait for given delay, return true if the delay is fulfilled (not cancelled by context)
-func (l *ConsulLock) delay(ctx context.Context, delay time.Duration) (success bool) <span class="cov4" title="11">{
+func (l *ConsulLock) delay(ctx context.Context, delay time.Duration) (success bool) <span class="cov3" title="11">{
         select </span>{
         case &lt;-time.After(delay):<span class="cov2" title="3">
                 return true</span>
-        case &lt;-ctx.Done():<span class="cov4" title="8">
+        case &lt;-ctx.Done():<span class="cov3" title="8">
                 return false</span>
         }
 }
 
-func (l *ConsulLock) release() error <span class="cov5" title="19">{
+func (l *ConsulLock) release() error <span class="cov4" title="19">{
         // Hold the lock as we try to release
         l.mtx.Lock()
         defer l.mtx.Unlock()
 
         // Ensure the lock is active
-        if l.loopContext == nil </span><span class="cov4" title="10">{
+        if l.loopContext == nil </span><span class="cov3" title="10">{
                 return nil
         }</span>
 
         // Stop lock loop
-        <span class="cov4" title="9">l.stopLoop()
+        <span class="cov3" title="9">l.stopLoop()
 
         // Release the lock explicitly if previously used session is known
         if l.session == "" </span><span class="cov1" title="1">{
                 return nil
         }</span>
-        <span class="cov4" title="8">pair := &amp;api.KVPair{
+        <span class="cov3" title="8">pair := &amp;api.KVPair{
                 Key:     l.option.Key,
                 Session: l.session,
                 Flags:   lockFlagValue,
@@ -19523,7 +19523,7 @@ type ConsulSessionOption struct {
         RetryDelay time.Duration
 }
 
-func NewConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connection, opts ...ConsulSessionOptions) (ret *ConsulSyncManager) <span class="cov5" title="11">{
+func NewConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connection, opts ...ConsulSessionOptions) (ret *ConsulSyncManager) <span class="cov3" title="11">{
         ret = &amp;ConsulSyncManager{
                 appCtx: ctx,
                 client: conn.Client(),
@@ -19537,18 +19537,18 @@ func NewConsulLockManager(ctx *bootstrap.ApplicationContext, conn *consul.Connec
         }
         ret.sessionCond = xsync.NewCond(&amp;ret.mtx)
 
-        for _, fn := range opts </span><span class="cov4" title="6">{
+        for _, fn := range opts </span><span class="cov3" title="6">{
                 fn(&amp;ret.option)
         }</span>
-        <span class="cov5" title="11">return</span>
+        <span class="cov3" title="11">return</span>
 }
 
-func (m *ConsulSyncManager) Start(_ context.Context) error <span class="cov5" title="11">{
+func (m *ConsulSyncManager) Start(_ context.Context) error <span class="cov3" title="11">{
         // do nothing, we support lazy start
         return nil
 }</span>
 
-func (m *ConsulSyncManager) Stop(ctx context.Context) error <span class="cov5" title="11">{
+func (m *ConsulSyncManager) Stop(ctx context.Context) error <span class="cov3" title="11">{
         m.mtx.Lock()
         defer m.mtx.Unlock()
         // enter shutdown mode
@@ -19556,20 +19556,20 @@ func (m *ConsulSyncManager) Stop(ctx context.Context) error <span class="cov5" t
         // stopLoop session loop
         m.stopLoop()
         // release all existing locks
-        for k, l := range m.locks </span><span class="cov5" title="11">{
+        for k, l := range m.locks </span><span class="cov3" title="11">{
                 if e := l.Release(); e != nil </span><span class="cov0" title="0">{
                         logger.WithContext(ctx).Warnf("Failed to release lock [%s]: %v", k, e)
                 }</span>
         }
-        <span class="cov5" title="11">return nil</span>
+        <span class="cov3" title="11">return nil</span>
 }
 
-func (m *ConsulSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.Lock, error) <span class="cov5" title="12">{
+func (m *ConsulSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.Lock, error) <span class="cov3" title="12">{
         if key == "" </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf(`cannot create distributed lock: key is required but missing`)
         }</span>
 
-        <span class="cov5" title="12">option := dsync.LockOption{
+        <span class="cov3" title="12">option := dsync.LockOption{
                 Valuer: dsync.NewJsonLockValuer(map[string]string{
                         "name": fmt.Sprintf("distributed lock - %s", m.appCtx.Name()),
                 }),
@@ -19578,90 +19578,90 @@ func (m *ConsulSyncManager) Lock(key string, opts ...dsync.LockOptions) (dsync.L
                 fn(&amp;option)
         }</span>
 
-        <span class="cov5" title="12">m.mtx.Lock()
+        <span class="cov3" title="12">m.mtx.Lock()
         defer m.mtx.Unlock()
 
         if m.shutdown </span><span class="cov0" title="0">{
                 return nil, dsync.ErrSyncManagerStopped
-        }</span> else<span class="cov5" title="12"> if lock, ok := m.locks[key]; ok </span><span class="cov1" title="1">{
+        }</span> else<span class="cov3" title="12"> if lock, ok := m.locks[key]; ok </span><span class="cov1" title="1">{
                 return lock, nil
         }</span>
 
-        <span class="cov5" title="11">m.locks[key] = newConsulLock(m.client, func(opt *ConsulLockOption) </span><span class="cov5" title="11">{
+        <span class="cov3" title="11">m.locks[key] = newConsulLock(m.client, func(opt *ConsulLockOption) </span><span class="cov3" title="11">{
                 opt.Context = m.appCtx
                 opt.SessionFunc = m.waitForSession
                 opt.Key = key
                 opt.Valuer = option.Valuer
         }</span>)
-        <span class="cov5" title="11">return m.locks[key], nil</span>
+        <span class="cov3" title="11">return m.locks[key], nil</span>
 }
 
 // startLoop requires mutex lock
-func (m *ConsulSyncManager) startLoop() error <span class="cov9" title="185">{
-        if m.shutdown </span><span class="cov9" title="172">{
+func (m *ConsulSyncManager) startLoop() error <span class="cov10" title="2695">{
+        if m.shutdown </span><span class="cov9" title="2682">{
                 return dsync.ErrSyncManagerStopped
         }</span>
-        <span class="cov5" title="13">if m.cancelFunc == nil </span><span class="cov4" title="9">{
+        <span class="cov3" title="13">if m.cancelFunc == nil </span><span class="cov3" title="9">{
                 ctx, cf := context.WithCancel(m.appCtx)
                 m.cancelFunc = cf
                 go m.sessionLoop(ctx)
         }</span>
-        <span class="cov5" title="13">return nil</span>
+        <span class="cov3" title="13">return nil</span>
 }
 
 // stopLoop requires mutex lock
-func (m *ConsulSyncManager) stopLoop() <span class="cov5" title="11">{
-        if m.cancelFunc != nil </span><span class="cov4" title="9">{
+func (m *ConsulSyncManager) stopLoop() <span class="cov3" title="11">{
+        if m.cancelFunc != nil </span><span class="cov3" title="9">{
                 m.cancelFunc()
                 m.cancelFunc = nil
         }</span>
-        <span class="cov5" title="11">return</span>
+        <span class="cov3" title="11">return</span>
 }
 
 // waitForSession returns current managed session. It blocks until session is available or given context is cancelled
-func (m *ConsulSyncManager) waitForSession(ctx context.Context) (string, error) <span class="cov10" title="191">{
+func (m *ConsulSyncManager) waitForSession(ctx context.Context) (string, error) <span class="cov10" title="2695">{
         m.mtx.Lock()
         defer m.mtx.Unlock()
 
         //nolint:contextcheck // startLoop starts background goroutine, it needs ApplicationContext to ensure the loop is not cancelled by given ctx
-        if e := m.startLoop(); e != nil </span><span class="cov9" title="178">{
+        if e := m.startLoop(); e != nil </span><span class="cov9" title="2682">{
                 return "", e
         }</span>
-        <span class="cov5" title="13">for </span><span class="cov6" title="22">{
+        <span class="cov3" title="13">for </span><span class="cov4" title="22">{
                 switch m.session </span>{
-                case "":<span class="cov4" title="10">
+                case "":<span class="cov3" title="10">
                         if e := m.sessionCond.Wait(ctx); e != nil </span><span class="cov1" title="1">{
                                 return "", e
                         }</span>
-                default:<span class="cov5" title="12">
+                default:<span class="cov3" title="12">
                         return m.session, nil</span>
                 }
         }
 }
 
-func (m *ConsulSyncManager) updateSession(sid string) <span class="cov6" title="19">{
+func (m *ConsulSyncManager) updateSession(sid string) <span class="cov4" title="19">{
         m.mtx.Lock()
         defer m.mtx.Unlock()
-        defer func(from, to string) </span><span class="cov6" title="19">{
-                if from != to </span><span class="cov4" title="10">{
+        defer func(from, to string) </span><span class="cov4" title="19">{
+                if from != to </span><span class="cov3" title="10">{
                         m.sessionCond.Broadcast()
                 }</span>
         }(m.session, sid)
-        <span class="cov6" title="19">m.session = sid</span>
+        <span class="cov4" title="19">m.session = sid</span>
 }
 
 // sessionLoop is the main loop to manage session
-func (m *ConsulSyncManager) sessionLoop(ctx context.Context) <span class="cov4" title="9">{
-        for </span><span class="cov6" title="19">{
+func (m *ConsulSyncManager) sessionLoop(ctx context.Context) <span class="cov3" title="9">{
+        for </span><span class="cov4" title="19">{
                 select </span>{
-                case &lt;-ctx.Done():<span class="cov4" title="9">
+                case &lt;-ctx.Done():<span class="cov3" title="9">
                         logger.WithContext(ctx).Infof("sync manager stopped")
                         return</span>
-                default:<span class="cov4" title="10"></span>
+                default:<span class="cov3" title="10"></span>
                 }
 
                 // reset session
-                <span class="cov4" title="10">m.updateSession("")
+                <span class="cov3" title="10">m.updateSession("")
                 wOpts := (*api.WriteOptions)(nil).WithContext(ctx)
                 session, _, e := m.client.Session().Create(&amp;api.SessionEntry{
                         Name:      m.option.Name,
@@ -19671,7 +19671,7 @@ func (m *ConsulSyncManager) sessionLoop(ctx context.Context) <span class="cov4" 
                 }, wOpts)
 
                 switch e </span>{
-                case nil:<span class="cov4" title="9">
+                case nil:<span class="cov3" title="9">
                         m.updateSession(session)</span>
                 default:<span class="cov1" title="1">
                         select </span>{
@@ -19683,38 +19683,38 @@ func (m *ConsulSyncManager) sessionLoop(ctx context.Context) <span class="cov4" 
                 }
 
                 // keep renewing the session
-                <span class="cov4" title="9">_ = m.keepSession(ctx, session)
+                <span class="cov3" title="9">_ = m.keepSession(ctx, session)
 
                 // session is invalid/expired by this point.
                 // try to notify all existing locks
                 m.mtx.Lock()
-                for _, l := range m.locks </span><span class="cov5" title="11">{
+                for _, l := range m.locks </span><span class="cov3" title="11">{
                         l.refresh()
                 }</span>
-                <span class="cov4" title="9">m.mtx.Unlock()</span>
+                <span class="cov3" title="9">m.mtx.Unlock()</span>
         }
 }
 
-func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) error <span class="cov4" title="9">{
-        for </span><span class="cov5" title="16">{
+func (m *ConsulSyncManager) keepSession(ctx context.Context, session string) error <span class="cov3" title="9">{
+        for </span><span class="cov3" title="13">{
                 select </span>{
-                case &lt;-ctx.Done():<span class="cov4" title="7">
+                case &lt;-ctx.Done():<span class="cov2" title="4">
                         return context.Canceled</span>
-                default:<span class="cov4" title="9"></span>
+                default:<span class="cov3" title="9"></span>
                 }
 
                 // RenewPeriodic is used to periodically invoke Session.Renew on a
                 // session until a doneChan is closed. This is meant to be used in a long-running
                 // goroutine to ensure a session stays valid.
-                <span class="cov4" title="9">wOpts := (*api.WriteOptions)(nil).WithContext(ctx)
+                <span class="cov3" title="9">wOpts := (*api.WriteOptions)(nil).WithContext(ctx)
                 e := m.client.Session().RenewPeriodic(m.option.TTL.String(), session, wOpts, ctx.Done())
                 switch </span>{
-                case e == nil:<span class="cov4" title="7"></span>
+                case e == nil:<span class="cov2" title="4"></span>
                         // just continue
                 case errors.Is(e, api.ErrSessionExpired):<span class="cov1" title="1">
                         logger.WithContext(ctx).Warnf("session expired")
                         return e</span>
-                default:<span class="cov1" title="1">
+                default:<span class="cov2" title="4">
                         logger.WithContext(ctx).Warnf("session lost: %v", e)
                         return e</span>
                 }
@@ -19938,7 +19938,7 @@ type comparableError struct {
         cause error
 }
 
-func newError(tmpl string, args...interface{}) comparableError <span class="cov5" title="15">{
+func newError(tmpl string, args...interface{}) comparableError <span class="cov3" title="15">{
         errorTypeCounter ++
         return comparableError {
                 typ: errorTypeCounter,
@@ -19950,19 +19950,19 @@ func (w comparableError) Error() string <span class="cov0" title="0">{
         return w.msg
 }</span>
 
-func (w comparableError) Is(target error) bool <span class="cov10" title="344">{
+func (w comparableError) Is(target error) bool <span class="cov10" title="5364">{
         var comparableTarget comparableError
         if errors.As(target, &amp;comparableTarget) </span><span class="cov0" title="0">{
                 return w.typ == comparableTarget.typ
         }</span>
-        <span class="cov10" title="344">return errors.Is(w.cause, target)</span>
+        <span class="cov9" title="5363">return errors.Is(w.cause, target)</span>
 }
 
-func (w comparableError) Unwrap() error <span class="cov9" title="317">{
+func (w comparableError) Unwrap() error <span class="cov9" title="5363">{
         return w.cause
 }</span>
 
-func (w comparableError) WithMessage(tmpl string, args ...interface{}) comparableError <span class="cov6" title="27">{
+func (w comparableError) WithMessage(tmpl string, args ...interface{}) comparableError <span class="cov4" title="27">{
         return comparableError{
                 typ:   w.typ,
                 msg:   fmt.Sprintf(tmpl, args...),
@@ -19970,7 +19970,7 @@ func (w comparableError) WithMessage(tmpl string, args ...interface{}) comparabl
         }
 }</span>
 
-func (w comparableError) WithCause(err error) comparableError <span class="cov5" title="25">{
+func (w comparableError) WithCause(err error) comparableError <span class="cov4" title="25">{
         return comparableError{
                 typ:   w.typ,
                 msg:   fmt.Sprintf(`%s: %v`, w.msg, err),
@@ -21422,9 +21422,9 @@ func NewErrorWithStatusCode(e interface{}, resp *http.Response, rawBody []byte, 
         switch </span>{
         case resp.StatusCode == http.StatusUnauthorized:<span class="cov3" title="4">
                 code = ErrorCodeUnauthorized</span>
-        case resp.StatusCode == http.StatusForbidden:<span class="cov0" title="0">
+        case resp.StatusCode == http.StatusForbidden:<span class="cov1" title="1">
                 code = ErrorCodeForbidden</span>
-        case resp.StatusCode &gt;= 400 &amp;&amp; resp.StatusCode &lt;= 499:<span class="cov5" title="8">
+        case resp.StatusCode &gt;= 400 &amp;&amp; resp.StatusCode &lt;= 499:<span class="cov4" title="7">
                 code = ErrorCodeGenericClientSide</span>
         case resp.StatusCode &gt;= 500 &amp;&amp; resp.StatusCode &lt;= 599:<span class="cov0" title="0">
                 code = ErrorCodeGenericServerSide</span>
@@ -23221,12 +23221,12 @@ type cEntry struct {
 }
 
 // isExpired is NOT goroutine-safe
-func (ce *cEntry) isExpired() bool <span class="cov9" title="234176">{
+func (ce *cEntry) isExpired() bool <span class="cov9" title="214270">{
         return !ce.expire.IsZero() &amp;&amp; !time.Now().Before(ce.expire)
 }</span>
 
 // isInvalidated is atomic operation
-func (ce *cEntry) isInvalidated() bool <span class="cov10" title="234602">{
+func (ce *cEntry) isInvalidated() bool <span class="cov10" title="214686">{
         return atomic.LoadUint64(&amp;ce.invalid) != 0
 }</span>
 
@@ -23236,7 +23236,7 @@ func (ce *cEntry) invalidate() <span class="cov2" title="13">{
 }</span>
 
 // isLoaded is atomic operation
-func (ce *cEntry) isLoaded() bool <span class="cov4" title="117">{
+func (ce *cEntry) isLoaded() bool <span class="cov4" title="103">{
         return atomic.LoadUint64(&amp;ce.loaded) != 0
 }</span>
 
@@ -23275,13 +23275,13 @@ func newCache(opts ...cacheOptions) (ret *cache) <span class="cov2" title="14">{
         return</span>
 }
 
-func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc, validator validateFunc) (entryValue, error) <span class="cov9" title="234126">{
+func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc, validator validateFunc) (entryValue, error) <span class="cov9" title="214234">{
         // maxRetry should be &gt; 0, no upper limit
         // 1. when entry exists and not expired/invalidated, no retry
         // 2. when entry is newly created, no retry
         // 3. when entry exists but expired/invalidated, mark it invalidated and retry
         const maxRetry = 2
-        for i := 0; i &lt;= maxRetry; i++ </span><span class="cov9" title="234132">{
+        for i := 0; i &lt;= maxRetry; i++ </span><span class="cov9" title="214241">{
                 // getOrNew guarantee that only one goroutine create new entry (if needed)
                 // aka, getOrNew uses cache-wise RW lock to ensure such behavior
                 entry, isNew := c.getOrNew(ctx, k, c.newEntryFunc(loader))
@@ -23290,19 +23290,19 @@ func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc, validat
                 }</span>
 
                 // wait for entry to load
-                <span class="cov9" title="234132">entry.wg.Wait()
+                <span class="cov9" title="214241">entry.wg.Wait()
 
                 // from now on, entry content become immutable
                 // check entry validity
                 // note that we skip validation if the entry is freshly created
-                if isNew || !entry.isExpired() &amp;&amp; (entry.lastErr != nil || validator(ctx, entry.value)) </span><span class="cov9" title="234126">{
+                if isNew || !entry.isExpired() &amp;&amp; (entry.lastErr != nil || validator(ctx, entry.value)) </span><span class="cov9" title="214234">{
                         // valid entry
-                        if entry.lastErr != nil </span><span class="cov8" title="51450">{
+                        if entry.lastErr != nil </span><span class="cov9" title="74794">{
                                 return nil, entry.lastErr
                         }</span>
-                        <span class="cov9" title="182676">return entry.value, nil</span>
+                        <span class="cov9" title="139440">return entry.value, nil</span>
                 }
-                <span class="cov2" title="6">entry.invalidate()</span>
+                <span class="cov2" title="7">entry.invalidate()</span>
         }
 
         <span class="cov0" title="0">return nil, fmt.Errorf("unable to load valid entry")</span>
@@ -23310,7 +23310,7 @@ func (c *cache) GetOrLoad(ctx context.Context, k *cKey, loader loadFunc, validat
 
 // newEntryFunc returns a newFunc that create an entry and kick off "loader" in separate goroutine
 // this method is not goroutine safe.
-func (c *cache) newEntryFunc(loader loadFunc) newFunc <span class="cov9" title="234132">{
+func (c *cache) newEntryFunc(loader loadFunc) newFunc <span class="cov9" title="214241">{
         return func(ctx context.Context, key *cKey) *cEntry </span><span class="cov4" title="66">{
                 ret := &amp;cEntry{}
                 ret.wg.Add(1)
@@ -23333,21 +23333,21 @@ func (c *cache) load(ctx context.Context, key *cKey, entry *cEntry, loader loadF
 
 // getOrNew return existing entry or create and set using newIfAbsent
 // this method is goroutine-safe
-func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc) (entry *cEntry, isNew bool) <span class="cov9" title="234132">{
+func (c *cache) getOrNew(ctx context.Context, pKey *cKey, newIfAbsent newFunc) (entry *cEntry, isNew bool) <span class="cov9" title="214241">{
         v, ok := c.get(pKey)
-        if ok </span><span class="cov9" title="234026">{
+        if ok </span><span class="cov9" title="214137">{
                 return v, false
         }</span>
-        <span class="cov4" title="106">return c.newIfAbsent(ctx, pKey, newIfAbsent)</span>
+        <span class="cov4" title="104">return c.newIfAbsent(ctx, pKey, newIfAbsent)</span>
 }
 
 // newIfAbsent create entry using given "creator" if the key doesn't exist. otherwise returns existing entry
 // this method is goroutine-safe
-func (c *cache) newIfAbsent(ctx context.Context, pKey *cKey, creator newFunc) (entry *cEntry, isNew bool) <span class="cov4" title="106">{
+func (c *cache) newIfAbsent(ctx context.Context, pKey *cKey, creator newFunc) (entry *cEntry, isNew bool) <span class="cov4" title="104">{
         c.mtx.Lock()
         defer c.mtx.Unlock()
 
-        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() || creator == nil </span><span class="cov3" title="40">{
+        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() || creator == nil </span><span class="cov3" title="38">{
                 return v, false
         }</span>
 
@@ -23364,26 +23364,26 @@ func (c *cache) set(pKey *cKey, v *cEntry) <span class="cov0" title="0">{
 }</span>
 
 // get is goroutine-safe
-func (c *cache) get(pKey *cKey) (*cEntry, bool) <span class="cov9" title="234132">{
+func (c *cache) get(pKey *cKey) (*cEntry, bool) <span class="cov9" title="214241">{
         c.mtx.RLock()
         defer c.mtx.RUnlock()
-        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() </span><span class="cov9" title="234026">{
+        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() </span><span class="cov9" title="214137">{
                 return v, ok
         }</span>
-        <span class="cov4" title="106">return nil, false</span>
+        <span class="cov4" title="104">return nil, false</span>
 }
 
 // getValue not goroutine-safe
-func (c *cache) getValue(pKey *cKey) (*cEntry, bool) <span class="cov9" title="234238">{
-        if v, ok := c.store[*pKey]; ok &amp;&amp; v != nil </span><span class="cov9" title="234078">{
+func (c *cache) getValue(pKey *cKey) (*cEntry, bool) <span class="cov9" title="214345">{
+        if v, ok := c.store[*pKey]; ok &amp;&amp; v != nil </span><span class="cov9" title="214189">{
                 return v, true
         }</span>
-        <span class="cov4" title="160">return nil, false</span>
+        <span class="cov4" title="156">return nil, false</span>
 }
 
 // setValue not goroutine-safe
-func (c *cache) setValue(pKey *cKey, v *cEntry) <span class="cov4" title="73">{
-        if v == nil </span><span class="cov2" title="7">{
+func (c *cache) setValue(pKey *cKey, v *cEntry) <span class="cov4" title="72">{
+        if v == nil </span><span class="cov2" title="6">{
                 delete(c.store, *pKey)
         }</span> else<span class="cov4" title="66"> {
                 c.store[*pKey] = v
@@ -23393,9 +23393,9 @@ func (c *cache) setValue(pKey *cKey, v *cEntry) <span class="cov4" title="73">{
 
 // deleteInvalidatedValues remove given keys
 // this method is not goroutine-safe
-func (c *cache) deleteInvalidatedValues() <span class="cov4" title="103">{
-        for k, v := range c.store </span><span class="cov5" title="407">{
-                if v.isInvalidated() </span><span class="cov2" title="7">{
+func (c *cache) deleteInvalidatedValues() <span class="cov4" title="98">{
+        for k, v := range c.store </span><span class="cov5" title="394">{
+                if v.isInvalidated() </span><span class="cov2" title="6">{
                         c.setValue(&amp;k, nil)
                 }</span>
         }
@@ -23404,29 +23404,29 @@ func (c *cache) deleteInvalidatedValues() <span class="cov4" title="103">{
 func (c *cache) startReaper(interval time.Duration) <span class="cov2" title="14">{
         c.reaper = time.NewTicker(interval)
         go func() </span><span class="cov2" title="14">{
-                for </span><span class="cov3" title="51">{
+                for </span><span class="cov3" title="46">{
                         select </span>{
-                        case &lt;-c.reaper.C:<span class="cov3" title="37">
+                        case &lt;-c.reaper.C:<span class="cov3" title="32">
                                 c.evict()</span>
                         }
                 }
         }()
 }
 
-func (c *cache) evict() <span class="cov3" title="37">{
+func (c *cache) evict() <span class="cov3" title="32">{
         // step 1, go through the store, find loaded entries (using atomic flag) and mark them invalidated if expired (with R lock)
-        func() </span><span class="cov3" title="37">{
+        func() </span><span class="cov3" title="32">{
                 c.mtx.RLock()
                 defer c.mtx.RUnlock()
-                for _, v := range c.store </span><span class="cov4" title="117">{
-                        if !v.isInvalidated() &amp;&amp; v.isLoaded() &amp;&amp; v.isExpired() </span><span class="cov2" title="7">{
+                for _, v := range c.store </span><span class="cov4" title="103">{
+                        if !v.isInvalidated() &amp;&amp; v.isLoaded() &amp;&amp; v.isExpired() </span><span class="cov2" title="6">{
                                 v.invalidate()
                         }</span>
                 }
         }()
 
         // step 2, remove invalidated entries (with W lock)
-        <span class="cov3" title="37">c.mtx.Lock()
+        <span class="cov3" title="32">c.mtx.Lock()
         defer c.mtx.Unlock()
         c.deleteInvalidatedValues()</span>
 }
@@ -25204,12 +25204,12 @@ type saramaGroupConsumer struct {
         closed      bool
 }
 
-func newSaramaGroupConsumer(topic string, group string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaGroupConsumer, error) <span class="cov9" title="6">{
+func newSaramaGroupConsumer(topic string, group string, addrs []string, config *bindingConfig, provisioner *saramaTopicProvisioner) (*saramaGroupConsumer, error) <span class="cov10" title="6">{
         if group == "" </span><span class="cov0" title="0">{
                 return nil, ErrorSubTypeBindingInternal.WithMessage("group is required and cannot be empty")
         }</span>
 
-        <span class="cov9" title="6">order.SortStable(config.consumer.dispatchInterceptors, order.OrderedFirstCompare)
+        <span class="cov10" title="6">order.SortStable(config.consumer.dispatchInterceptors, order.OrderedFirstCompare)
         order.SortStable(config.consumer.handlerInterceptors, order.OrderedFirstCompare)
         //config.Consumer.Return.Errors = true
         return &amp;saramaGroupConsumer{
@@ -25324,13 +25324,13 @@ func (g *saramaGroupConsumer) handleGroup(ctx context.Context, group sarama.Cons
                 dispatcher: g.dispatcher,
         }
 
-        for </span><span class="cov10" title="7">{
+        for </span><span class="cov6" title="3">{
                 // `Consume` should be called inside an infinite loop, when a server-side re-balance happens, the consumer session will need to be recreated to get the new claims
-                if e := group.Consume(ctx, []string{g.topic}, gh); e != nil </span><span class="cov9" title="6">{
+                if e := group.Consume(ctx, []string{g.topic}, gh); e != nil </span><span class="cov4" title="2">{
                         if errors.Is(e, sarama.ErrClosedConsumerGroup) </span><span class="cov4" title="2">{
                                 return
                         }</span>
-                        <span class="cov7" title="4">logger.WithContext(ctx).Warnf("Consumer Error: %v", e)</span>
+                        <span class="cov0" title="0">logger.WithContext(ctx).Warnf("Consumer Error: %v", e)</span>
                 }
         }
 }
@@ -26985,16 +26985,16 @@ func (p *saramaTopicProvisioner) topicExists(topic string) (bool, error) <span c
         if e != nil </span><span class="cov0" title="0">{
                 return false, e
         }</span>
-        <span class="cov9" title="19">if e := gc.RefreshMetadata(); e != nil </span><span class="cov5" title="4">{
+        <span class="cov9" title="19">if e := gc.RefreshMetadata(); e != nil </span><span class="cov4" title="4">{
                 return false, translateSaramaBindingError(e, "unable to refresh metadata: %v", e)
         }</span>
 
-        <span class="cov9" title="15">topics, e := gc.Topics()
+        <span class="cov8" title="15">topics, e := gc.Topics()
         if e != nil </span><span class="cov0" title="0">{
                 return false, translateSaramaBindingError(e, "unable to read topics: %v", e)
         }</span>
 
-        <span class="cov9" title="15">for _, t := range topics </span><span class="cov10" title="20">{
+        <span class="cov8" title="15">for _, t := range topics </span><span class="cov10" title="24">{
                 if t == topic </span><span class="cov7" title="10">{
                         return true, nil
                 }</span>
@@ -27004,7 +27004,7 @@ func (p *saramaTopicProvisioner) topicExists(topic string) (bool, error) <span c
 
 func (p *saramaTopicProvisioner) provisionTopic(topic string, cfg *bindingConfig) error <span class="cov7" title="10">{
         exists, e := p.topicExists(topic)
-        if e != nil </span><span class="cov5" title="4">{
+        if e != nil </span><span class="cov4" title="4">{
                 return e
         }</span>
 
@@ -28016,16 +28016,16 @@ func newConfigurableZapLogger(name string, core zapcore.Core, logLevel LoggingLe
         return l
 }</span>
 
-func (l *configurableZapLogger) WithContext(ctx context.Context) Logger <span class="cov10" title="17662">{
+func (l *configurableZapLogger) WithContext(ctx context.Context) Logger <span class="cov10" title="17661">{
         if ctx == nil </span><span class="cov0" title="0">{
                 return l
         }</span>
 
-        <span class="cov10" title="17662">fields := make([]interface{}, 0, len(l.valuers)*2)
+        <span class="cov10" title="17661">fields := make([]interface{}, 0, len(l.valuers)*2)
         for k, ctxValuer := range l.valuers </span><span class="cov7" title="1348">{
                 fields = append(fields, k, ctxValuer(ctx))
         }</span>
-        <span class="cov10" title="17662">return l.withKV(fields)</span>
+        <span class="cov10" title="17661">return l.withKV(fields)</span>
 }
 
 func (l *configurableZapLogger) setMinLevel(lv LoggingLevel) <span class="cov8" title="3857">{
@@ -28128,12 +28128,12 @@ func (l LoggingLevel) MarshalText() ([]byte, error) <span class="cov7" title="18
 }</span>
 
 // UnmarshalText implements encoding.TextUnmarshaler
-func (l *LoggingLevel) UnmarshalText(data []byte) error <span class="cov10" title="1782">{
+func (l *LoggingLevel) UnmarshalText(data []byte) error <span class="cov10" title="1812">{
         value := strings.ToUpper(string(data))
-        if v, ok := loggingLevelAtoI[value]; ok </span><span class="cov10" title="1782">{
+        if v, ok := loggingLevelAtoI[value]; ok </span><span class="cov10" title="1812">{
                 *l = v
         }</span>
-        <span class="cov10" title="1782">return nil</span>
+        <span class="cov10" title="1812">return nil</span>
 }
 
 /*********************
@@ -28356,7 +28356,7 @@ var zapEncoderConfig = zapcore.EncoderConfig{
         StacktraceKey:  LogKeyStacktrace,
         LineEnding:     zapcore.DefaultLineEnding,
         EncodeLevel:    zapcore.LowercaseLevelEncoder,
-        EncodeTime: func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) <span class="cov10" title="16286">{
+        EncodeTime: func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) <span class="cov10" title="16254">{
                 // RFC339 with milliseconds
                 encoder.AppendString(time.UTC().Format(`2006-01-02T15:04:05.999Z07:00`))
         }</span>,
@@ -28682,9 +28682,9 @@ func (f *TemplatedFormatter) init() <span class="cov6" title="342">{
         <span class="cov6" title="342">f.tmpl = t</span>
 }
 
-func (f *TemplatedFormatter) Format(kvs Fields, w io.Writer) error <span class="cov10" title="15611">{
+func (f *TemplatedFormatter) Format(kvs Fields, w io.Writer) error <span class="cov10" title="15579">{
         switch w.(type) </span>{
-        case *buffer.Buffer:<span class="cov10" title="15611">
+        case *buffer.Buffer:<span class="cov10" title="15579">
                 return f.tmpl.Execute(w, kvs)</span>
         default:<span class="cov0" title="0">
                 // from documents of template.Template.Execute:
@@ -28872,7 +28872,7 @@ func NoopColored(v interface{}, _...string) interface{} <span class="cov0" title
         return v
 }</span>
 
-func NoopQuickColor(v interface{}) interface{} <span class="cov10" title="31222">{
+func NoopQuickColor(v interface{}) interface{} <span class="cov10" title="31158">{
         return v
 }</span>
 
@@ -28980,16 +28980,16 @@ var (
 )
 
 func MakeKVFunc(ignored utils.StringSet) func(Fields) string <span class="cov5" title="342">{
-        return func(kvs Fields) string </span><span class="cov8" title="15611">{
+        return func(kvs Fields) string </span><span class="cov8" title="15579">{
                 kvStrs := make([]string, 0, len(kvs))
-                for k, v := range kvs </span><span class="cov9" title="84850">{
-                        if v == nil || ignored.Has(k) || reflect.ValueOf(v).IsZero() </span><span class="cov9" title="81166">{
+                for k, v := range kvs </span><span class="cov9" title="84690">{
+                        if v == nil || ignored.Has(k) || reflect.ValueOf(v).IsZero() </span><span class="cov9" title="81006">{
                                 continue</span>
                         }
                         <span class="cov7" title="3684">kvStrs = append(kvStrs, fmt.Sprintf(`%s="%v"`, k, v))</span>
                 }
 
-                <span class="cov8" title="15611">if len(kvStrs) == 0 </span><span class="cov8" title="13430">{
+                <span class="cov8" title="15579">if len(kvStrs) == 0 </span><span class="cov8" title="13398">{
                         return ""
                 }</span>
                 <span class="cov7" title="2181">return "{" + strings.Join(kvStrs, ", ") + "}"</span>
@@ -29007,10 +29007,10 @@ func MakeLevelFunc(term bool) func(padding int, kvs Fields) string <span class="
                         <span class="cov0" title="0">return lvStr</span>
                 }
         } else<span class="cov4" title="101"> {
-                return func(padding int, kvs Fields) string </span><span class="cov8" title="15611">{
+                return func(padding int, kvs Fields) string </span><span class="cov8" title="15579">{
                         lv, _ := kvs[LogKeyLevel]
                         lvStr := Sprint(lv)
-                        if funcs, ok := levelFuncsMap[lvStr]; ok </span><span class="cov8" title="15611">{
+                        if funcs, ok := levelFuncsMap[lvStr]; ok </span><span class="cov8" title="15579">{
                                 return funcs.text(padding)
                         }</span>
                         <span class="cov0" title="0">return lvStr</span>
@@ -29019,13 +29019,13 @@ func MakeLevelFunc(term bool) func(padding int, kvs Fields) string <span class="
 }
 
 func MakeLevelPaddingFunc(v interface{}) func(int) string <span class="cov5" title="404">{
-        return func(p int) string </span><span class="cov8" title="15611">{
+        return func(p int) string </span><span class="cov8" title="15579">{
                 return Padding(p, v)
         }</span>
 }
 
 // Padding example: `{{padding -6 value}}` "{{padding 10 value}}"
-func Padding(padding int, v interface{}) string <span class="cov9" title="62447">{
+func Padding(padding int, v interface{}) string <span class="cov9" title="62319">{
         tag := "%" + strconv.Itoa(padding) + "v"
         return fmt.Sprintf(tag, v)
 }</span>
@@ -29033,10 +29033,10 @@ func Padding(padding int, v interface{}) string <span class="cov9" title="62447"
 // Capped truncate given value to specified length
 // if cap &gt; 0: with tailing "..." if truncated
 // if cap &lt; 0: with middle "..." if truncated
-func Capped(cap int, v interface{}) string <span class="cov9" title="31724">{
+func Capped(cap int, v interface{}) string <span class="cov9" title="31660">{
         c := int(math.Abs(float64(cap)))
         s := Sprint(v)
-        if len(s) &lt;= c </span><span class="cov9" title="31134">{
+        if len(s) &lt;= c </span><span class="cov9" title="31070">{
                 return s
         }</span>
         <span class="cov6" title="590">if cap &gt; 0 </span><span class="cov5" title="283">{
@@ -29066,10 +29066,10 @@ func Join(sep string, values ...interface{}) string <span class="cov0" title="0"
 //         - if trace ID is not available, return empty string
 //  - if span ID is same as trace ID, we assume parent ID is 0 and only returns traceID
 //  - if span ID is different from trace ID and parent ID is same as trace ID, we only returns trace ID and span ID
-func Trace(tid, sid, pid interface{}) string <span class="cov8" title="15604">{
+func Trace(tid, sid, pid interface{}) string <span class="cov8" title="15572">{
         tidStr, sidStr, pidStr := Sprint(tid), Sprint(sid), Sprint(pid)
         switch </span>{
-        case tidStr == "":<span class="cov8" title="15349">
+        case tidStr == "":<span class="cov8" title="15317">
                 return ""</span>
         case sidStr == tidStr:<span class="cov5" title="169">
                 return tidStr</span>
@@ -29080,11 +29080,11 @@ func Trace(tid, sid, pid interface{}) string <span class="cov8" title="15604">{
         }
 }
 
-func Sprint(v interface{}) string <span class="cov10" title="94179">{
+func Sprint(v interface{}) string <span class="cov10" title="93987">{
         switch v.(type) </span>{
-        case nil:<span class="cov9" title="46102">
+        case nil:<span class="cov9" title="46006">
                 return ""</span>
-        case string:<span class="cov9" title="47635">
+        case string:<span class="cov9" title="47539">
                 return v.(string)</span>
         case []byte:<span class="cov0" title="0">
                 return string(v.([]byte))</span>
@@ -29156,7 +29156,7 @@ func (enc *ZapFormattedEncoder) Clone() zapcore.Encoder <span class="cov1" title
 // EncodeEntry implements zapcore.Encoder
 // We use map and slice based encoders. Working with map and slice is necessary with go template based formatter.
 // Map and slice operations is not the most performant approach, but it wouldn't be the bottleneck comparing to go template rendering
-func (enc *ZapFormattedEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) <span class="cov8" title="15611">{
+func (enc *ZapFormattedEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) <span class="cov8" title="15579">{
         objEnc := zapcore.NewMapObjectEncoder()
         // encode entry
         arrEnc := &amp;SliceArrayEncoder{make([]interface{}, 0, 5)}
@@ -29164,29 +29164,29 @@ func (enc *ZapFormattedEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcor
         objEnc.Fields[enc.Config.LevelKey] = applyZapValueEncoder(arrEnc, entry.Level, enc.Config.EncodeLevel)
         objEnc.Fields[enc.Config.TimeKey] = applyZapValueEncoder(arrEnc, entry.Time, enc.Config.EncodeTime)
         objEnc.Fields[enc.Config.MessageKey] = entry.Message
-        if entry.Caller.Defined </span><span class="cov8" title="15607">{
+        if entry.Caller.Defined </span><span class="cov8" title="15575">{
                 objEnc.Fields[enc.Config.CallerKey] = applyZapValueEncoder(arrEnc, entry.Caller, enc.Config.EncodeCaller)
         }</span>
-        <span class="cov8" title="15611">if len(entry.Stack) != 0 </span><span class="cov0" title="0">{
+        <span class="cov8" title="15579">if len(entry.Stack) != 0 </span><span class="cov0" title="0">{
                 objEnc.Fields[enc.Config.StacktraceKey] = entry.Stack
         }</span>
 
         // encode fields
-        <span class="cov8" title="15611">for i := range fields </span><span class="cov8" title="6799">{
+        <span class="cov8" title="15579">for i := range fields </span><span class="cov8" title="6799">{
                 fields[i].AddTo(objEnc)
         }</span>
-        <span class="cov8" title="15611">buf := zapBufferPool.Get()
+        <span class="cov8" title="15579">buf := zapBufferPool.Get()
         if e := enc.Formatter.Format(objEnc.Fields, buf); e != nil </span><span class="cov0" title="0">{
                 return nil, e
         }</span>
-        <span class="cov8" title="15611">return buf, nil</span>
+        <span class="cov8" title="15579">return buf, nil</span>
 }
 
-func applyZapValueEncoder[T any](arrEnc *SliceArrayEncoder, value T, valueEncoder func(T, zapcore.PrimitiveArrayEncoder)) interface{} <span class="cov10" title="62440">{
-        if valueEncoder == nil </span><span class="cov8" title="15611">{
+func applyZapValueEncoder[T any](arrEnc *SliceArrayEncoder, value T, valueEncoder func(T, zapcore.PrimitiveArrayEncoder)) interface{} <span class="cov10" title="62312">{
+        if valueEncoder == nil </span><span class="cov8" title="15579">{
                 return value
         }</span>
-        <span class="cov9" title="46829">valueEncoder(value, arrEnc)
+        <span class="cov9" title="46733">valueEncoder(value, arrEnc)
         return arrEnc.Latest()</span>
 }
 
@@ -29195,7 +29195,7 @@ type SliceArrayEncoder struct {
         elems []interface{}
 }
 
-func (s *SliceArrayEncoder) Latest() interface{} <span class="cov9" title="46849">{
+func (s *SliceArrayEncoder) Latest() interface{} <span class="cov9" title="46753">{
         return s.elems[len(s.elems)-1]
 }</span>
 
@@ -29211,7 +29211,7 @@ func (s *SliceArrayEncoder) AppendInt64(v int64)            <span class="cov1" t
 func (s *SliceArrayEncoder) AppendInt32(v int32)            <span class="cov1" title="1">{ s.elems = append(s.elems, v) }</span>
 func (s *SliceArrayEncoder) AppendInt16(v int16)            <span class="cov1" title="1">{ s.elems = append(s.elems, v) }</span>
 func (s *SliceArrayEncoder) AppendInt8(v int8)              <span class="cov1" title="1">{ s.elems = append(s.elems, v) }</span>
-func (s *SliceArrayEncoder) AppendString(v string)          <span class="cov9" title="46830">{ s.elems = append(s.elems, v) }</span>
+func (s *SliceArrayEncoder) AppendString(v string)          <span class="cov9" title="46734">{ s.elems = append(s.elems, v) }</span>
 func (s *SliceArrayEncoder) AppendTime(v time.Time)         <span class="cov1" title="1">{ s.elems = append(s.elems, v) }</span>
 func (s *SliceArrayEncoder) AppendUint(v uint)              <span class="cov1" title="1">{ s.elems = append(s.elems, v) }</span>
 func (s *SliceArrayEncoder) AppendUint64(v uint64)          <span class="cov1" title="1">{ s.elems = append(s.elems, v) }</span>
@@ -29339,7 +29339,7 @@ type zapLogger struct {
         //zap.SugaredLogger
 }
 
-func (l *zapLogger) WithKV(keyvals ...interface{}) Logger <span class="cov8" title="4069">{
+func (l *zapLogger) WithKV(keyvals ...interface{}) Logger <span class="cov8" title="4084">{
         return l.withKV(keyvals)
 }</span>
 
@@ -29377,7 +29377,7 @@ func (l *zapLogger) WithCaller(caller interface{}) Logger <span class="cov5" tit
         <span class="cov5" title="325">return cpy</span>
 }
 
-func (l *zapLogger) Debugf(msg string, args ...interface{}) <span class="cov8" title="7373">{
+func (l *zapLogger) Debugf(msg string, args ...interface{}) <span class="cov8" title="7342">{
         l.log(zapcore.DebugLevel, msg, args, nil)
 }</span>
 
@@ -29385,7 +29385,7 @@ func (l *zapLogger) Infof(msg string, args ...interface{}) <span class="cov8" ti
         l.log(zapcore.InfoLevel, msg, args, nil)
 }</span>
 
-func (l *zapLogger) Warnf(msg string, args ...interface{}) <span class="cov4" title="74">{
+func (l *zapLogger) Warnf(msg string, args ...interface{}) <span class="cov4" title="73">{
         l.log(zapcore.WarnLevel, msg, args, nil)
 }</span>
 
@@ -29426,23 +29426,23 @@ func (l *zapLogger) Log(keyvals ...interface{}) error <span class="cov0" title="
         return nil
 }</span>
 
-func (l *zapLogger) shallowCopy() *zapLogger <span class="cov9" title="23770">{
+func (l *zapLogger) shallowCopy() *zapLogger <span class="cov9" title="23784">{
         cpy := *l
         return &amp;cpy
 }</span>
 
-func (l *zapLogger) withKV(keyvals []interface{}) Logger <span class="cov9" title="21731">{
+func (l *zapLogger) withKV(keyvals []interface{}) Logger <span class="cov9" title="21745">{
         cpy := l.shallowCopy()
         cpy.fields = append(l.fields, l.toFields(keyvals)...)
         return cpy
 }</span>
 
-func (l *zapLogger) log(lvl zapcore.Level, msgTmpl string, fmtArgs []interface{}, keyvals []interface{}) <span class="cov9" title="18835">{
+func (l *zapLogger) log(lvl zapcore.Level, msgTmpl string, fmtArgs []interface{}, keyvals []interface{}) <span class="cov9" title="18803">{
         // If logging at this level is completely disabled, skip the overhead of string formatting.
         if lvl &lt; zapcore.DPanicLevel &amp;&amp; !l.core.Enabled(lvl) </span><span class="cov8" title="3860">{
                 return
         }</span>
-        <span class="cov9" title="14975">msg := l.constructMessage(msgTmpl, fmtArgs)
+        <span class="cov9" title="14943">msg := l.constructMessage(msgTmpl, fmtArgs)
         ce := l.core.Check(zapcore.Entry{
                 LoggerName: l.name,
                 Time:       l.clock.Now(),
@@ -29453,12 +29453,12 @@ func (l *zapLogger) log(lvl zapcore.Level, msgTmpl string, fmtArgs []interface{}
                 return
         }</span>
         // process fields
-        <span class="cov9" title="14936">adhocFields := l.toFields(keyvals)
+        <span class="cov9" title="14904">adhocFields := l.toFields(keyvals)
 
         // caller and stacktrace
-        if l.stacktracer != nil </span><span class="cov9" title="14936">{
+        if l.stacktracer != nil </span><span class="cov9" title="14904">{
                 switch frames, fallback := l.stacktracer(); </span>{
-                case len(frames) != 0:<span class="cov9" title="14934">
+                case len(frames) != 0:<span class="cov9" title="14902">
                         ce.Caller = zapcore.EntryCaller{
                                 Defined:  frames[0].PC != 0,
                                 PC:       frames[0].PC,
@@ -29475,55 +29475,55 @@ func (l *zapLogger) log(lvl zapcore.Level, msgTmpl string, fmtArgs []interface{}
         }
 
         // write log
-        <span class="cov9" title="14936">ce.Write(append(l.fields, adhocFields...)...)</span>
+        <span class="cov9" title="14904">ce.Write(append(l.fields, adhocFields...)...)</span>
 }
 
 // constructMessage similar to SugarLogger's getMessage(...)
-func (l *zapLogger) constructMessage(tmpl string, fmtArgs []interface{}) string <span class="cov9" title="14975">{
+func (l *zapLogger) constructMessage(tmpl string, fmtArgs []interface{}) string <span class="cov9" title="14943">{
         switch </span>{
         case len(fmtArgs) == 0:<span class="cov7" title="1952">
                 return tmpl</span>
         case tmpl == "\n":<span class="cov3" title="32">
                 return fmt.Sprintln(fmtArgs...)</span>
-        case len(tmpl) != 0:<span class="cov9" title="12951">
+        case len(tmpl) != 0:<span class="cov9" title="12919">
                 return fmt.Sprintf(tmpl, fmtArgs...)</span>
         default:<span class="cov4" title="40">
                 return fmt.Sprint(fmtArgs...)</span>
         }
 }
 
-func (l *zapLogger) toFields(keyvals []interface{}) []zapcore.Field <span class="cov10" title="36667">{
-        if len(keyvals) == 0 </span><span class="cov9" title="31751">{
+func (l *zapLogger) toFields(keyvals []interface{}) []zapcore.Field <span class="cov10" title="36649">{
+        if len(keyvals) == 0 </span><span class="cov9" title="31718">{
                 return nil
         }</span>
         // give it enough space to avoid re-allocate space
-        <span class="cov8" title="4916">fields := make([]zapcore.Field, 0, len(keyvals)/2+2)
-        for i := 0; i &lt; len(keyvals); i += 2 </span><span class="cov8" title="5784">{
+        <span class="cov8" title="4931">fields := make([]zapcore.Field, 0, len(keyvals)/2+2)
+        for i := 0; i &lt; len(keyvals); i += 2 </span><span class="cov8" title="5799">{
                 var key string
                 switch k := keyvals[i].(type) </span>{
-                case string:<span class="cov8" title="5784">
+                case string:<span class="cov8" title="5799">
                         key = k</span>
                 case fmt.Stringer:<span class="cov0" title="0">
                         key = k.String()</span>
                 default:<span class="cov0" title="0">
                         key = fmt.Sprint(k)</span>
                 }
-                <span class="cov8" title="5784">if i == len(keyvals)-1 </span><span class="cov0" title="0">{
+                <span class="cov8" title="5799">if i == len(keyvals)-1 </span><span class="cov0" title="0">{
                         fields = append(fields, zap.String(key, "!(MISSING)"))
                         break</span>
                 }
-                <span class="cov8" title="5784">switch v := keyvals[i+1].(type) </span>{
+                <span class="cov8" title="5799">switch v := keyvals[i+1].(type) </span>{
                 case zapcore.Field:<span class="cov0" title="0">
                         fields = append(fields, v)</span>
                 case *zapcore.Field:<span class="cov0" title="0">
                         fields = append(fields, *v)</span>
                 case func() interface{}:<span class="cov0" title="0">
                         fields = append(fields, zap.Any(key, v()))</span>
-                default:<span class="cov8" title="5784">
+                default:<span class="cov8" title="5799">
                         fields = append(fields, zap.Any(key, v))</span>
                 }
         }
-        <span class="cov8" title="4916">return fields</span>
+        <span class="cov8" title="4931">return fields</span>
 }
 </pre>
 		
@@ -29853,19 +29853,19 @@ type Stacktracer func() (frames []*runtime.Frame, fallback interface{})
 // skip: skip certain number of stacks from the top, including the call to the Stacktracer itself
 // depth: max number of stack frames to extract
 func RuntimeStacktracer(skip int, depth int) Stacktracer <span class="cov7" title="1413">{
-    return func() (frames []*runtime.Frame, fallback interface{}) </span><span class="cov10" title="14934">{
+    return func() (frames []*runtime.Frame, fallback interface{}) </span><span class="cov10" title="14902">{
         rpc := make([]uintptr, depth)
         count := runtime.Callers(skip, rpc)
         rawFrames := runtime.CallersFrames(rpc)
         frames = make([]*runtime.Frame, count)
-        for i := 0; i &lt; count; i++ </span><span class="cov10" title="14934">{
+        for i := 0; i &lt; count; i++ </span><span class="cov10" title="14902">{
             frame, more := rawFrames.Next()
             frames[i] = &amp;frame
-            if !more </span><span class="cov10" title="14934">{
+            if !more </span><span class="cov10" title="14902">{
                 break</span>
             }
         }
-        <span class="cov10" title="14934">return frames, nil</span>
+        <span class="cov10" title="14902">return frames, nil</span>
     }
 }
 
@@ -34024,12 +34024,12 @@ func resolveLogLevel(ctx context.Context, defaultLevel log.LoggingLevel) log.Log
 
 type decisionLogPluginFactory struct{}
 
-func (f decisionLogPluginFactory) Validate(_ *plugins.Manager, rawConfig []byte) (interface{}, error) <span class="cov4" title="15">{
+func (f decisionLogPluginFactory) Validate(_ *plugins.Manager, rawConfig []byte) (interface{}, error) <span class="cov5" title="30">{
         var props LoggingProperties
         if e := json.Unmarshal(rawConfig, &amp;props); e != nil </span><span class="cov0" title="0">{
                 return nil, e
         }</span>
-        <span class="cov4" title="15">return props, nil</span>
+        <span class="cov5" title="30">return props, nil</span>
 }
 
 func (f decisionLogPluginFactory) New(manager *plugins.Manager, cfg interface{}) plugins.Plugin <span class="cov4" title="15">{
@@ -34202,12 +34202,12 @@ func (l *opaLogger) Error(fmt string, args ...interface{}) <span class="cov0" ti
         l.logger.Errorf(fmt, args...)
 }</span>
 
-func (l *opaLogger) WithFields(fields map[string]interface{}) opalogging.Logger <span class="cov8" title="135">{
+func (l *opaLogger) WithFields(fields map[string]interface{}) opalogging.Logger <span class="cov8" title="150">{
         kvs := make([]interface{}, 0, 10)
-        for k, v := range fields </span><span class="cov10" title="300">{
+        for k, v := range fields </span><span class="cov10" title="315">{
                 kvs = append(kvs, k, v)
         }</span>
-        <span class="cov8" title="135">return &amp;opaLogger{
+        <span class="cov8" title="150">return &amp;opaLogger{
                 logger: l.logger.WithKV(kvs...),
                 level:  l.level,
         }</span>
@@ -38987,9 +38987,9 @@ type AcrMatcher web.RequestMatcher
 type ControlFunc func(security.Authentication) (decision bool, reason error)
 
 func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc <span class="cov8" title="88">{
-        return func(ctx context.Context, r *http.Request) (bool, error) </span><span class="cov10" title="215">{
+        return func(ctx context.Context, r *http.Request) (bool, error) </span><span class="cov10" title="210">{
                 matches, err := matcher.MatchesWithContext(ctx, r)
-                if !matches || err != nil </span><span class="cov7" title="58">{
+                if !matches || err != nil </span><span class="cov7" title="53">{
                         return false, err
                 }</span>
 
@@ -39007,9 +39007,9 @@ func MakeDecisionMakerFunc(matcher AcrMatcher, cf ControlFunc) DecisionMakerFunc
 }
 
 func WrapDecisionMakerFunc(matcher AcrMatcher, dmf DecisionMakerFunc) DecisionMakerFunc <span class="cov2" title="3">{
-        return func(ctx context.Context, r *http.Request) (bool, error) </span><span class="cov5" title="17">{
+        return func(ctx context.Context, r *http.Request) (bool, error) </span><span class="cov5" title="18">{
                 matches, err := matcher.MatchesWithContext(ctx, r)
-                if !matches || err != nil </span><span class="cov3" title="4">{
+                if !matches || err != nil </span><span class="cov3" title="5">{
                         return false, err
                 }</span>
                 <span class="cov5" title="13">return dmf(ctx, r)</span>
@@ -39349,7 +39349,7 @@ func NewAccessControlMiddleware(decisionMakers...DecisionMakerFunc) *AccessContr
 func (ac *AccessControlMiddleware) ACHandlerFunc() gin.HandlerFunc <span class="cov7" title="48">{
         return func(ctx *gin.Context) </span><span class="cov9" title="170">{
                 var err error
-                for _, decisionMaker := range ac.decisionMakers </span><span class="cov10" title="232">{
+                for _, decisionMaker := range ac.decisionMakers </span><span class="cov10" title="228">{
                         var handled bool
                         handled, err = decisionMaker(ctx, ctx.Request)
                         if handled </span><span class="cov9" title="170">{
@@ -66943,7 +66943,7 @@ func (m *SpMetadataManager) GetServiceProvider(serviceProviderID string) (SamlSp
         m.cacheMutex.RLock()
         defer m.cacheMutex.RUnlock()
 
-        for k, v := range m.cache </span><span class="cov8" title="21">{
+        for k, v := range m.cache </span><span class="cov8" title="24">{
                 if k == serviceProviderID </span><span class="cov7" title="18">{
                         return m.processed[k], v, nil
                 }</span>
@@ -75893,7 +75893,7 @@ type Key interface{
 
 type StringKey string
 
-func (s StringKey) Hash() interface{} <span class="cov9" title="833349">{
+func (s StringKey) Hash() interface{} <span class="cov9" title="937385">{
         return s
 }</span>
 
@@ -75952,12 +75952,12 @@ type cEntry struct {
 }
 
 // isExpired is NOT goroutine-safe
-func (ce *cEntry) isExpired() bool <span class="cov9" title="318644">{
+func (ce *cEntry) isExpired() bool <span class="cov9" title="374465">{
         return !ce.expire.IsZero() &amp;&amp; !time.Now().Before(ce.expire)
 }</span>
 
 // isInvalidated is atomic operation
-func (ce *cEntry) isInvalidated() bool <span class="cov10" title="975509">{
+func (ce *cEntry) isInvalidated() bool <span class="cov10" title="996326">{
         return atomic.LoadUint64(&amp;ce.invalid) != 0
 }</span>
 
@@ -75967,12 +75967,12 @@ func (ce *cEntry) invalidate() <span class="cov2" title="17">{
 }</span>
 
 // isLoaded is atomic operation
-func (ce *cEntry) isLoaded() bool <span class="cov4" title="144">{
+func (ce *cEntry) isLoaded() bool <span class="cov4" title="148">{
         return atomic.LoadUint64(&amp;ce.loaded) != 0
 }</span>
 
 // markLoaded is atomic operation
-func (ce *cEntry) markLoaded() <span class="cov8" title="107041">{
+func (ce *cEntry) markLoaded() <span class="cov8" title="106271">{
         atomic.StoreUint64(&amp;ce.loaded, 1)
 }</span>
 
@@ -76004,7 +76004,7 @@ func NewMemCache(opts ...CacheOptions) *cache <span class="cov2" title="14">{
         return c</span>
 }
 
-func (c *cache) GetOrLoad(ctx context.Context, k Key, loader LoadFunc, validator ValidateFunc) (interface{}, error) <span class="cov9" title="211572">{
+func (c *cache) GetOrLoad(ctx context.Context, k Key, loader LoadFunc, validator ValidateFunc) (interface{}, error) <span class="cov9" title="268154">{
         if loader == nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("unable to load valid entry: LoadFunc is nil")
         }</span>
@@ -76012,7 +76012,7 @@ func (c *cache) GetOrLoad(ctx context.Context, k Key, loader LoadFunc, validator
         // 1. when entry exists and not expired/invalidated, no retry
         // 2. when entry is newly created, no retry
         // 3. when entry exists but expired/invalidated, mark it invalidated and retry
-        <span class="cov9" title="211571">for i := 0; i &lt;= c.LoadRetry; i++ </span><span class="cov9" title="211581">{
+        <span class="cov9" title="268153">for i := 0; i &lt;= c.LoadRetry; i++ </span><span class="cov9" title="268163">{
                 // getOrNew guarantee that only one goroutine create new entry (if needed)
                 // aka, getOrNew uses cache-wise RW lock to ensure such behavior
                 entry, isNew := c.getOrNew(ctx, k, c.newEntryFunc(loader))
@@ -76021,17 +76021,17 @@ func (c *cache) GetOrLoad(ctx context.Context, k Key, loader LoadFunc, validator
                 }</span>
 
                 // wait for entry to load
-                <span class="cov9" title="211581">entry.wg.Wait()
+                <span class="cov9" title="268163">entry.wg.Wait()
 
                 // from now on, entry content become immutable
                 // check entry validity
                 // note that we skip validation if the entry is freshly created
-                if isNew || !entry.isExpired() &amp;&amp; (entry.lastErr != nil || validator == nil || validator(ctx, entry.value)) </span><span class="cov9" title="211571">{
+                if isNew || !entry.isExpired() &amp;&amp; (entry.lastErr != nil || validator == nil || validator(ctx, entry.value)) </span><span class="cov9" title="268153">{
                         // valid entry
-                        if entry.lastErr != nil </span><span class="cov8" title="59705">{
+                        if entry.lastErr != nil </span><span class="cov8" title="51243">{
                                 return nil, entry.lastErr
                         }</span>
-                        <span class="cov8" title="151866">return entry.value, nil</span>
+                        <span class="cov9" title="216910">return entry.value, nil</span>
                 }
                 <span class="cov2" title="10">entry.invalidate()</span>
         }
@@ -76039,23 +76039,23 @@ func (c *cache) GetOrLoad(ctx context.Context, k Key, loader LoadFunc, validator
         <span class="cov0" title="0">return nil, fmt.Errorf("unable to load valid entry")</span>
 }
 
-func (c *cache) Update(ctx context.Context, k Key, updater UpdateFunc) (bool, error) <span class="cov8" title="164732">{
+func (c *cache) Update(ctx context.Context, k Key, updater UpdateFunc) (bool, error) <span class="cov8" title="165460">{
         if updater == nil </span><span class="cov1" title="1">{
                 return false, fmt.Errorf("unable to update: UpdateFunc is nil")
         }</span>
 
-        <span class="cov8" title="164731">_, ok := c.get(k)
-        if !ok </span><span class="cov8" title="57745">{
+        <span class="cov8" title="165459">_, ok := c.get(k)
+        if !ok </span><span class="cov8" title="59242">{
                 return false, nil
         }</span>
 
-        <span class="cov8" title="106986">newEntry := c.replaceIfPresent(ctx, k, c.updateEntryFunc(updater))
+        <span class="cov8" title="106217">newEntry := c.replaceIfPresent(ctx, k, c.updateEntryFunc(updater))
         if newEntry == nil </span><span class="cov0" title="0">{
                 return false, nil
         }</span>
-        <span class="cov8" title="106986">newEntry.wg.Wait()
+        <span class="cov8" title="106217">newEntry.wg.Wait()
 
-        if !newEntry.isExpired() </span><span class="cov8" title="106986">{
+        if !newEntry.isExpired() </span><span class="cov8" title="106217">{
                 return true, newEntry.lastErr
         }</span>
         <span class="cov0" title="0">return true, nil</span>
@@ -76077,8 +76077,8 @@ func (c *cache) Evict() <span class="cov1" title="1">{
 
 // newEntryFunc returns a newEntryFunc that create an entry and kick off "loader" in separate goroutine
 // this method is not goroutine safe.
-func (c *cache) newEntryFunc(loader LoadFunc) newEntryFunc <span class="cov9" title="211581">{
-        return func(ctx context.Context, key Key) *cEntry </span><span class="cov3" title="55">{
+func (c *cache) newEntryFunc(loader LoadFunc) newEntryFunc <span class="cov9" title="268163">{
+        return func(ctx context.Context, key Key) *cEntry </span><span class="cov3" title="54">{
                 ret := &amp;cEntry{}
                 ret.wg.Add(1)
                 // schedule load
@@ -76090,8 +76090,8 @@ func (c *cache) newEntryFunc(loader LoadFunc) newEntryFunc <span class="cov9" ti
 // updateEntryFunc returns a replaceEntryFunc that create an entry using given UpdateFunc and old entry
 // this method is not goroutine safe.
 // this method assume the old entry is not nil and already loaded
-func (c *cache) updateEntryFunc(updater UpdateFunc) replaceEntryFunc <span class="cov8" title="106986">{
-        return func(ctx context.Context, key Key, old *cEntry) *cEntry </span><span class="cov8" title="106986">{
+func (c *cache) updateEntryFunc(updater UpdateFunc) replaceEntryFunc <span class="cov8" title="106217">{
+        return func(ctx context.Context, key Key, old *cEntry) *cEntry </span><span class="cov8" title="106217">{
                 ret := &amp;cEntry{
                         value:   old.value,
                         expire:  old.expire,
@@ -76099,16 +76099,16 @@ func (c *cache) updateEntryFunc(updater UpdateFunc) replaceEntryFunc <span class
                 }
                 ret.wg.Add(1)
                 // wrap updater as loader
-                go c.load(ctx, key, ret, func(ctx context.Context, k Key) (interface{}, time.Time, error) </span><span class="cov8" title="106986">{
+                go c.load(ctx, key, ret, func(ctx context.Context, k Key) (interface{}, time.Time, error) </span><span class="cov8" title="106217">{
                         return updater(ctx, k, old.value)
                 }</span>)
-                <span class="cov8" title="106986">return ret</span>
+                <span class="cov8" title="106217">return ret</span>
         }
 }
 
 // load execute given loader and sent entry's sync.WaitGroup Done()
 // this method is not goroutine-safe and should be invoked only once
-func (c *cache) load(ctx context.Context, key Key, entry *cEntry, loader LoadFunc) <span class="cov8" title="107041">{
+func (c *cache) load(ctx context.Context, key Key, entry *cEntry, loader LoadFunc) <span class="cov8" title="106271">{
         v, exp, e := loader(ctx, key)
         entry.value = v
         entry.expire = exp
@@ -76119,32 +76119,32 @@ func (c *cache) load(ctx context.Context, key Key, entry *cEntry, loader LoadFun
 
 // getOrNew return existing entry or create and set using newIfAbsent
 // this method is goroutine-safe
-func (c *cache) getOrNew(ctx context.Context, pKey Key, newIfAbsent newEntryFunc) (entry *cEntry, isNew bool) <span class="cov9" title="211581">{
+func (c *cache) getOrNew(ctx context.Context, pKey Key, newIfAbsent newEntryFunc) (entry *cEntry, isNew bool) <span class="cov9" title="268163">{
         v, ok := c.get(pKey)
-        if ok </span><span class="cov8" title="133303">{
+        if ok </span><span class="cov8" title="142348">{
                 return v, false
         }</span>
-        <span class="cov8" title="78278">return c.newIfAbsent(ctx, pKey, newIfAbsent)</span>
+        <span class="cov8" title="125815">return c.newIfAbsent(ctx, pKey, newIfAbsent)</span>
 }
 
 // newIfAbsent create entry using given "creator" if the key doesn't exist. otherwise returns existing entry
 // this method is goroutine-safe
-func (c *cache) newIfAbsent(ctx context.Context, pKey Key, creator newEntryFunc) (entry *cEntry, isNew bool) <span class="cov8" title="78278">{
+func (c *cache) newIfAbsent(ctx context.Context, pKey Key, creator newEntryFunc) (entry *cEntry, isNew bool) <span class="cov8" title="125815">{
         c.mtx.Lock()
         defer c.mtx.Unlock()
 
-        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() </span><span class="cov8" title="78223">{
+        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() </span><span class="cov8" title="125761">{
                 return v, false
         }</span>
 
-        <span class="cov3" title="55">v := creator(ctx, pKey)
+        <span class="cov3" title="54">v := creator(ctx, pKey)
         c.setValue(pKey, v)
         return v, true</span>
 }
 
 // replaceIfPresent create entry using given "replacer" and replace the current entry if the key exists. otherwise returns nil
 // this method is goroutine-safe
-func (c *cache) replaceIfPresent(ctx context.Context, pKey Key, replacer replaceEntryFunc) (entry *cEntry) <span class="cov8" title="106986">{
+func (c *cache) replaceIfPresent(ctx context.Context, pKey Key, replacer replaceEntryFunc) (entry *cEntry) <span class="cov8" title="106217">{
         c.mtx.Lock()
         defer c.mtx.Unlock()
 
@@ -76153,7 +76153,7 @@ func (c *cache) replaceIfPresent(ctx context.Context, pKey Key, replacer replace
                 return nil
         }</span>
 
-        <span class="cov8" title="106986">existing.wg.Wait()
+        <span class="cov8" title="106217">existing.wg.Wait()
         entry = replacer(ctx, pKey, existing)
         c.setValue(pKey, entry)
         return entry</span>
@@ -76167,30 +76167,30 @@ func (c *cache) set(pKey Key, v *cEntry) <span class="cov1" title="2">{
 }</span>
 
 // get is goroutine-safe
-func (c *cache) get(pKey Key) (*cEntry, bool) <span class="cov9" title="541042">{
+func (c *cache) get(pKey Key) (*cEntry, bool) <span class="cov9" title="599080">{
         c.mtx.RLock()
         defer c.mtx.RUnlock()
-        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() </span><span class="cov9" title="356158">{
+        if v, ok := c.getValue(pKey); ok &amp;&amp; !v.isInvalidated() </span><span class="cov9" title="356099">{
                 return v, ok
         }</span>
-        <span class="cov8" title="184884">return nil, false</span>
+        <span class="cov9" title="242981">return nil, false</span>
 }
 
 // getValue not goroutine-safe
-func (c *cache) getValue(pKey Key) (*cEntry, bool) <span class="cov9" title="726306">{
+func (c *cache) getValue(pKey Key) (*cEntry, bool) <span class="cov9" title="831112">{
         k := reflect.Indirect(reflect.ValueOf(pKey.Hash())).Interface()
-        if v, ok := c.store[k]; ok &amp;&amp; v != nil </span><span class="cov9" title="564927">{
+        if v, ok := c.store[k]; ok &amp;&amp; v != nil </span><span class="cov9" title="589676">{
                 return v, true
         }</span>
-        <span class="cov8" title="161379">return nil, false</span>
+        <span class="cov9" title="241436">return nil, false</span>
 }
 
 // setValue not goroutine-safe
-func (c *cache) setValue(pKey Key, v *cEntry) <span class="cov8" title="107043">{
+func (c *cache) setValue(pKey Key, v *cEntry) <span class="cov8" title="106273">{
         k := reflect.Indirect(reflect.ValueOf(pKey.Hash())).Interface()
         if v == nil </span><span class="cov1" title="2">{
                 delete(c.store, k)
-        }</span> else<span class="cov8" title="107041"> {
+        }</span> else<span class="cov8" title="106271"> {
                 c.store[k] = v
                 c.deleteInvalidatedValues()
         }</span>
@@ -76198,9 +76198,9 @@ func (c *cache) setValue(pKey Key, v *cEntry) <span class="cov8" title="107043">
 
 // deleteInvalidatedValues remove given keys
 // this method is not goroutine-safe
-func (c *cache) deleteInvalidatedValues() <span class="cov8" title="107088">{
-        for k, v := range c.store </span><span class="cov9" title="410437">{
-                if v.isInvalidated() </span><span class="cov2" title="11">{
+func (c *cache) deleteInvalidatedValues() <span class="cov8" title="106319">{
+        for k, v := range c.store </span><span class="cov9" title="406502">{
+                if v.isInvalidated() </span><span class="cov2" title="10">{
                         delete(c.store, k)
                 }</span>
         }
@@ -76209,21 +76209,21 @@ func (c *cache) deleteInvalidatedValues() <span class="cov8" title="107088">{
 func (c *cache) startReaper() <span class="cov2" title="14">{
         c.reaper = time.NewTicker(c.Heartbeat)
         go func() </span><span class="cov2" title="14">{
-                for </span><span class="cov3" title="60">{
+                for </span><span class="cov3" title="61">{
                         select </span>{
-                        case &lt;-c.reaper.C:<span class="cov3" title="46">
+                        case &lt;-c.reaper.C:<span class="cov3" title="47">
                                 c.evict()</span>
                         }
                 }
         }()
 }
 
-func (c *cache) evict() <span class="cov3" title="47">{
+func (c *cache) evict() <span class="cov3" title="48">{
         // step 1, go through the store, find loaded entries (using atomic flag) and mark them invalidated if expired (with R lock)
-        func() </span><span class="cov3" title="47">{
+        func() </span><span class="cov3" title="48">{
                 c.mtx.RLock()
                 defer c.mtx.RUnlock()
-                for _, v := range c.store </span><span class="cov4" title="145">{
+                for _, v := range c.store </span><span class="cov4" title="148">{
                         if !v.isInvalidated() &amp;&amp; v.isLoaded() &amp;&amp; v.isExpired() </span><span class="cov2" title="7">{
                                 v.invalidate()
                         }</span>
@@ -76231,7 +76231,7 @@ func (c *cache) evict() <span class="cov3" title="47">{
         }()
 
         // step 2, remove invalidated entries (with W lock)
-        <span class="cov3" title="47">c.mtx.Lock()
+        <span class="cov3" title="48">c.mtx.Lock()
         defer c.mtx.Unlock()
         c.deleteInvalidatedValues()</span>
 }
@@ -76291,27 +76291,27 @@ type mutableContext struct {
         valuers []ContextValuer
 }
 
-func (ctx *mutableContext) Value(key interface{}) (ret interface{}) <span class="cov10" title="15132">{
+func (ctx *mutableContext) Value(key interface{}) (ret interface{}) <span class="cov10" title="15756">{
         switch key </span>{
-        case ckMutableContext:<span class="cov8" title="1815">
+        case ckMutableContext:<span class="cov7" title="1815">
                 return ctx</span>
         }
 
         // get value from value map first, in case the key-value pair is overwritten
-        <span class="cov9" title="13317">ret, ok := ctx.values[key]
-        if ok &amp;&amp; ret != nil </span><span class="cov8" title="3912">{
+        <span class="cov9" title="13941">ret, ok := ctx.values[key]
+        if ok &amp;&amp; ret != nil </span><span class="cov8" title="3915">{
                 return
         }</span>
 
         // use valuers to get
-        <span class="cov9" title="9405">for _, valuer := range ctx.valuers </span><span class="cov7" title="788">{
+        <span class="cov9" title="10026">for _, valuer := range ctx.valuers </span><span class="cov7" title="1227">{
                 if ret = valuer(key); ret != nil </span><span class="cov5" title="126">{
                         return
                 }</span>
         }
 
         // pass along to parent
-        <span class="cov9" title="9279">return ctx.Context.Value(key)</span>
+        <span class="cov9" title="9900">return ctx.Context.Value(key)</span>
 }
 
 func (ctx *mutableContext) Set(key any, value any) <span class="cov8" title="3166">{
@@ -76374,8 +76374,8 @@ type MutableContextAccessor interface {
 // If MutableContext is not found, nil is returned.
 //
 // Important: This function may returns parent context of the given one. Therefore, changing values may affect parent context.
-func FindMutableContext(ctx context.Context) MutableContextAccessor <span class="cov8" title="1800">{
-        if mc, ok := ctx.Value(ckMutableContext).(*mutableContext); ok </span><span class="cov8" title="1800">{
+func FindMutableContext(ctx context.Context) MutableContextAccessor <span class="cov7" title="1800">{
+        if mc, ok := ctx.Value(ckMutableContext).(*mutableContext); ok </span><span class="cov7" title="1800">{
                 return mc
         }</span>
         <span class="cov0" title="0">return nil</span>
@@ -77397,13 +77397,13 @@ func (m OrMatcher) Matches(i interface{}) (ret bool, err error) <span class="cov
         <span class="cov9" title="8842">return</span>
 }
 
-func (m OrMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) <span class="cov9" title="6129">{
-        for _,item := range m </span><span class="cov9" title="11986">{
-                if ret,err = item.MatchesWithContext(c, i); ret || err != nil </span><span class="cov6" title="399">{
+func (m OrMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) <span class="cov9" title="6065">{
+        for _,item := range m </span><span class="cov9" title="11865">{
+                if ret,err = item.MatchesWithContext(c, i); ret || err != nil </span><span class="cov6" title="396">{
                         break</span>
                 }
         }
-        <span class="cov9" title="6129">return</span>
+        <span class="cov9" title="6065">return</span>
 }
 
 func (m OrMatcher) Or(matchers ...Matcher) ChainableMatcher <span class="cov5" title="200">{
@@ -77434,13 +77434,13 @@ func (m AndMatcher) Matches(i interface{}) (ret bool, err error) <span class="co
         <span class="cov6" title="496">return</span>
 }
 
-func (m AndMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) <span class="cov9" title="11915">{
-        for _,item := range m </span><span class="cov9" title="12982">{
-                if ret,err = item.MatchesWithContext(c, i); !ret || err != nil </span><span class="cov9" title="10918">{
+func (m AndMatcher) MatchesWithContext(c context.Context, i interface{}) (ret bool, err error) <span class="cov9" title="11918">{
+        for _,item := range m </span><span class="cov9" title="12985">{
+                if ret,err = item.MatchesWithContext(c, i); !ret || err != nil </span><span class="cov9" title="10921">{
                         break</span>
                 }
         }
-        <span class="cov9" title="11915">return</span>
+        <span class="cov9" title="11918">return</span>
 }
 
 func (m AndMatcher) Or(matchers ...Matcher) ChainableMatcher <span class="cov1" title="1">{
@@ -77554,24 +77554,24 @@ type stringMatcher struct {
         matchFunc func(context.Context, string) (bool, error)
 }
 
-func (m *stringMatcher) StringMatches(c context.Context, value string) (bool, error) <span class="cov10" title="19778">{
+func (m *stringMatcher) StringMatches(c context.Context, value string) (bool, error) <span class="cov10" title="19710">{
         return m.matchFunc(c, value)
 }</span>
 
-func (m *stringMatcher) Matches(i interface{}) (bool, error) <span class="cov5" title="203">{
+func (m *stringMatcher) Matches(i interface{}) (bool, error) <span class="cov5" title="204">{
         v, ok := i.(string)
         if !ok </span><span class="cov0" title="0">{
                 return false, fmt.Errorf("StringMatcher doesn't support %T", i)
         }</span>
-        <span class="cov5" title="203">return m.StringMatches(context.TODO(), v)</span>
+        <span class="cov5" title="204">return m.StringMatches(context.TODO(), v)</span>
 }
 
-func (m *stringMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) <span class="cov9" title="19575">{
+func (m *stringMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) <span class="cov9" title="19506">{
         v, ok := i.(string)
         if !ok </span><span class="cov0" title="0">{
                 return false, fmt.Errorf("StringMatcher doesn't support %T", i)
         }</span>
-        <span class="cov9" title="19575">return m.StringMatches(c, v)</span>
+        <span class="cov9" title="19506">return m.StringMatches(c, v)</span>
 }
 
 func (m *stringMatcher) Or(matchers ...Matcher) ChainableMatcher <span class="cov4" title="63">{
@@ -77596,7 +77596,7 @@ func WithString(expected string, caseInsensitive bool) StringMatcher <span class
                 desc = desc + descSuffixCaseInsensitive
         }</span>
         <span class="cov6" title="344">return &amp;stringMatcher{
-                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov8" title="3541">{
+                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov8" title="3517">{
                         return MatchString(expected, value, caseInsensitive), nil
                 }</span>,
                 description: desc,
@@ -77628,7 +77628,7 @@ func AnyNonEmptyString() StringMatcher <span class="cov4" title="58">{
 
 func WithPathPattern(pattern string) StringMatcher <span class="cov6" title="377">{
         return &amp;stringMatcher{
-                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov9" title="12015">{
+                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov9" title="12019">{
                         return MatchPathPattern(pattern, value)
                 }</span>,
                 description: fmt.Sprintf("matches pattern [%s]", pattern),
@@ -77654,7 +77654,7 @@ func WithSuffix(suffix string, caseInsensitive bool) StringMatcher <span class="
                 desc = desc + descSuffixCaseInsensitive
         }</span>
         <span class="cov3" title="15">return &amp;stringMatcher{
-                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov7" title="2040">{
+                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov7" title="2016">{
                         return MatchSuffix(suffix, value, caseInsensitive)
                 }</span>,
                 description: desc,
@@ -77672,7 +77672,7 @@ func WithRegex(regex string) StringMatcher <span class="cov0" title="0">{
 
 func WithRegexPattern(regex *regexp.Regexp) StringMatcher <span class="cov3" title="15">{
         return &amp;stringMatcher{
-                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov7" title="2040">{
+                matchFunc: func(_ context.Context, value string) (bool, error) </span><span class="cov7" title="2016">{
                         return MatchRegexPattern(regex, value)
                 }</span>,
                 description: fmt.Sprintf("matches regex [%s]", regex.String()),
@@ -77683,12 +77683,12 @@ func WithRegexPattern(regex *regexp.Regexp) StringMatcher <span class="cov3" tit
         helpers
 ***************************/
 
-func MatchString(expected, actual string, caseInsensitive bool) bool <span class="cov8" title="3541">{
+func MatchString(expected, actual string, caseInsensitive bool) bool <span class="cov8" title="3517">{
         if caseInsensitive </span><span class="cov7" title="1501">{
                 expected = strings.ToLower(expected)
                 actual = strings.ToLower(actual)
         }</span>
-        <span class="cov8" title="3541">return expected == actual</span>
+        <span class="cov8" title="3517">return expected == actual</span>
 }
 
 func MatchSubString(substr, actual string, caseInsensitive bool) bool <span class="cov2" title="4">{
@@ -77719,11 +77719,11 @@ func MatchSubString(substr, actual string, caseInsensitive bool) bool <span clas
 //    c           matches character c (c != '\\', '-', ']')
 //    '\\' c      matches character c
 //    lo '-' hi   matches character c for lo &lt;= c &lt;= hi
-func MatchPathPattern(pattern, path string) (bool, error) <span class="cov9" title="12015">{
+func MatchPathPattern(pattern, path string) (bool, error) <span class="cov9" title="12019">{
         if pattern == "" </span><span class="cov0" title="0">{
                 return true, nil
         }</span>
-        <span class="cov9" title="12015">return doublestar.Match(pattern, path)</span>
+        <span class="cov9" title="12019">return doublestar.Match(pattern, path)</span>
 }
 
 func MatchPrefix(prefix, value string, caseInsensitive bool) (bool, error) <span class="cov5" title="87">{
@@ -77733,18 +77733,18 @@ func MatchPrefix(prefix, value string, caseInsensitive bool) (bool, error) <span
         <span class="cov4" title="66">return strings.HasPrefix(value, prefix), nil</span>
 }
 
-func MatchSuffix(suffix, value string, caseInsensitive bool) (bool, error) <span class="cov7" title="2040">{
+func MatchSuffix(suffix, value string, caseInsensitive bool) (bool, error) <span class="cov7" title="2016">{
         if caseInsensitive </span><span class="cov0" title="0">{
                 return strings.HasSuffix(strings.ToLower(value), strings.ToLower(suffix)), nil
         }</span>
-        <span class="cov7" title="2040">return strings.HasSuffix(value, suffix), nil</span>
+        <span class="cov7" title="2016">return strings.HasSuffix(value, suffix), nil</span>
 }
 
 func MatchRegex(regex, value string) (bool, error) <span class="cov0" title="0">{
         return regexp.MatchString(regex, value)
 }</span>
 
-func MatchRegexPattern(regex *regexp.Regexp, value string) (bool, error) <span class="cov7" title="2040">{
+func MatchRegexPattern(regex *regexp.Regexp, value string) (bool, error) <span class="cov7" title="2016">{
         return regex.MatchString(value), nil
 }</pre>
 		
@@ -77912,7 +77912,7 @@ func Sort(slice interface{}, compareFunc CompareFunc) <span class="cov2" title="
         if sv.Kind() != reflect.Slice </span><span class="cov0" title="0">{
                 panic(fmt.Errorf("Sort only support slice, but got %T", slice))</span>
         }
-        <span class="cov2" title="5">sort.Slice(slice, func(i, j int) bool </span><span class="cov8" title="1677">{
+        <span class="cov2" title="5">sort.Slice(slice, func(i, j int) bool </span><span class="cov8" title="2159">{
                 return compareFunc(sv.Index(i).Interface(), sv.Index(j).Interface())
         }</span>)
 }
@@ -77924,7 +77924,7 @@ func SortStable(slice interface{}, compareFunc CompareFunc) <span class="cov9" t
         if sv.Kind() != reflect.Slice </span><span class="cov0" title="0">{
                 panic(fmt.Errorf("Sort only support slice, but got %T", slice))</span>
         }
-        <span class="cov9" title="8227">sort.SliceStable(slice, func(i, j int) bool </span><span class="cov10" title="10443">{
+        <span class="cov9" title="8227">sort.SliceStable(slice, func(i, j int) bool </span><span class="cov10" title="11020">{
                 return compareFunc(sv.Index(i).Interface(), sv.Index(j).Interface())
         }</span>)
 }
@@ -77933,7 +77933,7 @@ func SortStable(slice interface{}, compareFunc CompareFunc) <span class="cov9" t
 // - PriorityOrdered wins over other types
 // - Ordered wins over non- PriorityOrdered
 // - Same category will compare its corresponding order value
-func OrderedFirstCompare(left interface{}, right interface{}) bool <span class="cov9" title="4626">{
+func OrderedFirstCompare(left interface{}, right interface{}) bool <span class="cov9" title="4465">{
         // first consider PriorityOrder
         lp, lpok := left.(PriorityOrdered)
         rp, rpok := right.(PriorityOrdered)
@@ -77942,27 +77942,27 @@ func OrderedFirstCompare(left interface{}, right interface{}) bool <span class="
 
         switch </span>{
         // PriorityOrdered cases
-        case lpok &amp;&amp; rpok:<span class="cov7" title="552">
+        case lpok &amp;&amp; rpok:<span class="cov6" title="235">
                 return lp.PriorityOrder() &lt; rp.PriorityOrder()</span>
-        case lpok &amp;&amp; !rpok:<span class="cov6" title="400">
+        case lpok &amp;&amp; !rpok:<span class="cov6" title="495">
                 return true</span>
-        case !lpok &amp;&amp; rpok:<span class="cov5" title="165">
+        case !lpok &amp;&amp; rpok:<span class="cov5" title="75">
                 return false</span>
         // Ordered cases
-        case look &amp;&amp; rook:<span class="cov8" title="2214">
+        case look &amp;&amp; rook:<span class="cov8" title="2353">
                 return lo.Order() &lt; ro.Order()</span>
-        case look &amp;&amp; !rook:<span class="cov6" title="248">
+        case look &amp;&amp; !rook:<span class="cov6" title="251">
                 return true</span>
-        case !look &amp;&amp; rook:<span class="cov5" title="88">
+        case !look &amp;&amp; rook:<span class="cov5" title="139">
                 return false</span>
         // not Ordered nor PriorityOrdered
-        default:<span class="cov7" title="959">
+        default:<span class="cov7" title="917">
                 return false</span>
         }
 }
 
 // OrderedFirstCompareReverse compares objects based on order interfaces with same rule as OrderedFirstCompare but reversed
-func OrderedFirstCompareReverse(left interface{}, right interface{}) bool <span class="cov9" title="8342">{
+func OrderedFirstCompareReverse(left interface{}, right interface{}) bool <span class="cov9" title="8833">{
         // first consider PriorityOrder
         lp, lpok := left.(PriorityOrdered)
         rp, rpok := right.(PriorityOrdered)
@@ -77971,21 +77971,21 @@ func OrderedFirstCompareReverse(left interface{}, right interface{}) bool <span 
 
         switch </span>{
         // PriorityOrdered cases
-        case lpok &amp;&amp; rpok:<span class="cov5" title="99">
+        case lpok &amp;&amp; rpok:<span class="cov6" title="302">
                 return lp.PriorityOrder() &gt; rp.PriorityOrder()</span>
-        case lpok &amp;&amp; !rpok:<span class="cov4" title="42">
+        case lpok &amp;&amp; !rpok:<span class="cov5" title="66">
                 return false</span>
-        case !lpok &amp;&amp; rpok:<span class="cov5" title="157">
+        case !lpok &amp;&amp; rpok:<span class="cov6" title="304">
                 return true</span>
         // Ordered cases
-        case look &amp;&amp; rook:<span class="cov9" title="7796">
+        case look &amp;&amp; rook:<span class="cov9" title="7706">
                 return lo.Order() &gt; ro.Order()</span>
-        case look &amp;&amp; !rook:<span class="cov4" title="46">
+        case look &amp;&amp; !rook:<span class="cov4" title="48">
                 return false</span>
-        case !look &amp;&amp; rook:<span class="cov5" title="88">
+        case !look &amp;&amp; rook:<span class="cov6" title="197">
                 return true</span>
         // not Ordered nor PriorityOrdered
-        default:<span class="cov5" title="114">
+        default:<span class="cov6" title="210">
                 return false</span>
         }
 }
@@ -77994,7 +77994,7 @@ func OrderedFirstCompareReverse(left interface{}, right interface{}) bool <span 
 // - Regular object (neither PriorityOrdered nor Ordered) wins over other types
 // - PriorityOrdered wins over Ordered
 // - Same category will compare its corresponding order value
-func OrderedLastCompare(left interface{}, right interface{}) bool <span class="cov8" title="1390">{
+func OrderedLastCompare(left interface{}, right interface{}) bool <span class="cov7" title="1290">{
         // first consider PriorityOrder
         lp, lpok := left.(PriorityOrdered)
         rp, rpok := right.(PriorityOrdered)
@@ -78003,24 +78003,24 @@ func OrderedLastCompare(left interface{}, right interface{}) bool <span class="c
 
         switch </span>{
         // if both side are regular objects, there's no order
-        case !lpok &amp;&amp; !look &amp;&amp; !rpok &amp;&amp; !rook:<span class="cov5" title="150">
+        case !lpok &amp;&amp; !look &amp;&amp; !rpok &amp;&amp; !rook:<span class="cov5" title="109">
                 return false</span>
         // from here down, at least one side is not a regular object
         // left or right are regular object
-        case !lpok &amp;&amp; !look:<span class="cov6" title="321"> //left is regular object
+        case !lpok &amp;&amp; !look:<span class="cov5" title="98"> //left is regular object
                 return true</span>
-        case !rpok &amp;&amp; !rook:<span class="cov5" title="77"> //right is regular object
+        case !rpok &amp;&amp; !rook:<span class="cov4" title="32"> //right is regular object
                 return false</span>
         // from here down, both side are ordered or priority ordered
         // PriorityOrdered cases
-        case lpok &amp;&amp; rpok:<span class="cov6" title="458">
+        case lpok &amp;&amp; rpok:<span class="cov6" title="362">
                 return lp.PriorityOrder() &lt; rp.PriorityOrder()</span>
-        case lpok &amp;&amp; !rpok:<span class="cov4" title="56">
+        case lpok &amp;&amp; !rpok:<span class="cov6" title="183">
                 return true</span>
-        case !lpok &amp;&amp; rpok:<span class="cov5" title="109">
+        case !lpok &amp;&amp; rpok:<span class="cov5" title="103">
                 return false</span>
         // Ordered cases
-        case look &amp;&amp; rook:<span class="cov6" title="219">
+        case look &amp;&amp; rook:<span class="cov6" title="403">
                 return lo.Order() &lt; ro.Order()</span>
         default:<span class="cov0" title="0">
                 return false</span> // theoretically wouldn't get here
@@ -78028,7 +78028,7 @@ func OrderedLastCompare(left interface{}, right interface{}) bool <span class="c
 }
 
 // OrderedLastCompareReverse compares objects based on order interfaces with same rule as OrderedLastCompare but reversed
-func OrderedLastCompareReverse(left interface{}, right interface{}) bool <span class="cov7" title="992">{
+func OrderedLastCompareReverse(left interface{}, right interface{}) bool <span class="cov8" title="1414">{
         // first consider PriorityOrder
         lp, lpok := left.(PriorityOrdered)
         rp, rpok := right.(PriorityOrdered)
@@ -78037,24 +78037,24 @@ func OrderedLastCompareReverse(left interface{}, right interface{}) bool <span c
 
         switch </span>{
         // if both side are regular objects, there's no order
-        case !lpok &amp;&amp; !look &amp;&amp; !rpok &amp;&amp; !rook:<span class="cov4" title="47">
+        case !lpok &amp;&amp; !look &amp;&amp; !rpok &amp;&amp; !rook:<span class="cov5" title="167">
                 return false</span>
         // from here down, at least one side is not a regular object
         // left or right are regular object
-        case !lpok &amp;&amp; !look:<span class="cov4" title="27"> //left is regular object
+        case !lpok &amp;&amp; !look:<span class="cov4" title="28"> //left is regular object
                 return false</span>
-        case !rpok &amp;&amp; !rook:<span class="cov4" title="56"> //right is regular object
+        case !rpok &amp;&amp; !rook:<span class="cov6" title="265"> //right is regular object
                 return true</span>
         // from here down, both side are ordered or priority ordered
         // PriorityOrdered cases
-        case lpok &amp;&amp; rpok:<span class="cov6" title="309">
+        case lpok &amp;&amp; rpok:<span class="cov7" title="586">
                 return lp.PriorityOrder() &gt; rp.PriorityOrder()</span>
-        case lpok &amp;&amp; !rpok:<span class="cov4" title="36">
+        case lpok &amp;&amp; !rpok:<span class="cov4" title="45">
                 return false</span>
-        case !lpok &amp;&amp; rpok:<span class="cov5" title="129">
+        case !lpok &amp;&amp; rpok:<span class="cov5" title="138">
                 return true</span>
         // Ordered cases
-        case look &amp;&amp; rook:<span class="cov6" title="388">
+        case look &amp;&amp; rook:<span class="cov6" title="185">
                 return lo.Order() &gt; ro.Order()</span>
         default:<span class="cov0" title="0">
                 return false</span> //theoretically wouldn't get here
@@ -78066,7 +78066,7 @@ func OrderedLastCompareReverse(left interface{}, right interface{}) bool <span c
 // - Regular object (neither PriorityOrdered nor Ordered) wins Ordered
 // - Ordered at last
 // - Same category will compare its corresponding order value
-func UnorderedMiddleCompare(left interface{}, right interface{}) bool <span class="cov7" title="920">{
+func UnorderedMiddleCompare(left interface{}, right interface{}) bool <span class="cov7" title="1180">{
         // first consider PriorityOrder
         lp, lpok := left.(PriorityOrdered)
         rp, rpok := right.(PriorityOrdered)
@@ -78075,25 +78075,25 @@ func UnorderedMiddleCompare(left interface{}, right interface{}) bool <span clas
 
         switch </span>{
         // PriorityOrdered cases - if at least one of the operand is PriorityOrdered
-        case lpok &amp;&amp; rpok:<span class="cov6" title="189">
+        case lpok &amp;&amp; rpok:<span class="cov5" title="100">
                 return lp.PriorityOrder() &lt; rp.PriorityOrder()</span>
-        case lpok &amp;&amp; !rpok:<span class="cov5" title="140">
+        case lpok &amp;&amp; !rpok:<span class="cov5" title="132">
                 return true</span>
-        case !lpok &amp;&amp; rpok:<span class="cov3" title="11">
+        case !lpok &amp;&amp; rpok:<span class="cov2" title="3">
                 return false</span>
         // Both are unordered - at this point, we know they are not PriorityOrdered, so we just need to check both are also not Ordered
-        case !look &amp;&amp; !rook:<span class="cov5" title="131">
+        case !look &amp;&amp; !rook:<span class="cov6" title="257">
                 return false</span> // return false to indicate left is not less than right, so that the natural order is kept
         // Left operand is not ordered, right operand is ordered
         // return true so that un ordered comes before ordered
-        case !look:<span class="cov5" title="102">
+        case !look:<span class="cov5" title="172">
                 return true</span>
         // Right operand is not ordered, left operand is ordered
         // return false so that un ordered comes before ordered
-        case !rook:<span class="cov4" title="29">
+        case !rook:<span class="cov5" title="74">
                 return false</span>
         // both side are ordered
-        default:<span class="cov6" title="318">
+        default:<span class="cov6" title="442">
                 return lo.Order() &lt; ro.Order()</span>
         }
 }
@@ -78341,7 +78341,7 @@ func NewStringSetFrom(i interface{}) StringSet <span class="cov5" title="462">{
 }
 
 func (s StringSet) Add(values...string) StringSet <span class="cov8" title="9087">{
-        for _, item := range values </span><span class="cov8" title="11147">{
+        for _, item := range values </span><span class="cov8" title="11150">{
                 s[item] = void{}
         }</span>
         <span class="cov8" title="9087">return s</span>
@@ -78354,7 +78354,7 @@ func (s StringSet) Remove(values...string) StringSet <span class="cov2" title="1
         <span class="cov2" title="12">return s</span>
 }
 
-func (s StringSet) Has(value string) bool <span class="cov10" title="92160">{
+func (s StringSet) Has(value string) bool <span class="cov10" title="92099">{
         _, ok := s[value]
         return ok
 }</span>
@@ -78537,11 +78537,11 @@ func NewGenericSet[T comparable](values...T) GenericSet[T] <span class="cov5" ti
         return make(GenericSet[T]).Add(values...)
 }</span>
 
-func (s GenericSet[T]) Add(values...T) GenericSet[T] <span class="cov7" title="4312">{
+func (s GenericSet[T]) Add(values...T) GenericSet[T] <span class="cov7" title="4318">{
         for _, item := range values </span><span class="cov7" title="2296">{
                 s[item] = void{}
         }</span>
-        <span class="cov7" title="4312">return s</span>
+        <span class="cov7" title="4318">return s</span>
 }
 
 func (s GenericSet[T]) Remove(values...T) GenericSet[T] <span class="cov1" title="2">{
@@ -78809,19 +78809,19 @@ func ParseString(s string) interface{} <span class="cov7" title="25797">{
 const dash = rune('-')
 
 // CamelToSnakeCase convert "camelCase" string to "snake-case"
-func CamelToSnakeCase(camelCase string) string <span class="cov8" title="176009">{
+func CamelToSnakeCase(camelCase string) string <span class="cov8" title="176097">{
         var converted []rune
-        for pos, char := range camelCase </span><span class="cov10" title="1129760">{
-                if unicode.IsUpper(char) </span><span class="cov9" title="534752">{
+        for pos, char := range camelCase </span><span class="cov10" title="1129633">{
+                if unicode.IsUpper(char) </span><span class="cov9" title="534001">{
                         if pos&gt;0 &amp;&amp; unicode.IsLower([]rune(camelCase)[pos-1]) </span><span class="cov5" title="1764">{
                                 converted = append(converted, dash)
                         }</span>
-                        <span class="cov9" title="534752">converted = append(converted, unicode.ToLower(char))</span>
-                } else<span class="cov9" title="595008"> {
+                        <span class="cov9" title="534001">converted = append(converted, unicode.ToLower(char))</span>
+                } else<span class="cov9" title="595632"> {
                         converted = append(converted, unicode.ToLower(char))
                 }</span>
         }
-        <span class="cov8" title="176009">return string(converted)</span>
+        <span class="cov8" title="176097">return string(converted)</span>
 }
 </pre>
 		
@@ -79368,7 +79368,7 @@ type Cond struct {
         n unsafe.Pointer
 }
 
-func NewCond(l sync.Locker) *Cond <span class="cov6" title="35">{
+func NewCond(l sync.Locker) *Cond <span class="cov5" title="35">{
         c := &amp;Cond{L: l}
         n := make(chan struct{})
         c.n = unsafe.Pointer(&amp;n)
@@ -79377,27 +79377,27 @@ func NewCond(l sync.Locker) *Cond <span class="cov6" title="35">{
 
 // Wait for Broadcast calls. Similar to regular sync.Cond, this unlocks the underlying
 // locker first, waits on changes and re-locks it before returning.
-func (c *Cond) Wait(ctx context.Context) (err error) <span class="cov7" title="66">{
+func (c *Cond) Wait(ctx context.Context) (err error) <span class="cov5" title="66">{
         n := c.notifyChan()
         c.L.Unlock()
         select </span>{
-        case &lt;-n:<span class="cov7" title="58"></span>
-        case &lt;-ctx.Done():<span class="cov4" title="7">
+        case &lt;-n:<span class="cov5" title="59"></span>
+        case &lt;-ctx.Done():<span class="cov3" title="7">
                 err = ctx.Err()</span>
         }
-        <span class="cov7" title="65">c.L.Lock()
+        <span class="cov5" title="66">c.L.Lock()
         return</span>
 }
 
 // Broadcast call notifies everyone that something has changed.
-func (c *Cond) Broadcast() <span class="cov10" title="244">{
+func (c *Cond) Broadcast() <span class="cov10" title="2766">{
         n := make(chan struct{})
         ptrOld := atomic.SwapPointer(&amp;c.n, unsafe.Pointer(&amp;n))
         close(*(*chan struct{})(ptrOld))
 }</span>
 
 // notifyChan Returns a channel that can be used to wait for next Broadcast() call.
-func (c *Cond) notifyChan() &lt;-chan struct{} <span class="cov7" title="66">{
+func (c *Cond) notifyChan() &lt;-chan struct{} <span class="cov5" title="66">{
         ptr := atomic.LoadPointer(&amp;c.n)
         return *((*chan struct{})(ptr))
 }</span>
@@ -80603,7 +80603,7 @@ func (r *TokenRefresher) isRefreshable() bool <span class="cov1" title="1">{
 // Starts a blocking process to monitor if the token stops being renewed
 // If so, it will refresh the token (if refreshable) and restart renewing process
 func (r *TokenRefresher) monitorRenew(ctx context.Context) <span class="cov7" title="8">{
-        for </span><span class="cov10" title="17">{
+        for </span><span class="cov10" title="18">{
                 if r.renewer == nil </span><span class="cov7" title="9">{
                         // If the token expires or if the lease is revoked
                         // Sleep for some time and see if the token valid now (i.e if the token is recreated by vault)
@@ -80620,8 +80620,8 @@ func (r *TokenRefresher) monitorRenew(ctx context.Context) <span class="cov7" ti
                         // Starts a blocking process to periodically renew the token.
                         <span class="cov7" title="7">go r.renewer.Start()</span>
                 }
-                <span class="cov9" title="15">select </span>{
-                case renewal := &lt;-r.renewer.RenewCh():<span class="cov7" title="8">
+                <span class="cov9" title="16">select </span>{
+                case renewal := &lt;-r.renewer.RenewCh():<span class="cov7" title="9">
                         logger.WithContext(ctx).Debugf("%s successfully renewed at %v", renewerDescription, renewal.RenewedAt)</span>
                 case err := &lt;-r.renewer.DoneCh():<span class="cov1" title="1">
                         r.renewer = nil
@@ -82341,7 +82341,7 @@ func MustHttpRequest(ctx context.Context) *http.Request <span class="cov4" title
 
 // ContextPath returns the "server.context-path" from properties with leading "/".
 // This function returns empty string if context-path is root or not set
-func ContextPath(ctx context.Context) string <span class="cov8" title="338">{
+func ContextPath(ctx context.Context) string <span class="cov8" title="341">{
         ctxPath, _ := ctx.Value(contextPathCtxKey{}).(string)
         return ctxPath
 }</span>
@@ -82473,11 +82473,11 @@ func preProcessGinContext(gc *gin.Context) *gin.Context <span class="cov7" title
  **************************/
 
 func ginContextValuer(gc *gin.Context) func(key interface{}) interface{} <span class="cov8" title="483">{
-        return func(key interface{}) interface{} </span><span class="cov8" title="612">{
+        return func(key interface{}) interface{} </span><span class="cov9" title="1051">{
                 switch strKey, _ := key.(string); strKey </span>{
                 case gin.ContextKey:<span class="cov0" title="0">
                         return gc</span>
-                default:<span class="cov8" title="612">
+                default:<span class="cov9" title="1051">
                         v, _ := gc.Get(strKey)
                         return v</span>
                 }
@@ -82786,7 +82786,7 @@ func (h ginStaticAssetsHandler) PreCompressedGzipAsset() gin.HandlerFunc <span c
 
                 // write specific content-type if extension is recognized.
                 // this is required for some browsers, e.g. Firefox
-                for k, v := range gzipContentTypeMapping </span><span class="cov5" title="3">{
+                for k, v := range gzipContentTypeMapping </span><span class="cov6" title="4">{
                         if strings.HasSuffix(gc.Request.URL.Path, k) </span><span class="cov3" title="2">{
                                 gc.Header("Content-Type", v)
                                 break</span>
@@ -83477,7 +83477,7 @@ func (f logFormatter) intercept(params gin.LogFormatterParams) (empty string) <s
 }
 
 func (f logFormatter) logLevel(r *http.Request) log.LoggingLevel <span class="cov9" title="431">{
-        for k, v := range f.levels </span><span class="cov8" title="203">{
+        for k, v := range f.levels </span><span class="cov8" title="204">{
                 if match, e := k.Matches(r); e == nil &amp;&amp; match </span><span class="cov6" title="31">{
                         return v
                 }</span>
@@ -83530,10 +83530,10 @@ func withLoggingRequestPattern(pattern string, methods...string) *loggingRequest
         }
 }</span>
 
-func (m *loggingRequestMatcher) RequestMatches(_ context.Context, r *http.Request) (bool, error) <span class="cov8" title="203">{
+func (m *loggingRequestMatcher) RequestMatches(_ context.Context, r *http.Request) (bool, error) <span class="cov8" title="204">{
         path := r.URL.Path
         match, e := m.pathMatcher.Matches(path)
-        if e != nil || !match </span><span class="cov7" title="96">{
+        if e != nil || !match </span><span class="cov7" title="97">{
                 return false, e
         }</span>
 
@@ -83549,12 +83549,12 @@ func (m *loggingRequestMatcher) RequestMatches(_ context.Context, r *http.Reques
         <span class="cov7" title="76">return false, nil</span>
 }
 
-func (m *loggingRequestMatcher) Matches(i interface{}) (bool, error) <span class="cov8" title="203">{
+func (m *loggingRequestMatcher) Matches(i interface{}) (bool, error) <span class="cov8" title="204">{
         value, ok := i.(*http.Request)
         if !ok </span><span class="cov0" title="0">{
                 return false, fmt.Errorf("unsupported type %T", i)
         }</span>
-        <span class="cov8" title="203">return m.RequestMatches(context.TODO(), value)</span>
+        <span class="cov8" title="204">return m.RequestMatches(context.TODO(), value)</span>
 }
 
 func (m *loggingRequestMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) <span class="cov0" title="0">{
@@ -83844,15 +83844,15 @@ type requestMatcher struct {
         delegate      matcher.Matcher
 }
 
-func (m *requestMatcher) RequestMatches(c context.Context, r *http.Request) (bool, error) <span class="cov10" title="1667">{
-        if m.matchableFunc == nil </span><span class="cov8" title="575">{
+func (m *requestMatcher) RequestMatches(c context.Context, r *http.Request) (bool, error) <span class="cov10" title="1673">{
+        if m.matchableFunc == nil </span><span class="cov8" title="578">{
                 return m.delegate.MatchesWithContext(c, r)
         }</span>
-        <span class="cov9" title="1092">matchable, err := m.matchableFunc(c, r)
+        <span class="cov9" title="1095">matchable, err := m.matchableFunc(c, r)
         if err != nil </span><span class="cov0" title="0">{
                 return false, err
         }</span>
-        <span class="cov9" title="1092">return m.delegate.MatchesWithContext(c, matchable)</span>
+        <span class="cov9" title="1095">return m.delegate.MatchesWithContext(c, matchable)</span>
 }
 
 func (m *requestMatcher) Matches(i interface{}) (bool, error) <span class="cov4" title="21">{
@@ -83863,12 +83863,12 @@ func (m *requestMatcher) Matches(i interface{}) (bool, error) <span class="cov4"
         <span class="cov4" title="21">return m.RequestMatches(context.TODO(), value)</span>
 }
 
-func (m *requestMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) <span class="cov9" title="1646">{
+func (m *requestMatcher) MatchesWithContext(c context.Context, i interface{}) (bool, error) <span class="cov9" title="1652">{
         value, err := interfaceToRequest(i)
         if err != nil </span><span class="cov0" title="0">{
                 return false, err
         }</span>
-        <span class="cov9" title="1646">return m.RequestMatches(c, value)</span>
+        <span class="cov9" title="1652">return m.RequestMatches(c, value)</span>
 }
 
 func (m *requestMatcher) Or(matchers ...matcher.Matcher) matcher.ChainableMatcher <span class="cov6" title="105">{
@@ -84051,12 +84051,12 @@ func CustomMatcher(description string, matchable matchableFunc, delegate matcher
 /**************************
         helpers
 ***************************/
-func interfaceToRequest(i interface{}) (*http.Request, error) <span class="cov10" title="1667">{
+func interfaceToRequest(i interface{}) (*http.Request, error) <span class="cov10" title="1673">{
         switch i.(type) </span>{
         case http.Request:<span class="cov0" title="0">
                 r := i.(http.Request)
                 return &amp;r, nil</span>
-        case *http.Request:<span class="cov10" title="1667">
+        case *http.Request:<span class="cov10" title="1673">
                 return i.(*http.Request), nil</span>
         default:<span class="cov0" title="0">
                 return nil, fmt.Errorf("web.RequestMatcher doesn't support %T", i)</span>
@@ -84082,7 +84082,7 @@ func method(_ context.Context, r *http.Request) (interface{}, error) <span class
         return r.Method, nil
 }</span>
 
-func path(c context.Context, r *http.Request) (interface{}, error) <span class="cov7" title="278">{
+func path(c context.Context, r *http.Request) (interface{}, error) <span class="cov7" title="281">{
         path := r.URL.Path
         ctxPath := web.ContextPath(c)
         return strings.TrimPrefix(path, ctxPath), nil
@@ -88115,7 +88115,7 @@ type mergedContext struct {
 }
 
 func (mc mergedContext) Deadline() (earliest time.Time, ok bool) <span class="cov7" title="681">{
-        for _, ctx := range mc.sources </span><span class="cov8" title="1362">{
+        for _, ctx := range mc.sources </span><span class="cov7" title="1362">{
                 if deadline, subOk := ctx.Deadline(); subOk &amp;&amp; (earliest.IsZero() || deadline.Before(earliest)) </span><span class="cov0" title="0">{
                         earliest = deadline
                         ok = true
@@ -88124,7 +88124,7 @@ func (mc mergedContext) Deadline() (earliest time.Time, ok bool) <span class="co
         <span class="cov7" title="681">return</span>
 }
 
-func (mc mergedContext) Done() &lt;-chan struct{} <span class="cov8" title="1894">{
+func (mc mergedContext) Done() &lt;-chan struct{} <span class="cov8" title="1900">{
         return mc.done
 }</span>
 
@@ -88137,13 +88137,13 @@ func (mc mergedContext) Err() error <span class="cov2" title="6">{
         <span class="cov2" title="6">return nil</span>
 }
 
-func (mc mergedContext) Value(key any) any <span class="cov9" title="5597">{
-        for _, ctx := range mc.sources </span><span class="cov10" title="10452">{
+func (mc mergedContext) Value(key any) any <span class="cov9" title="5984">{
+        for _, ctx := range mc.sources </span><span class="cov10" title="11226">{
                 if v := ctx.Value(key); v != nil </span><span class="cov7" title="872">{
                         return v
                 }</span>
         }
-        <span class="cov9" title="4725">return nil</span>
+        <span class="cov9" title="5112">return nil</span>
 }
 </pre>
 		
@@ -88244,12 +88244,12 @@ type testFxContext struct {
         tb *testBootstrapper
 }
 
-func (c *testFxContext) Value(key interface{}) interface{} <span class="cov10" title="6113">{
+func (c *testFxContext) Value(key interface{}) interface{} <span class="cov10" title="6500">{
         switch </span>{
         case key == ctxKeyTestBootstrapper:<span class="cov8" title="1256">
                 return c.tb</span>
         }
-        <span class="cov9" title="4857">return c.Context.Value(key)</span>
+        <span class="cov9" title="5244">return c.Context.Value(key)</span>
 }
 
 // TestBootstrapper returns current *bootstrap.Bootstrapper of the test context
@@ -89584,12 +89584,12 @@ func AdditionalMatcherOptions(ctx context.Context, opts ...RecordMatcherOptions)
 
 // ResetRecorder revert the change made by AdditionalMatcherOptions.
 // Note: If tests configured via WithHttpPlayback, this method is automatically invoked at sub-test teardown.
-func ResetRecorder(ctx context.Context) <span class="cov7" title="96">{
+func ResetRecorder(ctx context.Context) <span class="cov6" title="96">{
         rec, ok := ctx.Value(ckRecorder).(*HttpRecorder)
         if !ok || rec.Recorder == nil </span><span class="cov0" title="0">{
                 return
         }</span>
-        <span class="cov7" title="96">rec.SetMatcher(rec.InitMatcher)</span>
+        <span class="cov6" title="96">rec.SetMatcher(rec.InitMatcher)</span>
 }
 
 // StopRecorder stops the recorder extracted from the given context.
@@ -89645,8 +89645,8 @@ func DisableHttpRecordingMode() HTTPVCROptions <span class="cov3" title="6">{
 }
 
 // HttpRecordName returns a HTTPVCROptions that set HTTP record's name
-func HttpRecordName(name string) HTTPVCROptions <span class="cov6" title="46">{
-        return func(opt *HTTPVCROption) </span><span class="cov6" title="46">{
+func HttpRecordName(name string) HTTPVCROptions <span class="cov5" title="46">{
+        return func(opt *HTTPVCROption) </span><span class="cov5" title="46">{
                 opt.Name = name
         }</span>
 }
@@ -89764,34 +89764,34 @@ type recorderAwareContext struct {
         recorder *HttpRecorder
 }
 
-func contextWithRecorder(parent context.Context, rec *HttpRecorder) context.Context <span class="cov7" title="98">{
+func contextWithRecorder(parent context.Context, rec *HttpRecorder) context.Context <span class="cov6" title="98">{
         if rec == nil </span><span class="cov0" title="0">{
                 return parent
         }</span>
-        <span class="cov7" title="98">return &amp;recorderAwareContext{
+        <span class="cov6" title="98">return &amp;recorderAwareContext{
                 Context:  parent,
                 recorder: rec,
         }</span>
 }
 
-func (c *recorderAwareContext) Value(k interface{}) interface{} <span class="cov10" title="938">{
+func (c *recorderAwareContext) Value(k interface{}) interface{} <span class="cov10" title="998">{
         switch k </span>{
         case ckRecorder:<span class="cov7" title="170">
                 return c.recorder</span>
-        default:<span class="cov9" title="768">
+        default:<span class="cov9" title="828">
                 return c.Context.Value(k)</span>
         }
 }
 
 func recorderDISetup(di *recorderDI) test.SetupFunc <span class="cov5" title="34">{
-        return func(ctx context.Context, t *testing.T) (context.Context, error) </span><span class="cov7" title="96">{
+        return func(ctx context.Context, t *testing.T) (context.Context, error) </span><span class="cov6" title="96">{
                 return contextWithRecorder(ctx, di.HTTPRecorder), nil
         }</span>
 }
 
 // recorderReset automatically reset recorder to original state in case it changed
 func recorderReset() test.TeardownFunc <span class="cov5" title="34">{
-        return func(ctx context.Context, t *testing.T) error </span><span class="cov7" title="96">{
+        return func(ctx context.Context, t *testing.T) error </span><span class="cov6" title="96">{
                 ResetRecorder(ctx)
                 return nil
         }</span>
@@ -89957,17 +89957,17 @@ func httpRecorderCleanup(lc fx.Lifecycle, rec *recorder.Recorder) <span class="c
 }
 
 func wrapRecordRequestMatcher(fn GenericMatcherFunc[*http.Request, cassette.Request]) cassette.MatcherFunc <span class="cov5" title="41">{
-        return func(out *http.Request, record cassette.Request) bool </span><span class="cov9" title="843">{
-                if e := fn(out, record); e != nil </span><span class="cov9" title="443">{
-                        if !errors.Is(e, errInteractionIDMismatch) </span><span class="cov8" title="219">{
+        return func(out *http.Request, record cassette.Request) bool </span><span class="cov9" title="813">{
+                if e := fn(out, record); e != nil </span><span class="cov8" title="412">{
+                        if !errors.Is(e, errInteractionIDMismatch) </span><span class="cov7" title="188">{
                                 logger.Debugf("HTTP interaction missing: %s - %v: expect %s, but got %s",
                                         record.Headers.Get(xInteractionIndexHeader), e,
                                         fmt.Sprintf(`%s "%s"`, record.Method, record.URL),
                                         fmt.Sprintf(`%s "%s"`, out.Method, out.URL.String()))
                         }</span>
-                        <span class="cov9" title="443">return false</span>
+                        <span class="cov8" title="412">return false</span>
                 }
-                <span class="cov8" title="400">return true</span>
+                <span class="cov8" title="401">return true</span>
         }
 }
 </pre>
@@ -90434,42 +90434,42 @@ type RecordMatcherOption struct {
 // Note: In case the request contains random/temporal data in queries/headers/form/JSON, use Fuzzy* options
 func NewRecordMatcher(opts ...RecordMatcherOptions) GenericMatcherFunc[*http.Request, cassette.Request] <span class="cov6" title="41">{
         opt := resolveMatcherOption(opts)
-        return func(out *http.Request, record cassette.Request) error </span><span class="cov9" title="619">{
+        return func(out *http.Request, record cassette.Request) error </span><span class="cov9" title="589">{
                 recordUrl, e := url.Parse(record.URL)
                 if e != nil </span><span class="cov0" title="0">{
                         return fmt.Errorf("invalid recorded URL")
                 }</span>
 
-                <span class="cov9" title="619">if out.Method != record.Method </span><span class="cov7" title="161">{
+                <span class="cov9" title="589">if out.Method != record.Method </span><span class="cov7" title="131">{
                         return fmt.Errorf("http method mismatch")
                 }</span>
-                <span class="cov9" title="458">if e := opt.URLMatcher(out.URL, recordUrl); e != nil </span><span class="cov6" title="49">{
+                <span class="cov9" title="458">if e := opt.URLMatcher(out.URL, recordUrl); e != nil </span><span class="cov6" title="48">{
                         return e
                 }</span>
-                <span class="cov9" title="409">if e := opt.QueryMatcher(out.URL.Query(), recordUrl.Query()); e != nil </span><span class="cov3" title="8">{
+                <span class="cov9" title="410">if e := opt.QueryMatcher(out.URL.Query(), recordUrl.Query()); e != nil </span><span class="cov3" title="8">{
                         return e
                 }</span>
-                <span class="cov9" title="401">if e := opt.HeaderMatcher(out.Header, record.Headers); e != nil </span><span class="cov1" title="1">{
+                <span class="cov9" title="402">if e := opt.HeaderMatcher(out.Header, record.Headers); e != nil </span><span class="cov1" title="1">{
                         return e
                 }</span>
 
-                <span class="cov9" title="400">var reqBody []byte
-                if out.Body != nil &amp;&amp; out.Body != http.NoBody </span><span class="cov8" title="204">{
+                <span class="cov9" title="401">var reqBody []byte
+                if out.Body != nil &amp;&amp; out.Body != http.NoBody </span><span class="cov8" title="205">{
                         data, e := io.ReadAll(out.Body)
                         if e != nil </span><span class="cov0" title="0">{
                                 return fmt.Errorf("unable to read request's body")
                         }</span>
-                        <span class="cov8" title="204">reqBody = data
+                        <span class="cov8" title="205">reqBody = data
                         out.Body.Close()
                         out.Body = io.NopCloser(bytes.NewBuffer(data))</span>
                 }
                 // find first supported body matcher and use it
-                <span class="cov9" title="400">contentType := record.Headers.Get("Content-Type")
-                for _, matcher := range opt.BodyMatchers </span><span class="cov10" title="764">{
-                        if !matcher.Support(contentType) </span><span class="cov8" title="364">{
+                <span class="cov9" title="401">contentType := record.Headers.Get("Content-Type")
+                for _, matcher := range opt.BodyMatchers </span><span class="cov10" title="719">{
+                        if !matcher.Support(contentType) </span><span class="cov8" title="318">{
                                 continue</span>
                         }
-                        <span class="cov9" title="400">return matcher.Matches(reqBody, []byte(record.Body))</span>
+                        <span class="cov9" title="401">return matcher.Matches(reqBody, []byte(record.Body))</span>
                 }
                 <span class="cov0" title="0">return nil</span>
         }
@@ -90616,20 +90616,21 @@ package ittest
 
 import (
         "fmt"
-        "github.com/spyzhov/ajson"
         "mime"
         "net/url"
         "reflect"
         "strings"
+
+        "github.com/spyzhov/ajson"
 )
 
 type RecordLiteralBodyMatcher GenericMatcherFunc[[]byte, []byte]
 
-func (m RecordLiteralBodyMatcher) Support(_ string) bool <span class="cov8" title="322">{
+func (m RecordLiteralBodyMatcher) Support(_ string) bool <span class="cov8" title="276">{
         return true
 }</span>
 
-func (m RecordLiteralBodyMatcher) Matches(out []byte, record []byte) error <span class="cov8" title="322">{
+func (m RecordLiteralBodyMatcher) Matches(out []byte, record []byte) error <span class="cov8" title="276">{
         return m(out, record)
 }</span>
 
@@ -90661,9 +90662,9 @@ func (m RecordFormBodyMatcher) Matches(out []byte, record []byte) error <span cl
 
 // NewRecordFormBodyMatcher returns RecordBodyMatcher that matches request bodies as application/x-www-form-urlencoded.
 // any value in the fuzzyKeys is not compared. But outgoing body need to have all keys contained in the record body
-func NewRecordFormBodyMatcher(fuzzyKeys...string) RecordBodyMatcher <span class="cov5" title="41">{
+func NewRecordFormBodyMatcher(fuzzyKeys ...string) RecordBodyMatcher <span class="cov5" title="41">{
         valuesMatcher := newValuesMatcher("form body", nil, fuzzyKeys...)
-        return RecordLiteralBodyMatcher(func(out []byte, record []byte) error </span><span class="cov8" title="322">{
+        return RecordLiteralBodyMatcher(func(out []byte, record []byte) error </span><span class="cov8" title="276">{
                 outForm := parseFormBody(out)
                 rForm := parseFormBody(record)
                 return valuesMatcher(outForm, rForm)
@@ -90672,12 +90673,12 @@ func NewRecordFormBodyMatcher(fuzzyKeys...string) RecordBodyMatcher <span class=
 
 type RecordJsonBodyMatcher GenericMatcherFunc[[]byte, []byte]
 
-func (m RecordJsonBodyMatcher) Support(contentType string) bool <span class="cov9" title="442">{
+func (m RecordJsonBodyMatcher) Support(contentType string) bool <span class="cov9" title="443">{
         media, _, e := mime.ParseMediaType(contentType)
         return e == nil &amp;&amp; media == "application/json"
 }</span>
 
-func (m RecordJsonBodyMatcher) Matches(out []byte, record []byte) error <span class="cov9" title="439">{
+func (m RecordJsonBodyMatcher) Matches(out []byte, record []byte) error <span class="cov9" title="486">{
         return m(out, record)
 }</span>
 
@@ -90686,8 +90687,11 @@ func (m RecordJsonBodyMatcher) Matches(out []byte, record []byte) error <span cl
 // all fields that the record contains
 func NewRecordJsonBodyMatcher(fuzzyJsonPaths ...string) RecordBodyMatcher <span class="cov5" title="43">{
         parsedPaths := parseJsonPaths(fuzzyJsonPaths)
-        return RecordJsonBodyMatcher(func(out []byte, record []byte) error </span><span class="cov9" title="439">{
-                rRoot, rMatched, e := parseJsonWithFilter(record, parsedPaths)
+        return RecordJsonBodyMatcher(func(out []byte, record []byte) error </span><span class="cov9" title="486">{
+                if len(out) == 0 &amp;&amp; len(record) == 0 </span><span class="cov6" title="47">{
+                        return nil
+                }</span>
+                <span class="cov9" title="439">rRoot, rMatched, e := parseJsonWithFilter(record, parsedPaths)
                 if e != nil </span><span class="cov0" title="0">{
                         return e
                 }</span>
@@ -90756,21 +90760,20 @@ func parseJsonWithFilter(data []byte, jsonPaths []parsedJsonPath) (filtered inte
         return</span>
 }
 
-func parseFormBody(data []byte) url.Values <span class="cov9" title="644">{
+func parseFormBody(data []byte) url.Values <span class="cov9" title="552">{
         parsed := url.Values{}
         vals := strings.Split(string(data), "&amp;")
-        for _, pair := range vals </span><span class="cov9" title="732">{
+        for _, pair := range vals </span><span class="cov9" title="640">{
                 kv := strings.SplitN(pair, "=", 2)
-                if len(kv) &lt; 2 </span><span class="cov9" title="554">{
+                if len(kv) &lt; 2 </span><span class="cov9" title="462">{
                         continue</span>
                 }
-                <span class="cov7" title="178">if v , e := url.QueryUnescape(kv[1]); e == nil </span><span class="cov7" title="178">{
+                <span class="cov7" title="178">if v, e := url.QueryUnescape(kv[1]); e == nil </span><span class="cov7" title="178">{
                         parsed.Add(kv[0], v)
                 }</span>
         }
-        <span class="cov9" title="644">return parsed</span>
+        <span class="cov9" title="552">return parsed</span>
 }
-
 </pre>
 		
 		<pre class="file" id="file676" style="display: none">// Copyright 2023 Cisco Systems, Inc. and its affiliates
@@ -90801,13 +90804,13 @@ import (
 // NewRecordURLMatcher returns RecordURLMatcherFunc that compares Method, Path, Host and Port
 func NewRecordURLMatcher(ignoreHost bool) GenericMatcherFunc[*url.URL, *url.URL] <span class="cov5" title="41">{
         return func(out *url.URL, record *url.URL) error </span><span class="cov8" title="458">{
-                if out.Path != record.Path </span><span class="cov5" title="49">{
+                if out.Path != record.Path </span><span class="cov5" title="48">{
                         return fmt.Errorf("http path mismatch")
                 }</span>
-                <span class="cov8" title="409">if !ignoreHost &amp;&amp; out.Host != record.Host </span><span class="cov0" title="0">{
+                <span class="cov8" title="410">if !ignoreHost &amp;&amp; out.Host != record.Host </span><span class="cov0" title="0">{
                         return fmt.Errorf("http host mismatch")
                 }</span>
-                <span class="cov8" title="409">return nil</span>
+                <span class="cov8" title="410">return nil</span>
         }
 }
 
@@ -90821,7 +90824,7 @@ func NewRecordQueryMatcher(fuzzyKeys ...string) GenericMatcherFunc[url.Values, u
 // Any header value is ignored if its key is in the optional fuzzyKeys
 func NewRecordHeaderMatcher(fuzzyKeys ...string) GenericMatcherFunc[http.Header, http.Header] <span class="cov5" title="41">{
         delegate := newValuesMatcher("header", IgnoredRequestHeaders, fuzzyKeys...)
-        return func(out http.Header, record http.Header) error </span><span class="cov8" title="401">{
+        return func(out http.Header, record http.Header) error </span><span class="cov8" title="402">{
                 return delegate(url.Values(out), url.Values(record))
         }</span>
 }
@@ -90834,28 +90837,28 @@ func NewRecordHeaderMatcher(fuzzyKeys ...string) GenericMatcherFunc[http.Header,
 // Any value is ignored if its key is in the optional fuzzyKeys
 func newValuesMatcher(name string, ignoredKeys utils.StringSet, fuzzyKeys ...string) GenericMatcherFunc[url.Values, url.Values] <span class="cov7" title="123">{
         fuzzyK := utils.NewStringSet(fuzzyKeys...)
-        return func(out url.Values, record url.Values) error </span><span class="cov9" title="1132">{
-                for k, rv := range record </span><span class="cov10" title="1303">{
-                        if ignoredKeys != nil &amp;&amp; ignoredKeys.Has(k) </span><span class="cov8" title="400">{
+        return func(out url.Values, record url.Values) error </span><span class="cov9" title="1088">{
+                for k, rv := range record </span><span class="cov10" title="1353">{
+                        if ignoredKeys != nil &amp;&amp; ignoredKeys.Has(k) </span><span class="cov8" title="401">{
                                 continue</span>
                         }
 
-                        <span class="cov9" title="903">exactV := !fuzzyK.Has(k)
+                        <span class="cov9" title="952">exactV := !fuzzyK.Has(k)
                         ov, ok := out[k]
                         if !ok || exactV &amp;&amp; len(ov) != len(rv) </span><span class="cov3" title="8">{
                                 return fmt.Errorf("http %s [%s] missing", name, k)
                         }</span>
-                        <span class="cov9" title="895">if !exactV </span><span class="cov8" title="358">{
+                        <span class="cov9" title="944">if !exactV </span><span class="cov8" title="358">{
                                 continue</span>
                         }
                         // values
-                        <span class="cov8" title="537">for i, v := range ov </span><span class="cov8" title="537">{
+                        <span class="cov8" title="586">for i, v := range ov </span><span class="cov8" title="586">{
                                 if rv[i] != v </span><span class="cov1" title="1">{
                                         return fmt.Errorf("http %s [%s] mismatch", name, k)
                                 }</span>
                         }
                 }
-                <span class="cov9" title="1123">return nil</span>
+                <span class="cov9" title="1079">return nil</span>
         }
 }
 
@@ -99898,11 +99901,11 @@ func NewMockedFederatedAccountStore(props ...*MockedFederatedUserProperties) Moc
 // LoadAccountByExternalId The externalIdName and value matches the test assertion
 // The externalIdp matches that from the MockedIdpName
 func (s MockedFederatedAccountStore) LoadAccountByExternalId(_ context.Context, extIdName string, extIdValue string, extIdpName string, _ security.AutoCreateUserDetails, _ interface{}) (security.Account, error) <span class="cov5" title="8">{
-        for i := range s.mocks </span><span class="cov6" title="15">{
+        for i := range s.mocks </span><span class="cov6" title="16">{
                 p := s.mocks[i]
                 if extIdName != p.ExtIdName &amp;&amp; p.ExtIdName != "*" ||
                         extIdValue != p.ExtIdValue &amp;&amp; p.ExtIdValue != "*" ||
-                        extIdpName != p.ExtIdpName &amp;&amp; p.ExtIdpName != "*" </span><span class="cov4" title="7">{
+                        extIdpName != p.ExtIdpName &amp;&amp; p.ExtIdpName != "*" </span><span class="cov5" title="8">{
                         continue</span>
                 }
                 <span class="cov5" title="8">p.UserId = s.withDefault(p.UserId, fmt.Sprintf("ext-%s-%s", extIdName, extIdValue))
@@ -103175,7 +103178,7 @@ import (
 
 // CurrentPort utility func that extract current server port from testing context
 // Return -1 if not found
-func CurrentPort(ctx context.Context) int <span class="cov5" title="50">{
+func CurrentPort(ctx context.Context) int <span class="cov4" title="50">{
         if v, ok := ctx.Value(ctxKeyInfo).(*serverInfo); ok </span><span class="cov4" title="34">{
                 return v.port
         }</span>
@@ -103217,7 +103220,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
         }
 
         <span class="cov7" title="369">originalPath := tUrl.Path
-        if !tUrl.IsAbs() </span><span class="cov7" title="332">{
+        if !tUrl.IsAbs() </span><span class="cov6" title="332">{
                 tUrl.Scheme = "http"
                 tUrl.Path = path.Clean(path.Join(info.contextPath, tUrl.Path))
                 // path.Clean removes trailing slash except for root;
@@ -103228,7 +103231,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
                 }</span>
         }
 
-        <span class="cov7" title="369">if ctx.Value(ctxKeyHttpHandler) != nil </span><span class="cov7" title="353">{
+        <span class="cov7" title="369">if ctx.Value(ctxKeyHttpHandler) != nil </span><span class="cov6" title="353">{
                 // WithMockedServer is enabled, we use httptest
                 req = httptest.NewRequest(method, tUrl.String(), body).WithContext(ctx)
         }</span> else<span class="cov3" title="16"> {
@@ -103250,7 +103253,7 @@ func NewRequest(ctx context.Context, method, target string, body io.Reader, opts
 //nolint:bodyclose // we don't close body here, whoever using this function should close it when done
 func Exec(ctx context.Context, req *http.Request, opts ...RequestOptions) (ExecResult, error) <span class="cov7" title="369">{
         applyRequestOptions(ctx, req, false, opts)
-        if handler, ok := ctx.Value(ctxKeyHttpHandler).(http.Handler); ok </span><span class="cov7" title="353">{
+        if handler, ok := ctx.Value(ctxKeyHttpHandler).(http.Handler); ok </span><span class="cov6" title="353">{
                 // mocked mode
                 rw := httptest.NewRecorder()
                 handler.ServeHTTP(rw, req)
@@ -103378,7 +103381,7 @@ func newWebTestContext(parent context.Context, config *TestServerConfig, info *s
         }
 }</span>
 
-func (c *webTestContext) Value(key interface{}) interface{} <span class="cov10" title="5654">{
+func (c *webTestContext) Value(key interface{}) interface{} <span class="cov10" title="6894">{
         switch </span>{
         case key == ctxKeyInfo &amp;&amp; c.info != nil:<span class="cov7" title="442">
                 return c.info</span>
@@ -103389,7 +103392,7 @@ func (c *webTestContext) Value(key interface{}) interface{} <span class="cov10" 
         case key == ctxKeyHttpHandler &amp;&amp; c.handler != nil:<span class="cov7" title="706">
                 return c.handler</span>
         }
-        <span class="cov9" title="4137">return c.Context.Value(key)</span>
+        <span class="cov9" title="5377">return c.Context.Value(key)</span>
 }
 </pre>
 		
