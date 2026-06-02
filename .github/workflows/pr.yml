@@ -77,9 +77,9 @@ jobs:
         id: process_pr_coverage
         shell: bash
         env:
-          PR_STATEMENTS: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_num_stmt }}
-          PR_COVER_COUNT: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_cover_count }}
-          PR_COVERAGE: ${{ fromJSON(steps.pr_coverage.outputs.summary).patch_coverage }}
+          PR_STATEMENTS: ${{ fromJSON(steps.pr_coverage.outputs.summary || '{}').patch_num_stmt }}
+          PR_COVER_COUNT: ${{ fromJSON(steps.pr_coverage.outputs.summary || '{}').patch_cover_count }}
+          PR_COVERAGE: ${{ fromJSON(steps.pr_coverage.outputs.summary || '{}').patch_coverage }}
         run: |
           FORMATTED_COV=$(printf "%.1f" $PR_COVERAGE)
           echo "pr_statements=$PR_STATEMENTS" >> $GITHUB_OUTPUT

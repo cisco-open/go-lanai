@@ -109,7 +109,7 @@ func (t PostgresErrorTranslator) translateDuplicateKeyErrorMessage(e data.DataEr
 	if valMsg != "" {
 		msg = fmt.Sprintf("%s; %s", msg, valMsg)
 	}
-	return e.WithCause(e.Cause(), msg)
+	return e.WithCause(e.Cause(), "%s", msg)
 }
 
 // translateErrorCode translate postgres error code to data.DataError code

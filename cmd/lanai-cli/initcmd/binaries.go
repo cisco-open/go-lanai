@@ -19,18 +19,19 @@ package initcmd
 import (
 	"context"
 	"fmt"
-	"github.com/bmatcuk/doublestar/v4"
-	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
 	"os"
 	"strings"
+
+	"github.com/bmatcuk/doublestar/v4"
+	"github.com/cisco-open/go-lanai/cmd/lanai-cli/cmdutils"
 )
 
 var defaultBinaries = map[string]string{
 	"github.com/axw/gocov/gocov":  "v1.1.0",
 	"github.com/AlekSi/gocov-xml": "v1.1.0",
-	"gotest.tools/gotestsum":      "v1.12.0",
+	"gotest.tools/gotestsum":      "v1.13.0",
 	//"github.com/golangci/golangci-lint/cmd/golangci-lint": "v1.64.8",
-	"github.com/golangci/golangci-lint/v2/cmd/golangci-lint": "v2.2.2",
+	"github.com/golangci/golangci-lint/v2/cmd/golangci-lint": "v2.12.2",
 }
 
 var exclusiveBinaries = [][]string{

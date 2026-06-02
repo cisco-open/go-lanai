@@ -17,7 +17,7 @@ interactions:
         form: {}
         headers:
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             X-Http-Record-Index:
                 - "0"
         url: http://localhost:8500/v1/session/create
@@ -28,20 +28,23 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 45
+        content_length: 53
         uncompressed: false
-        body: '{"ID":"f5981ae5-181d-9306-3e46-c1fc313cf4ab"}'
+        body: |-
+            {
+                "ID": "cdd5f663-d935-2f68-fdfa-209e4b16b02b"
+            }
         headers:
             Content-Length:
-                - "45"
+                - "53"
             Content-Type:
-                - application/json
+                - application/json; charset=utf-8
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -50,20 +53,20 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 235
+        content_length: 232
         transfer_encoding: []
         trailer: {}
         host: localhost:8500
         remote_addr: ""
         request_uri: ""
-        body: '{"build":{"build-time":"2024-02-25T15:05:11-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"github.com/cisco-open/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
+        body: '{"build":{"build-time":"2026-05-28T15:10:13-06:00","hash":"Unknown","modules":{"go-lanai":{"path":"github.com/cisco-open/go-lanai","version":"main"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
         form: {}
         headers:
             Content-Type:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "1"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=f5981ae5-181d-9306-3e46-c1fc313cf4ab&flags=2837033986114203673
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=cdd5f663-d935-2f68-fdfa-209e4b16b02b&flags=2837033986114203673
         method: PUT
       response:
         proto: HTTP/1.1
@@ -71,20 +74,21 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 4
+        content_length: 5
         uncompressed: false
-        body: "true"
+        body: |
+            true
         headers:
             Content-Length:
-                - "4"
+                - "5"
             Content-Type:
-                - application/json
+                - application/octet-stream
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -106,7 +110,7 @@ interactions:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "2"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=f5981ae5-181d-9306-3e46-c1fc313cf4ab
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=cdd5f663-d935-2f68-fdfa-209e4b16b02b
         method: PUT
       response:
         proto: HTTP/1.1
@@ -114,20 +118,21 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 4
+        content_length: 5
         uncompressed: false
-        body: "true"
+        body: |
+            true
         headers:
             Content-Length:
-                - "4"
+                - "5"
             Content-Type:
-                - application/json
+                - application/octet-stream
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -136,20 +141,20 @@ interactions:
         proto: HTTP/1.1
         proto_major: 1
         proto_minor: 1
-        content_length: 235
+        content_length: 232
         transfer_encoding: []
         trailer: {}
         host: localhost:8500
         remote_addr: ""
         request_uri: ""
-        body: '{"build":{"build-time":"2024-02-25T15:05:11-05:00","hash":"Unknown","modules":{"go-lanai":{"path":"github.com/cisco-open/go-lanai","version":"develop"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
+        body: '{"build":{"build-time":"2026-05-28T15:10:13-06:00","hash":"Unknown","modules":{"go-lanai":{"path":"github.com/cisco-open/go-lanai","version":"main"}},"version":"Unknown"},"service":{"context-path":"/test","name":"testapp","port":0}}'
         form: {}
         headers:
             Content-Type:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "3"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=f5981ae5-181d-9306-3e46-c1fc313cf4ab&flags=2837033986114203673
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?acquire=cdd5f663-d935-2f68-fdfa-209e4b16b02b&flags=2837033986114203673
         method: PUT
       response:
         proto: HTTP/1.1
@@ -157,20 +162,21 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 4
+        content_length: 5
         uncompressed: false
-        body: "true"
+        body: |
+            true
         headers:
             Content-Length:
-                - "4"
+                - "5"
             Content-Type:
-                - application/json
+                - application/octet-stream
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs
@@ -192,7 +198,7 @@ interactions:
                 - application/octet-stream
             X-Http-Record-Index:
                 - "4"
-        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=f5981ae5-181d-9306-3e46-c1fc313cf4ab
+        url: http://localhost:8500/v1/kv/service/testapp/leadership?flags=2837033986114203673&release=cdd5f663-d935-2f68-fdfa-209e4b16b02b
         method: PUT
       response:
         proto: HTTP/1.1
@@ -200,20 +206,21 @@ interactions:
         proto_minor: 1
         transfer_encoding: []
         trailer: {}
-        content_length: 4
+        content_length: 5
         uncompressed: false
-        body: "true"
+        body: |
+            true
         headers:
             Content-Length:
-                - "4"
+                - "5"
             Content-Type:
-                - application/json
+                - application/octet-stream
             Date:
                 - Fri, 19 Aug 2022 8:51:32 GMT
             Vary:
                 - Accept-Encoding
             X-Consul-Default-Acl-Policy:
-                - deny
+                - allow
         status: 200 OK
         code: 200
         duration: 200µs

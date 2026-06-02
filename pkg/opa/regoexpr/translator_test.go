@@ -19,10 +19,11 @@ package regoexpr
 import (
 	"context"
 	"fmt"
-	"github.com/onsi/gomega"
-	"github.com/open-policy-agent/opa/ast"
 	"sort"
 	"strings"
+
+	"github.com/onsi/gomega"
+	"github.com/open-policy-agent/opa/ast"
 )
 
 /****************************
@@ -95,6 +96,11 @@ func (e *TestCompositeExpr) Compare(expr TestExpression) int {
 		}
 		if ret := strings.Compare(e.Op, v.Op); ret != 0 {
 			return ret
+		}
+		for i := range e.Exprs {
+			if ret := e.Exprs[i].Compare(v.Exprs[i]); ret != 0 {
+				return ret
+			}
 		}
 		return 0
 	default:
@@ -189,4 +195,3 @@ func (t TestQueryTranslator) negate(expr *TestExpr) TestExpression {
 	}
 	return &newExpr
 }
-

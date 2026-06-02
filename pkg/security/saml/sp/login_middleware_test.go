@@ -17,21 +17,22 @@
 package sp
 
 import (
-    "context"
-    "errors"
-    "github.com/cisco-open/go-lanai/pkg/security"
-    lanaisaml "github.com/cisco-open/go-lanai/pkg/security/saml"
-    "github.com/cisco-open/go-lanai/pkg/security/saml/sp/testdata"
-    "github.com/cisco-open/go-lanai/pkg/web"
-    "github.com/cisco-open/go-lanai/test/samltest"
-    "github.com/cisco-open/go-lanai/test/sectest"
-    "github.com/crewjam/saml"
-    "github.com/gin-gonic/gin"
-    "github.com/onsi/gomega"
-    "net/http"
-    "net/http/httptest"
-    "strings"
-    "testing"
+	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/cisco-open/go-lanai/pkg/security"
+	lanaisaml "github.com/cisco-open/go-lanai/pkg/security/saml"
+	"github.com/cisco-open/go-lanai/pkg/security/saml/sp/testdata"
+	"github.com/cisco-open/go-lanai/pkg/web"
+	"github.com/cisco-open/go-lanai/test/samltest"
+	"github.com/cisco-open/go-lanai/test/sectest"
+	"github.com/crewjam/saml"
+	"github.com/gin-gonic/gin"
+	"github.com/onsi/gomega"
 )
 
 func TestAcsEndpoint(t *testing.T) {
@@ -40,7 +41,7 @@ func TestAcsEndpoint(t *testing.T) {
 
 func TestSamlEntryPoint(t *testing.T) {
 	tests := []struct {
-		name string
+		name           string
 		samlProperties lanaisaml.SamlProperties
 	}{
 		{
@@ -52,16 +53,16 @@ func TestSamlEntryPoint(t *testing.T) {
 		{
 			name: "NameID Format set to unspecified.",
 			samlProperties: lanaisaml.SamlProperties{
-			KeyFile:         "testdata/saml_test.key",
-			CertificateFile: "testdata/saml_test.cert",
-			NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"},
+				KeyFile:         "testdata/saml_test.key",
+				CertificateFile: "testdata/saml_test.cert",
+				NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"},
 		},
 		{
 			name: "NameID Format set to emailAddress.",
 			samlProperties: lanaisaml.SamlProperties{
-			KeyFile:         "testdata/saml_test.key",
-			CertificateFile: "testdata/saml_test.cert",
-			NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"},
+				KeyFile:         "testdata/saml_test.key",
+				CertificateFile: "testdata/saml_test.cert",
+				NameIDFormat:    "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"},
 		},
 	}
 
@@ -96,7 +97,6 @@ func TestSamlEntryPoint(t *testing.T) {
 }
 
 type TestWebSecurity struct {
-
 }
 
 func (t TestWebSecurity) Context() context.Context {
@@ -149,7 +149,7 @@ func mockGinContext() *gin.Context {
 		Request:  req,
 		Writer:   nil,
 		Params:   gin.Params{},
-		Keys:     map[string]interface{}{},
+		Keys:     map[any]any{},
 		Errors:   nil,
 		Accepted: []string{},
 	}
