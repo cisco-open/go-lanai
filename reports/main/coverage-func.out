@@ -1153,7 +1153,7 @@ github.com/cisco-open/go-lanai/pkg/kafka/properties.go:144:					BindKafkaPropert
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:32:					topicExists					83.3%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:54:					provisionTopic					100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:67:					tryCreateTopic					66.7%
-github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				41.2%
+github.com/cisco-open/go-lanai/pkg/kafka/provisioner.go:86:					tryProvisionPartitions				58.8%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:43:					newSaramaSubscriber				100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:55:					Topic						100.0%
 github.com/cisco-open/go-lanai/pkg/kafka/subscriber.go:59:					Partitions					100.0%
