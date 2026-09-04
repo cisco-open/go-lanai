@@ -800,12 +800,12 @@ github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:169:					updateState				
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:193:					startLoop					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:199:					stopLoop					100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:206:					refresh						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:218:					lockLoop					96.6%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:218:					lockLoop					93.1%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:277:					acquireLock					71.4%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:343:					handleAcquisitionFailure			78.9%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:390:					monitorLock					82.4%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:431:					delay						100.0%
-github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:440:					release						91.7%
+github.com/cisco-open/go-lanai/pkg/dsync/consul/lock.go:440:					release						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:56:					NewConsulLockManager				100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:76:					Start						100.0%
 github.com/cisco-open/go-lanai/pkg/dsync/consul/manager.go:81:					Stop						87.5%
@@ -982,7 +982,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:126:			GetO
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:161:			newEntryFunc					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:173:			load						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:184:			getOrNew					100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					85.7%
+github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:208:			set						0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:215:			get						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:225:			getValue					100.0%
