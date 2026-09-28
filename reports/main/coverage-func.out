@@ -982,7 +982,7 @@ github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:126:			GetO
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:161:			newEntryFunc					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:173:			load						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:184:			getOrNew					100.0%
-github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					85.7%
+github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:194:			newIfAbsent					100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:208:			set						0.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:215:			get						100.0%
 github.com/cisco-open/go-lanai/pkg/integrate/security/scope/cache.go:225:			getValue					100.0%
@@ -1641,7 +1641,7 @@ github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:53:			Read	
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:80:			AppendAll					87.5%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:106:			Append						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:120:			groupKey					100.0%
-github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						42.9%
+github.com/cisco-open/go-lanai/pkg/profiler/monitor/storage_redis.go:124:			reverse						100.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:38:					Use						0.0%
 github.com/cisco-open/go-lanai/pkg/profiler/package.go:48:					initialize					66.7%
 github.com/cisco-open/go-lanai/pkg/profiler/pprof.go:31:					Mappings					100.0%
